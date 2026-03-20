@@ -8,21 +8,28 @@ const supabase = createClient(
 );
 
 // ==============================
-// ANON ID HELPER
+// HELPERS
 // ==============================
 function getAnonId() {
   let id = localStorage.getItem("anon_id");
-
   if (!id) {
     id = crypto.randomUUID();
     localStorage.setItem("anon_id", id);
   }
-
   return id;
 }
 
+function timeAgo(date) {
+  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+
+  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  return `${Math.floor(seconds / 86400)}d ago`;
+}
+
 // ==============================
-// AUTH (MOD LOGIN)
+// AUTH
 // ==============================
 function Auth({ setUser }) {
   const [email, setEmail] = useState("");
@@ -30,7 +37,6 @@ function Auth({ setUser }) {
 
   const signIn = async () => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
     if (error) alert(error.message);
     else setUser(data.user);
   };
@@ -51,14 +57,20 @@ function Auth({ setUser }) {
 function Home() {
   const [posts, setPosts] = useState([]);
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
-
   const fetchPosts = async () => {
-    const { data } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
+    const { data } = await supabase
+      .from("posts")
+      .select("*")
+      .order("created_at", { ascending: false });
+
     setPosts(data || []);
   };
+
+  useEffect(() => {
+    fetchPosts();
+    const interval = setInterval(fetchPosts, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div>
@@ -66,11 +78,14 @@ function Home() {
       <Link to="/new">Create Post</Link>
 
       {posts.map((p) => (
-        <div key={p.id}>
+        <div key={p.id} style={{ borderBottom: "1px solid #ccc", padding: "10px" }}>
           <Link to={`/post/${p.id}`}>
             <h3>{p.title}</h3>
           </Link>
-          <p>Anon ID: {p.anon_id?.slice(0, 6)}</p>
+          <p>{p.content}</p>
+          <small>
+            anon-{p.anon_id?.slice(0, 6)} • {timeAgo(p.created_at)}
+          </small>
         </div>
       ))}
     </div>
@@ -78,7 +93,7 @@ function Home() {
 }
 
 // ==============================
-// CREATE POST (ANON)
+// CREATE POST
 // ==============================
 function NewPost() {
   const [title, setTitle] = useState("");
@@ -92,10 +107,7 @@ function NewPost() {
       .select("*")
       .eq("anon_id", anon_id);
 
-    if (banned?.length > 0) {
-      alert("You are banned");
-      return;
-    }
+    if (banned?.length > 0) return alert("You are banned");
 
     await supabase.from("posts").insert({
       title,
@@ -103,21 +115,23 @@ function NewPost() {
       anon_id
     });
 
+    setTitle("");
+    setContent("");
     alert("Posted!");
   };
 
   return (
     <div>
       <h2>New Post</h2>
-      <input placeholder="Title" onChange={(e) => setTitle(e.target.value)} />
-      <textarea onChange={(e) => setContent(e.target.value)} />
+      <input value={title} placeholder="Title" onChange={(e) => setTitle(e.target.value)} />
+      <textarea value={content} onChange={(e) => setContent(e.target.value)} />
       <button onClick={createPost}>Post</button>
     </div>
   );
 }
 
 // ==============================
-// POST PAGE
+// POST PAGE (CHAT STYLE)
 // ==============================
 function PostPage() {
   const { id } = useParams();
@@ -125,19 +139,27 @@ function PostPage() {
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
 
-  useEffect(() => {
-    load();
-  }, []);
-
   const load = async () => {
     const { data: post } = await supabase.from("posts").select("*").eq("id", id).single();
-    const { data: comments } = await supabase.from("comments").select("*").eq("post_id", id);
+    const { data: comments } = await supabase
+      .from("comments")
+      .select("*")
+      .eq("post_id", id)
+      .order("created_at", { ascending: true });
 
     setPost(post);
     setComments(comments || []);
   };
 
+  useEffect(() => {
+    load();
+    const interval = setInterval(load, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   const addComment = async () => {
+    if (!text.trim()) return;
+
     const anon_id = getAnonId();
 
     const { data: banned } = await supabase
@@ -145,10 +167,7 @@ function PostPage() {
       .select("*")
       .eq("anon_id", anon_id);
 
-    if (banned?.length > 0) {
-      alert("You are banned");
-      return;
-    }
+    if (banned?.length > 0) return alert("You are banned");
 
     await supabase.from("comments").insert({
       content: text,
@@ -167,15 +186,23 @@ function PostPage() {
       <h2>{post.title}</h2>
       <p>{post.content}</p>
 
-      <h3>Comments</h3>
-      {comments.map((c) => (
-        <p key={c.id}>
-          {c.content} (anon: {c.anon_id?.slice(0, 6)})
-        </p>
-      ))}
+      <div style={{ marginTop: "20px" }}>
+        {comments.map((c) => (
+          <div key={c.id} style={{ marginBottom: "10px" }}>
+            <b>anon-{c.anon_id?.slice(0, 6)}</b>{" "}
+            <small>{timeAgo(c.created_at)}</small>
+            <p>{c.content}</p>
+          </div>
+        ))}
+      </div>
 
-      <textarea value={text} onChange={(e) => setText(e.target.value)} />
-      <button onClick={addComment}>Comment</button>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && addComment()}
+        placeholder="Write a reply..."
+      />
+      <button onClick={addComment}>Send</button>
     </div>
   );
 }
@@ -186,14 +213,14 @@ function PostPage() {
 function ModPanel() {
   const [posts, setPosts] = useState([]);
 
-  useEffect(() => {
-    loadPosts();
-  }, []);
-
   const loadPosts = async () => {
     const { data } = await supabase.from("posts").select("*");
     setPosts(data || []);
   };
+
+  useEffect(() => {
+    loadPosts();
+  }, []);
 
   const banUser = async (anon_id) => {
     await supabase.from("bans").insert({ anon_id });
@@ -207,9 +234,7 @@ function ModPanel() {
       {posts.map((p) => (
         <div key={p.id}>
           <p>{p.title}</p>
-          <button onClick={() => banUser(p.anon_id)}>
-            Ban this user
-          </button>
+          <button onClick={() => banUser(p.anon_id)}>Ban user</button>
         </div>
       ))}
     </div>
@@ -236,10 +261,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/new" element={<NewPost />} />
         <Route path="/post/:id" element={<PostPage />} />
-        <Route
-          path="/mod"
-          element={user ? <ModPanel /> : <Auth setUser={setUser} />}
-        />
+        <Route path="/mod" element={user ? <ModPanel /> : <Auth setUser={setUser} />} />
       </Routes>
     </Router>
   );
