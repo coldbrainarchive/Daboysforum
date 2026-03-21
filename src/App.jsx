@@ -31,6 +31,10 @@ function getBrowserId() {
   return id;
 }
 
+function getModName() {
+  return localStorage.getItem("mod_name") || "Mod";
+}
+
 // ==============================
 // AUTH HEADER
 // ==============================
@@ -111,29 +115,35 @@ function Home() {
       <h1>Daboysforum 👻</h1>
       <Link to="/new">Create Post</Link>
 
-      {posts.map((p) => (
-        <div key={p.id} style={{ borderBottom: "1px solid #ccc", padding: 10 }}>
-          {p.pinned && <b>📌 PINNED</b>}
-          {p.locked && <b style={{ color: "red" }}> 🔒</b>}
+      {posts.map((p) => {
+        const isMod = p.username === getModName();
 
-          <Link to={`/post/${p.id}`}>
-            <h3>{p.title}</h3>
-          </Link>
+        return (
+          <div key={p.id} style={{ borderBottom: "1px solid #ccc", padding: 10 }}>
+            {p.pinned && <b>📌 PINNED</b>}
+            {p.locked && <b style={{ color: "red" }}> 🔒</b>}
 
-          <p>{p.content}</p>
+            <Link to={`/post/${p.id}`}>
+              <h3>{p.title}</h3>
+            </Link>
 
-          <small>
-            {p.username || `Anon #${shortId(p.browser_id)}`} •{" "}
-            {timeAgo(p.last_activity || p.created_at)}
-          </small>
-        </div>
-      ))}
+            <p>{p.content}</p>
+
+            <small>
+              <b style={{ color: isMod ? "purple" : "black" }}>
+                {p.username || `Anon #${shortId(p.browser_id)}`}
+              </b>{" "}
+              • {timeAgo(p.last_activity || p.created_at)}
+            </small>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
 // ==============================
-// CREATE POST
+// CREATE POST (FIXED)
 // ==============================
 function NewPost() {
   const [title, setTitle] = useState("");
@@ -142,18 +152,22 @@ function NewPost() {
   const createPost = async () => {
     if (!title.trim() || !content.trim()) return alert("Fill all fields");
 
+    const { data } = await supabase.auth.getUser();
+    const isMod = !!data.user;
+
     const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/create-post", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title,
         content,
-        browser_id: getBrowserId()
+        browser_id: getBrowserId(),
+        username: isMod ? getModName() : null // 🔥 FIX
       })
     });
 
-    const data = await res.json();
-    if (!res.ok) return alert(data.error);
+    const result = await res.json();
+    if (!res.ok) return alert(result.error);
 
     setTitle("");
     setContent("");
@@ -171,7 +185,7 @@ function NewPost() {
 }
 
 // ==============================
-// POST PAGE
+// POST PAGE (FIXED)
 // ==============================
 function PostPage({ user }) {
   const { id } = useParams();
@@ -209,7 +223,8 @@ function PostPage({ user }) {
       body: JSON.stringify({
         content: text,
         post_id: id,
-        browser_id: getBrowserId()
+        browser_id: getBrowserId(),
+        username: isMod ? getModName() : null // 🔥 FIX
       })
     });
 
@@ -224,47 +239,34 @@ function PostPage({ user }) {
       <h2>{post.title}</h2>
       <p>{post.content}</p>
 
-      {post.locked && <b style={{ color: "red" }}>🔒 Locked</b>}
+      {comments.map((c) => {
+        const isModUser = c.username === getModName();
 
-      {isMod && (
-        <div style={{ marginBottom: 20 }}>
-          <button onClick={() => modAction({ type: "toggle_pin", post_id: id, value: !post.pinned })}>Pin</button>
-          <button onClick={() => modAction({ type: "toggle_lock", post_id: id, value: !post.locked })}>Lock</button>
-          <button onClick={() => modAction({ type: "delete_post", post_id: id })}>Delete</button>
-          <button onClick={() => modAction({ type: "ban", browser_id: post.browser_id })}>Ban</button>
-        </div>
-      )}
-
-      {comments.map((c) => (
-        <div key={c.id} style={{ borderLeft: "4px solid #ccc", marginBottom: 10, padding: 5 }}>
-          <b>
-            {c.username || `Anon #${shortId(c.browser_id)}`}
-            {c.browser_id === post.browser_id && " (OP)"}
-          </b>
-          <small> {timeAgo(c.created_at)}</small>
-          <p>{c.content}</p>
-
-          {isMod && (
-            <button onClick={() => modAction({ type: "delete_comment", comment_id: c.id })}>
-              Delete
-            </button>
-          )}
-        </div>
-      ))}
+        return (
+          <div key={c.id} style={{ borderLeft: "4px solid #ccc", marginBottom: 10, padding: 5 }}>
+            <b style={{ color: isModUser ? "purple" : "black" }}>
+              {c.username || `Anon #${shortId(c.browser_id)}`}
+              {c.browser_id === post.browser_id && " (OP)"}
+            </b>
+            <small> {timeAgo(c.created_at)}</small>
+            <p>{c.content}</p>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
 // ==============================
-// MOD PANEL (FIXED 🔥)
+// MOD PANEL (FINAL)
 // ==============================
 function ModPanel({ setModName }) {
   const [name, setName] = useState(localStorage.getItem("mod_name") || "");
 
   const save = () => {
     localStorage.setItem("mod_name", name);
-    setModName(name); // 🔥 CRITICAL FIX
-    alert("Saved!");
+    setModName(name);
+    alert("Saved! Your posts will now use this name.");
   };
 
   return (
@@ -280,7 +282,7 @@ function ModPanel({ setModName }) {
 }
 
 // ==============================
-// MAIN (FIXED 🔥)
+// MAIN
 // ==============================
 export default function App() {
   const [user, setUser] = useState(null);
@@ -300,10 +302,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/new" element={<NewPost />} />
         <Route path="/post/:id" element={<PostPage user={user} />} />
-        <Route
-          path="/mod"
-          element={user ? <ModPanel setModName={setModName} /> : <Auth setUser={setUser} />}
-        />
+        <Route path="/mod" element={user ? <ModPanel setModName={setModName} /> : <Auth setUser={setUser} />} />
       </Routes>
     </Router>
   );
