@@ -18,8 +18,20 @@ function timeAgo(date) {
   return `${Math.floor(seconds / 86400)}d ago`;
 }
 
-function shortId(hash) {
-  return hash?.slice(0, 6) || "??????";
+function shortId(id) {
+  return id?.slice(0, 6) || "??????";
+}
+
+// 🔥 STABLE ANON ID (KEY FIX)
+function getBrowserId() {
+  let id = localStorage.getItem("browser_id");
+
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("browser_id", id);
+  }
+
+  return id;
 }
 
 // ==============================
@@ -46,7 +58,7 @@ function Auth({ setUser }) {
 }
 
 // ==============================
-// HOME (BUMP SYSTEM + PINNED)
+// HOME
 // ==============================
 function Home() {
   const [posts, setPosts] = useState([]);
@@ -55,8 +67,8 @@ function Home() {
     const { data } = await supabase
       .from("posts")
       .select("*")
-      .order("pinned", { ascending: false }) // pinned first
-      .order("last_activity", { ascending: false }); // then bump
+      .order("pinned", { ascending: false })
+      .order("last_activity", { ascending: false });
 
     setPosts(data || []);
   };
@@ -80,7 +92,8 @@ function Home() {
           </Link>
           <p>{p.content}</p>
           <small>
-            Anonymous #{shortId(p.ip_hash)} • active {timeAgo(p.last_activity || p.created_at)}
+            Anonymous #{shortId(p.browser_id)} • active{" "}
+            {timeAgo(p.last_activity || p.created_at)}
           </small>
         </div>
       ))}
@@ -107,7 +120,11 @@ function NewPost() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ title, content })
+        body: JSON.stringify({
+          title,
+          content,
+          browser_id: getBrowserId() // 🔥 NEW
+        })
       });
 
       const data = await res.json();
@@ -137,7 +154,7 @@ function NewPost() {
 }
 
 // ==============================
-// POST PAGE (LOCK + LIMIT)
+// POST PAGE
 // ==============================
 function PostPage() {
   const { id } = useParams();
@@ -188,7 +205,8 @@ function PostPage() {
         },
         body: JSON.stringify({
           content: text,
-          post_id: id
+          post_id: id,
+          browser_id: getBrowserId() // 🔥 NEW
         })
       });
 
@@ -223,10 +241,10 @@ function PostPage() {
             style={{
               marginBottom: "10px",
               padding: "5px",
-              borderLeft: `4px solid #${shortId(c.ip_hash)}`
+              borderLeft: `4px solid #${shortId(c.browser_id)}`
             }}
           >
-            <b>Anonymous #{shortId(c.ip_hash)}</b>{" "}
+            <b>Anonymous #{shortId(c.browser_id)}</b>{" "}
             <small>{timeAgo(c.created_at)}</small>
             <p>{c.content}</p>
           </div>
@@ -248,7 +266,7 @@ function PostPage() {
 }
 
 // ==============================
-// MOD PANEL (PIN + BAN)
+// MOD PANEL
 // ==============================
 function ModPanel() {
   const [posts, setPosts] = useState([]);
