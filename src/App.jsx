@@ -262,11 +262,50 @@ function PostPage({ user }) {
 // ==============================
 function ModPanel({ setModName }) {
   const [name, setName] = useState(localStorage.getItem("mod_name") || "");
+  const [users, setUsers] = useState([]);
+  const [bans, setBans] = useState([]);
+
+  const load = async () => {
+    const { data: posts } = await supabase.from("posts").select("*");
+    const { data: comments } = await supabase.from("comments").select("*");
+    const { data: bans } = await supabase.from("bans").select("*");
+
+    setBans(bans || []);
+
+    const all = [...(posts || []), ...(comments || [])];
+    const map = {};
+
+    all.forEach((u) => {
+      if (!u.browser_id) return;
+
+      map[u.browser_id] = {
+        browser_id: u.browser_id,
+        username: u.username || `Anon #${shortId(u.browser_id)}`
+      };
+    });
+
+    setUsers(Object.values(map));
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
 
   const save = () => {
     localStorage.setItem("mod_name", name);
     setModName(name);
-    alert("Saved! Your posts will now use this name.");
+    alert("Saved!");
+  };
+
+  const isBanned = (id) => bans.some((b) => b.browser_id === id);
+
+  const toggleBan = async (u) => {
+    if (isBanned(u.browser_id)) {
+      await supabase.from("bans").delete().eq("browser_id", u.browser_id);
+    } else {
+      await modAction({ type: "ban", browser_id: u.browser_id, username: u.username });
+    }
+    load();
   };
 
   return (
@@ -274,13 +313,31 @@ function ModPanel({ setModName }) {
       <h2>Mod Panel</h2>
 
       <p>Current name: <b>{name || "Mod"}</b></p>
-
       <input value={name} onChange={(e) => setName(e.target.value)} />
       <button onClick={save}>Save</button>
+
+      <h3 style={{ marginTop: 20 }}>Users</h3>
+
+      {users.map((u) => (
+        <div key={u.browser_id} style={{ borderBottom: "1px solid #ccc", padding: 10 }}>
+          <b>{u.username}</b>
+          <br />
+          <small>{u.browser_id}</small>
+          <br />
+
+          <span style={{ color: isBanned(u.browser_id) ? "red" : "green" }}>
+            {isBanned(u.browser_id) ? "BANNED" : "ACTIVE"}
+          </span>
+
+          <br />
+          <button onClick={() => toggleBan(u)}>
+            {isBanned(u.browser_id) ? "Unban" : "Ban"}
+          </button>
+        </div>
+      ))}
     </div>
   );
 }
-
 // ==============================
 // MAIN
 // ==============================
