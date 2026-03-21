@@ -22,16 +22,22 @@ function shortId(id) {
   return id?.slice(0, 6) || "??????";
 }
 
-// 🔥 STABLE ANON ID (KEY FIX)
 function getBrowserId() {
   let id = localStorage.getItem("browser_id");
-
   if (!id) {
     id = crypto.randomUUID();
     localStorage.setItem("browser_id", id);
   }
-
   return id;
+}
+
+function getUsername() {
+  let name = localStorage.getItem("username");
+  if (!name) {
+    name = prompt("Pick a username:") || "Anonymous";
+    localStorage.setItem("username", name);
+  }
+  return name;
 }
 
 // ==============================
@@ -50,8 +56,8 @@ function Auth({ setUser }) {
   return (
     <div>
       <h2>Moderator Login</h2>
-      <input placeholder="email" onChange={(e) => setEmail(e.target.value)} />
-      <input placeholder="password" type="password" onChange={(e) => setPassword(e.target.value)} />
+      <input onChange={(e) => setEmail(e.target.value)} placeholder="email" />
+      <input type="password" onChange={(e) => setPassword(e.target.value)} placeholder="password" />
       <button onClick={signIn}>Login</button>
     </div>
   );
@@ -67,6 +73,7 @@ function Home() {
     const { data } = await supabase
       .from("posts")
       .select("*")
+      .eq("deleted", false)
       .order("pinned", { ascending: false })
       .order("last_activity", { ascending: false });
 
@@ -75,8 +82,8 @@ function Home() {
 
   useEffect(() => {
     fetchPosts();
-    const interval = setInterval(fetchPosts, 4000);
-    return () => clearInterval(interval);
+    const i = setInterval(fetchPosts, 4000);
+    return () => clearInterval(i);
   }, []);
 
   return (
@@ -85,14 +92,18 @@ function Home() {
       <Link to="/new">Create Post</Link>
 
       {posts.map((p) => (
-        <div key={p.id} style={{ borderBottom: "1px solid #ccc", padding: "10px" }}>
+        <div key={p.id} style={{ borderBottom: "1px solid #ccc", padding: 10 }}>
           {p.pinned && <b>📌 PINNED</b>}
+          {p.locked && <b style={{ color: "red" }}> 🔒</b>}
+
           <Link to={`/post/${p.id}`}>
             <h3>{p.title}</h3>
           </Link>
+
           <p>{p.content}</p>
+
           <small>
-            Anonymous #{shortId(p.browser_id)} • active{" "}
+            {p.username || `Anon #${shortId(p.browser_id)}`} •{" "}
             {timeAgo(p.last_activity || p.created_at)}
           </small>
         </div>
@@ -109,38 +120,25 @@ function NewPost() {
   const [content, setContent] = useState("");
 
   const createPost = async () => {
-    if (!title.trim() || !content.trim()) {
-      alert("Fill in both fields");
-      return;
-    }
+    if (!title.trim() || !content.trim()) return alert("Fill all fields");
 
-    try {
-      const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/create-post", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          title,
-          content,
-          browser_id: getBrowserId() // 🔥 NEW
-        })
-      });
+    const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/create-post", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        content,
+        browser_id: getBrowserId(),
+        username: getUsername()
+      })
+    });
 
-      const data = await res.json();
+    const data = await res.json();
+    if (!res.ok) return alert(data.error);
 
-      if (!res.ok) {
-        alert(data.error || "Failed to post");
-        return;
-      }
-
-      setTitle("");
-      setContent("");
-      alert("Posted!");
-    } catch (err) {
-      alert("Error posting");
-      console.error(err);
-    }
+    setTitle("");
+    setContent("");
+    alert("Posted!");
   };
 
   return (
@@ -162,67 +160,46 @@ function PostPage() {
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
 
-  const MAX_COMMENTS = 200;
-  const LOCK_AFTER_HOURS = 24;
-
-  const isLocked = () => {
-    if (!post) return false;
-    const ageHours = (new Date() - new Date(post.created_at)) / (1000 * 60 * 60);
-    return ageHours > LOCK_AFTER_HOURS || comments.length >= MAX_COMMENTS;
-  };
-
   const load = async () => {
-    const { data: post } = await supabase.from("posts").select("*").eq("id", id).single();
-    const { data: comments } = await supabase
+    const { data: p } = await supabase.from("posts").select("*").eq("id", id).single();
+    const { data: c } = await supabase
       .from("comments")
       .select("*")
       .eq("post_id", id)
-      .order("created_at", { ascending: true });
+      .eq("deleted", false)
+      .order("created_at");
 
-    setPost(post);
-    setComments(comments || []);
+    setPost(p);
+    setComments(c || []);
   };
 
   useEffect(() => {
     load();
-    const interval = setInterval(load, 2000);
-    return () => clearInterval(interval);
+    const i = setInterval(load, 2000);
+    return () => clearInterval(i);
   }, []);
 
   const addComment = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || post.locked) return;
 
-    if (isLocked()) {
-      alert("Thread is locked");
-      return;
-    }
+    const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/add-comment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        content: text,
+        post_id: id,
+        browser_id: getBrowserId(),
+        username: getUsername()
+      })
+    });
 
-    try {
-      const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/add-comment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          content: text,
-          post_id: id,
-          browser_id: getBrowserId() // 🔥 NEW
-        })
-      });
+    const data = await res.json();
+    if (!res.ok) return alert(data.error);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || "Failed to comment");
-        return;
-      }
-
-      setText("");
-      load();
-    } catch (err) {
-      console.error(err);
-      alert("Error posting comment");
-    }
+    setText("");
+    load();
   };
 
   if (!post) return <div>Loading...</div>;
@@ -232,32 +209,22 @@ function PostPage() {
       <h2>{post.title}</h2>
       <p>{post.content}</p>
 
-      {isLocked() && <b style={{ color: "red" }}>🔒 Thread Locked</b>}
+      {post.locked && <b style={{ color: "red" }}>🔒 Locked</b>}
 
-      <div style={{ marginTop: "20px" }}>
-        {comments.map((c) => (
-          <div
-            key={c.id}
-            style={{
-              marginBottom: "10px",
-              padding: "5px",
-              borderLeft: `4px solid #${shortId(c.browser_id)}`
-            }}
-          >
-            <b>Anonymous #{shortId(c.browser_id)}</b>{" "}
-            <small>{timeAgo(c.created_at)}</small>
-            <p>{c.content}</p>
-          </div>
-        ))}
-      </div>
+      {comments.map((c) => (
+        <div key={c.id} style={{ borderLeft: "4px solid #ccc", marginBottom: 10, padding: 5 }}>
+          <b>
+            {c.username || `Anon #${shortId(c.browser_id)}`}
+            {c.browser_id === post.browser_id && " (OP)"}
+          </b>
+          <small> {timeAgo(c.created_at)}</small>
+          <p>{c.content}</p>
+        </div>
+      ))}
 
-      {!isLocked() && (
+      {!post.locked && (
         <>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Write a reply..."
-          />
+          <textarea value={text} onChange={(e) => setText(e.target.value)} />
           <button onClick={addComment}>Send</button>
         </>
       )}
@@ -271,40 +238,47 @@ function PostPage() {
 function ModPanel() {
   const [posts, setPosts] = useState([]);
 
-  const loadPosts = async () => {
+  const load = async () => {
     const { data } = await supabase.from("posts").select("*");
     setPosts(data || []);
   };
 
   useEffect(() => {
-    loadPosts();
+    load();
   }, []);
 
-  const banUser = async (ip_hash) => {
-    await supabase.from("bans").insert({ ip_hash });
-    alert("User banned");
+  const ban = async (browser_id) => {
+    await supabase.from("bans").insert({ browser_id });
+    alert("Banned");
   };
 
-  const togglePin = async (post) => {
-    await supabase
-      .from("posts")
-      .update({ pinned: !post.pinned })
-      .eq("id", post.id);
+  const del = async (id) => {
+    await supabase.from("posts").update({ deleted: true }).eq("id", id);
+    load();
+  };
 
-    loadPosts();
+  const lock = async (p) => {
+    await supabase.from("posts").update({ locked: !p.locked }).eq("id", p.id);
+    load();
+  };
+
+  const pin = async (p) => {
+    await supabase.from("posts").update({ pinned: !p.pinned }).eq("id", p.id);
+    load();
   };
 
   return (
     <div>
-      <h2>Moderator Panel</h2>
+      <h2>Mod Panel</h2>
 
       {posts.map((p) => (
         <div key={p.id}>
           <p>{p.title}</p>
-          <button onClick={() => banUser(p.ip_hash)}>Ban user</button>
-          <button onClick={() => togglePin(p)}>
-            {p.pinned ? "Unpin" : "Pin"}
-          </button>
+
+          <button onClick={() => ban(p.browser_id)}>Ban</button>
+          <button onClick={() => pin(p)}>{p.pinned ? "Unpin" : "Pin"}</button>
+          <button onClick={() => lock(p)}>{p.locked ? "Unlock" : "Lock"}</button>
+          <button onClick={() => del(p.id)}>Delete</button>
         </div>
       ))}
     </div>
@@ -312,7 +286,7 @@ function ModPanel() {
 }
 
 // ==============================
-// MAIN APP
+// MAIN
 // ==============================
 export default function App() {
   const [user, setUser] = useState(null);
@@ -324,7 +298,7 @@ export default function App() {
   return (
     <Router>
       <nav>
-        <Link to="/">Home</Link> | <Link to="/mod">Mod Panel</Link>
+        <Link to="/">Home</Link> | <Link to="/mod">Mod</Link>
       </nav>
 
       <Routes>
