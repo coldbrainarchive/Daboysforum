@@ -31,16 +31,9 @@ function getBrowserId() {
   return id;
 }
 
-function getUsername() {
-  let name = localStorage.getItem("username");
-  if (!name) {
-    name = prompt("Pick a username:") || "Anonymous";
-    localStorage.setItem("username", name);
-  }
-  return name;
-}
-
-// 🔥 AUTH HEADER FOR MOD ACTIONS
+// ==============================
+// AUTH HEADER
+// ==============================
 async function getAuthHeader() {
   const { data } = await supabase.auth.getSession();
   return {
@@ -48,7 +41,9 @@ async function getAuthHeader() {
   };
 }
 
-// 🔥 MOD ACTION HELPER
+// ==============================
+// MOD ACTION HELPER
+// ==============================
 async function modAction(action) {
   const headers = await getAuthHeader();
 
@@ -128,8 +123,7 @@ function Home() {
           <p>{p.content}</p>
 
           <small>
-            {p.username || `Anon #${shortId(p.browser_id)}`} •{" "}
-            {timeAgo(p.last_activity || p.created_at)}
+            {p.username} • {timeAgo(p.last_activity || p.created_at)}
           </small>
         </div>
       ))}
@@ -153,8 +147,7 @@ function NewPost() {
       body: JSON.stringify({
         title,
         content,
-        browser_id: getBrowserId(),
-        username: getUsername()
+        browser_id: getBrowserId()
       })
     });
 
@@ -177,7 +170,7 @@ function NewPost() {
 }
 
 // ==============================
-// POST PAGE (🔥 MOD POWER HERE)
+// POST PAGE
 // ==============================
 function PostPage({ user }) {
   const { id } = useParams();
@@ -217,8 +210,7 @@ function PostPage({ user }) {
       body: JSON.stringify({
         content: text,
         post_id: id,
-        browser_id: getBrowserId(),
-        username: getUsername()
+        browser_id: getBrowserId()
       })
     });
 
@@ -235,23 +227,14 @@ function PostPage({ user }) {
 
       {post.locked && <b style={{ color: "red" }}>🔒 Locked</b>}
 
-      {/* 🔥 MOD CONTROLS */}
+      {/* MOD CONTROLS */}
       {isMod && (
         <div style={{ marginBottom: 20 }}>
-          <button onClick={() => modAction({ type: "toggle_pin", post_id: id, value: !post.pinned })}>
-            Pin
-          </button>
-
-          <button onClick={() => modAction({ type: "toggle_lock", post_id: id, value: !post.locked })}>
-            Lock
-          </button>
-
-          <button onClick={() => modAction({ type: "delete_post", post_id: id })}>
-            Delete Post
-          </button>
-
-          <button onClick={() => modAction({ type: "ban", browser_id: post.browser_id })}>
-            Ban User
+          <button onClick={() => modAction({ type: "toggle_pin", post_id: id, value: !post.pinned })}>Pin</button>
+          <button onClick={() => modAction({ type: "toggle_lock", post_id: id, value: !post.locked })}>Lock</button>
+          <button onClick={() => modAction({ type: "delete_post", post_id: id })}>Delete</button>
+          <button onClick={() => modAction({ type: "ban", username: post.username, browser_id: post.browser_id })}>
+            Ban
           </button>
         </div>
       )}
@@ -259,13 +242,12 @@ function PostPage({ user }) {
       {comments.map((c) => (
         <div key={c.id} style={{ borderLeft: "4px solid #ccc", marginBottom: 10, padding: 5 }}>
           <b>
-            {c.username || `Anon #${shortId(c.browser_id)}`}
+            {c.username}
             {c.browser_id === post.browser_id && " (OP)"}
           </b>
           <small> {timeAgo(c.created_at)}</small>
           <p>{c.content}</p>
 
-          {/* 🔥 DELETE COMMENT */}
           {isMod && (
             <button onClick={() => modAction({ type: "delete_comment", comment_id: c.id })}>
               Delete
@@ -285,10 +267,27 @@ function PostPage({ user }) {
 }
 
 // ==============================
-// MOD PANEL
+// MOD PANEL (🔥 NEW)
 // ==============================
 function ModPanel() {
-  return <div><h2>Mod Panel</h2><p>Use post pages to moderate 🔥</p></div>;
+  const [name, setName] = useState(localStorage.getItem("mod_name") || "");
+
+  const save = () => {
+    localStorage.setItem("mod_name", name);
+    alert("Saved");
+  };
+
+  return (
+    <div>
+      <h2>Mod Profile</h2>
+
+      <p>Your mod name:</p>
+      <input value={name} onChange={(e) => setName(e.target.value)} />
+      <button onClick={save}>Save</button>
+
+      <p style={{ marginTop: 20 }}>Moderate directly from posts 🔥</p>
+    </div>
+  );
 }
 
 // ==============================
