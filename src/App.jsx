@@ -31,6 +31,10 @@ function getBrowserId() {
   return id;
 }
 
+function getModName() {
+  return localStorage.getItem("mod_name") || "Mod";
+}
+
 // ==============================
 // AUTH HEADER
 // ==============================
@@ -42,7 +46,7 @@ async function getAuthHeader() {
 }
 
 // ==============================
-// MOD ACTION HELPER
+// MOD ACTION
 // ==============================
 async function modAction(action) {
   const headers = await getAuthHeader();
@@ -123,7 +127,8 @@ function Home() {
           <p>{p.content}</p>
 
           <small>
-            {p.username} • {timeAgo(p.last_activity || p.created_at)}
+            {p.username || `Anon #${shortId(p.browser_id)}`} •{" "}
+            {timeAgo(p.last_activity || p.created_at)}
           </small>
         </div>
       ))}
@@ -204,9 +209,7 @@ function PostPage({ user }) {
 
     await fetch("https://daboysforumip.coldbrainarchive.workers.dev/add-comment", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         content: text,
         post_id: id,
@@ -227,22 +230,19 @@ function PostPage({ user }) {
 
       {post.locked && <b style={{ color: "red" }}>🔒 Locked</b>}
 
-      {/* MOD CONTROLS */}
       {isMod && (
         <div style={{ marginBottom: 20 }}>
           <button onClick={() => modAction({ type: "toggle_pin", post_id: id, value: !post.pinned })}>Pin</button>
           <button onClick={() => modAction({ type: "toggle_lock", post_id: id, value: !post.locked })}>Lock</button>
           <button onClick={() => modAction({ type: "delete_post", post_id: id })}>Delete</button>
-          <button onClick={() => modAction({ type: "ban", username: post.username, browser_id: post.browser_id })}>
-            Ban
-          </button>
+          <button onClick={() => modAction({ type: "ban", browser_id: post.browser_id })}>Ban</button>
         </div>
       )}
 
       {comments.map((c) => (
         <div key={c.id} style={{ borderLeft: "4px solid #ccc", marginBottom: 10, padding: 5 }}>
           <b>
-            {c.username}
+            {c.username || `Anon #${shortId(c.browser_id)}`}
             {c.browser_id === post.browser_id && " (OP)"}
           </b>
           <small> {timeAgo(c.created_at)}</small>
@@ -267,25 +267,82 @@ function PostPage({ user }) {
 }
 
 // ==============================
-// MOD PANEL (🔥 NEW)
+// MOD PANEL (🔥 FULL USER LIST)
 // ==============================
 function ModPanel() {
   const [name, setName] = useState(localStorage.getItem("mod_name") || "");
+  const [users, setUsers] = useState([]);
+  const [bans, setBans] = useState([]);
+
+  const load = async () => {
+    const { data: posts } = await supabase.from("posts").select("*");
+    const { data: comments } = await supabase.from("comments").select("*");
+    const { data: bans } = await supabase.from("bans").select("*");
+
+    setBans(bans || []);
+
+    const all = [...(posts || []), ...(comments || [])];
+    const map = {};
+
+    all.forEach((u) => {
+      if (!u.browser_id) return;
+
+      map[u.browser_id] = {
+        browser_id: u.browser_id,
+        username: u.username || `Anon #${shortId(u.browser_id)}`
+      };
+    });
+
+    setUsers(Object.values(map));
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
 
   const save = () => {
     localStorage.setItem("mod_name", name);
     alert("Saved");
   };
 
+  const isBanned = (id) => bans.some((b) => b.browser_id === id);
+
+  const toggleBan = async (u) => {
+    if (isBanned(u.browser_id)) {
+      await supabase.from("bans").delete().eq("browser_id", u.browser_id);
+    } else {
+      await modAction({ type: "ban", browser_id: u.browser_id });
+    }
+    load();
+  };
+
   return (
     <div>
-      <h2>Mod Profile</h2>
+      <h2>Mod Panel</h2>
 
-      <p>Your mod name:</p>
-      <input value={name} onChange={(e) => setName(e.target.value)} />
-      <button onClick={save}>Save</button>
+      <div>
+        <p>Mod name:</p>
+        <input value={name} onChange={(e) => setName(e.target.value)} />
+        <button onClick={save}>Save</button>
+      </div>
 
-      <p style={{ marginTop: 20 }}>Moderate directly from posts 🔥</p>
+      <h3 style={{ marginTop: 20 }}>Users</h3>
+
+      {users.map((u) => (
+        <div key={u.browser_id} style={{ borderBottom: "1px solid #ccc", padding: 10 }}>
+          <b>{u.username}</b>
+          <br />
+          <small>{u.browser_id}</small>
+          <br />
+          <span style={{ color: isBanned(u.browser_id) ? "red" : "green" }}>
+            {isBanned(u.browser_id) ? "BANNED" : "ACTIVE"}
+          </span>
+          <br />
+          <button onClick={() => toggleBan(u)}>
+            {isBanned(u.browser_id) ? "Unban" : "Ban"}
+          </button>
+        </div>
+      ))}
     </div>
   );
 }
@@ -303,7 +360,7 @@ export default function App() {
   return (
     <Router>
       <nav>
-        <Link to="/">Home</Link> | <Link to="/mod">Mod</Link>
+        <Link to="/">Home</Link> | <Link to="/mod">Mod ({getModName()})</Link>
       </nav>
 
       <Routes>
