@@ -204,7 +204,7 @@ function NewPost() {
 }
 
 // ==============================
-// POST PAGE (FIXED ✅)
+// POST PAGE (WITH MOD CONTROLS 🔥)
 // ==============================
 function PostPage({ user }) {
   const { id } = useParams();
@@ -236,7 +236,7 @@ function PostPage({ user }) {
     load();
     const i = setInterval(load, 2000);
     return () => clearInterval(i);
-  }, [id]); // ✅ added dependency (important)
+  }, [id]);
 
   const addComment = async () => {
     if (!text.trim() || post?.locked) return;
@@ -276,6 +276,39 @@ function PostPage({ user }) {
 
       {post.locked && <b style={{ color: "red" }}>🔒 Locked</b>}
 
+      {/* 🔥 MOD CONTROLS (POST) */}
+      {isMod && (
+        <div style={{ marginBottom: 10 }}>
+          <button onClick={() => modAction({ type: "delete_post", post_id: post.id })}>
+            🗑 Delete
+          </button>
+
+          <button
+            onClick={async () => {
+              await supabase
+                .from("posts")
+                .update({ pinned: !post.pinned })
+                .eq("id", post.id);
+              load();
+            }}
+          >
+            {post.pinned ? "Unpin" : "📌 Pin"}
+          </button>
+
+          <button
+            onClick={async () => {
+              await supabase
+                .from("posts")
+                .update({ locked: !post.locked })
+                .eq("id", post.id);
+              load();
+            }}
+          >
+            {post.locked ? "Unlock" : "🔒 Lock"}
+          </button>
+        </div>
+      )}
+
       {/* COMMENTS */}
       {comments.map((c) => {
         const isModUser = c.username === getModName();
@@ -290,16 +323,28 @@ function PostPage({ user }) {
             }}
           >
             <b
-  style={{
-    color: isModUser ? "#c084fc" : getUserColor(c.browser_id),
-    fontWeight: "bold"
-  }}
->
+              style={{
+                color: isModUser ? "#c084fc" : getUserColor(c.browser_id),
+                fontWeight: "bold"
+              }}
+            >
               {c.username || `Anon #${shortId(c.browser_id)}`}
               {c.browser_id === post.browser_id && " (OP)"}
             </b>
+
             <small> {timeAgo(c.created_at)}</small>
             <p>{c.content}</p>
+
+            {/* 🔥 MOD DELETE COMMENT */}
+            {isMod && (
+              <button
+                onClick={() =>
+                  modAction({ type: "delete_comment", comment_id: c.id })
+                }
+              >
+                🗑 Delete
+              </button>
+            )}
           </div>
         );
       })}
