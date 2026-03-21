@@ -40,6 +40,31 @@ function getUsername() {
   return name;
 }
 
+// 🔥 AUTH HEADER FOR MOD ACTIONS
+async function getAuthHeader() {
+  const { data } = await supabase.auth.getSession();
+  return {
+    Authorization: `Bearer ${data.session?.access_token}`
+  };
+}
+
+// 🔥 MOD ACTION HELPER
+async function modAction(action) {
+  const headers = await getAuthHeader();
+
+  const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/mod-action", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...headers
+    },
+    body: JSON.stringify(action)
+  });
+
+  const data = await res.json();
+  if (!res.ok) alert(data.error);
+}
+
 // ==============================
 // AUTH
 // ==============================
@@ -152,13 +177,15 @@ function NewPost() {
 }
 
 // ==============================
-// POST PAGE
+// POST PAGE (🔥 MOD POWER HERE)
 // ==============================
-function PostPage() {
+function PostPage({ user }) {
   const { id } = useParams();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
+
+  const isMod = !!user;
 
   const load = async () => {
     const { data: p } = await supabase.from("posts").select("*").eq("id", id).single();
@@ -182,7 +209,7 @@ function PostPage() {
   const addComment = async () => {
     if (!text.trim() || post.locked) return;
 
-    const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/add-comment", {
+    await fetch("https://daboysforumip.coldbrainarchive.workers.dev/add-comment", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -194,9 +221,6 @@ function PostPage() {
         username: getUsername()
       })
     });
-
-    const data = await res.json();
-    if (!res.ok) return alert(data.error);
 
     setText("");
     load();
@@ -211,6 +235,27 @@ function PostPage() {
 
       {post.locked && <b style={{ color: "red" }}>🔒 Locked</b>}
 
+      {/* 🔥 MOD CONTROLS */}
+      {isMod && (
+        <div style={{ marginBottom: 20 }}>
+          <button onClick={() => modAction({ type: "toggle_pin", post_id: id, value: !post.pinned })}>
+            Pin
+          </button>
+
+          <button onClick={() => modAction({ type: "toggle_lock", post_id: id, value: !post.locked })}>
+            Lock
+          </button>
+
+          <button onClick={() => modAction({ type: "delete_post", post_id: id })}>
+            Delete Post
+          </button>
+
+          <button onClick={() => modAction({ type: "ban", browser_id: post.browser_id })}>
+            Ban User
+          </button>
+        </div>
+      )}
+
       {comments.map((c) => (
         <div key={c.id} style={{ borderLeft: "4px solid #ccc", marginBottom: 10, padding: 5 }}>
           <b>
@@ -219,6 +264,13 @@ function PostPage() {
           </b>
           <small> {timeAgo(c.created_at)}</small>
           <p>{c.content}</p>
+
+          {/* 🔥 DELETE COMMENT */}
+          {isMod && (
+            <button onClick={() => modAction({ type: "delete_comment", comment_id: c.id })}>
+              Delete
+            </button>
+          )}
         </div>
       ))}
 
@@ -236,53 +288,7 @@ function PostPage() {
 // MOD PANEL
 // ==============================
 function ModPanel() {
-  const [posts, setPosts] = useState([]);
-
-  const load = async () => {
-    const { data } = await supabase.from("posts").select("*");
-    setPosts(data || []);
-  };
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  const ban = async (browser_id) => {
-    await supabase.from("bans").insert({ browser_id });
-    alert("Banned");
-  };
-
-  const del = async (id) => {
-    await supabase.from("posts").update({ deleted: true }).eq("id", id);
-    load();
-  };
-
-  const lock = async (p) => {
-    await supabase.from("posts").update({ locked: !p.locked }).eq("id", p.id);
-    load();
-  };
-
-  const pin = async (p) => {
-    await supabase.from("posts").update({ pinned: !p.pinned }).eq("id", p.id);
-    load();
-  };
-
-  return (
-    <div>
-      <h2>Mod Panel</h2>
-
-      {posts.map((p) => (
-        <div key={p.id}>
-          <p>{p.title}</p>
-
-          <button onClick={() => ban(p.browser_id)}>Ban</button>
-          <button onClick={() => pin(p)}>{p.pinned ? "Unpin" : "Pin"}</button>
-          <button onClick={() => lock(p)}>{p.locked ? "Unlock" : "Lock"}</button>
-          <button onClick={() => del(p.id)}>Delete</button>
-        </div>
-      ))}
-    </div>
-  );
+  return <div><h2>Mod Panel</h2><p>Use post pages to moderate 🔥</p></div>;
 }
 
 // ==============================
@@ -304,7 +310,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/new" element={<NewPost />} />
-        <Route path="/post/:id" element={<PostPage />} />
+        <Route path="/post/:id" element={<PostPage user={user} />} />
         <Route path="/mod" element={user ? <ModPanel /> : <Auth setUser={setUser} />} />
       </Routes>
     </Router>
