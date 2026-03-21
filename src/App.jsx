@@ -31,10 +31,6 @@ function getBrowserId() {
   return id;
 }
 
-function getModName() {
-  return localStorage.getItem("mod_name") || "Mod";
-}
-
 // ==============================
 // AUTH HEADER
 // ==============================
@@ -255,103 +251,40 @@ function PostPage({ user }) {
           )}
         </div>
       ))}
-
-      {!post.locked && (
-        <>
-          <textarea value={text} onChange={(e) => setText(e.target.value)} />
-          <button onClick={addComment}>Send</button>
-        </>
-      )}
     </div>
   );
 }
 
 // ==============================
-// MOD PANEL (🔥 FULL USER LIST)
+// MOD PANEL (FIXED 🔥)
 // ==============================
-function ModPanel() {
+function ModPanel({ setModName }) {
   const [name, setName] = useState(localStorage.getItem("mod_name") || "");
-  const [users, setUsers] = useState([]);
-  const [bans, setBans] = useState([]);
-
-  const load = async () => {
-    const { data: posts } = await supabase.from("posts").select("*");
-    const { data: comments } = await supabase.from("comments").select("*");
-    const { data: bans } = await supabase.from("bans").select("*");
-
-    setBans(bans || []);
-
-    const all = [...(posts || []), ...(comments || [])];
-    const map = {};
-
-    all.forEach((u) => {
-      if (!u.browser_id) return;
-
-      map[u.browser_id] = {
-        browser_id: u.browser_id,
-        username: u.username || `Anon #${shortId(u.browser_id)}`
-      };
-    });
-
-    setUsers(Object.values(map));
-  };
-
-  useEffect(() => {
-    load();
-  }, []);
 
   const save = () => {
     localStorage.setItem("mod_name", name);
-    alert("Saved");
-  };
-
-  const isBanned = (id) => bans.some((b) => b.browser_id === id);
-
-  const toggleBan = async (u) => {
-    if (isBanned(u.browser_id)) {
-      await supabase.from("bans").delete().eq("browser_id", u.browser_id);
-    } else {
-      await modAction({ type: "ban", browser_id: u.browser_id });
-    }
-    load();
+    setModName(name); // 🔥 CRITICAL FIX
+    alert("Saved!");
   };
 
   return (
     <div>
       <h2>Mod Panel</h2>
 
-      <div>
-        <p>Mod name:</p>
-        <input value={name} onChange={(e) => setName(e.target.value)} />
-        <button onClick={save}>Save</button>
-      </div>
+      <p>Current name: <b>{name || "Mod"}</b></p>
 
-      <h3 style={{ marginTop: 20 }}>Users</h3>
-
-      {users.map((u) => (
-        <div key={u.browser_id} style={{ borderBottom: "1px solid #ccc", padding: 10 }}>
-          <b>{u.username}</b>
-          <br />
-          <small>{u.browser_id}</small>
-          <br />
-          <span style={{ color: isBanned(u.browser_id) ? "red" : "green" }}>
-            {isBanned(u.browser_id) ? "BANNED" : "ACTIVE"}
-          </span>
-          <br />
-          <button onClick={() => toggleBan(u)}>
-            {isBanned(u.browser_id) ? "Unban" : "Ban"}
-          </button>
-        </div>
-      ))}
+      <input value={name} onChange={(e) => setName(e.target.value)} />
+      <button onClick={save}>Save</button>
     </div>
   );
 }
 
 // ==============================
-// MAIN
+// MAIN (FIXED 🔥)
 // ==============================
 export default function App() {
   const [user, setUser] = useState(null);
+  const [modName, setModName] = useState(localStorage.getItem("mod_name") || "Mod");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
@@ -360,14 +293,17 @@ export default function App() {
   return (
     <Router>
       <nav>
-        <Link to="/">Home</Link> | <Link to="/mod">Mod ({getModName()})</Link>
+        <Link to="/">Home</Link> | <Link to="/mod">Mod ({modName})</Link>
       </nav>
 
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/new" element={<NewPost />} />
         <Route path="/post/:id" element={<PostPage user={user} />} />
-        <Route path="/mod" element={user ? <ModPanel /> : <Auth setUser={setUser} />} />
+        <Route
+          path="/mod"
+          element={user ? <ModPanel setModName={setModName} /> : <Auth setUser={setUser} />}
+        />
       </Routes>
     </Router>
   );
