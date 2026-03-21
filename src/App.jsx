@@ -185,7 +185,7 @@ function NewPost() {
 }
 
 // ==============================
-// POST PAGE (FIXED)
+// POST PAGE (FIXED ✅)
 // ==============================
 function PostPage({ user }) {
   const { id } = useParams();
@@ -196,7 +196,12 @@ function PostPage({ user }) {
   const isMod = !!user;
 
   const load = async () => {
-    const { data: p } = await supabase.from("posts").select("*").eq("id", id).single();
+    const { data: p } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("id", id)
+      .single();
+
     const { data: c } = await supabase
       .from("comments")
       .select("*")
@@ -212,24 +217,35 @@ function PostPage({ user }) {
     load();
     const i = setInterval(load, 2000);
     return () => clearInterval(i);
-  }, []);
+  }, [id]); // ✅ added dependency (important)
 
   const addComment = async () => {
-    if (!text.trim() || post.locked) return;
+    if (!text.trim() || post?.locked) return;
 
-    await fetch("https://daboysforumip.coldbrainarchive.workers.dev/add-comment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content: text,
-        post_id: id,
-        browser_id: getBrowserId(),
-        username: isMod ? getModName() : null // 🔥 FIX
-      })
-    });
+    try {
+      const res = await fetch(
+        "https://daboysforumip.coldbrainarchive.workers.dev/add-comment",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: text,
+            post_id: id,
+            browser_id: getBrowserId(),
+            username: isMod ? getModName() : null
+          })
+        }
+      );
 
-    setText("");
-    load();
+      const result = await res.json();
+      if (!res.ok) return alert(result.error);
+
+      setText("");
+      load();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send comment");
+    }
   };
 
   if (!post) return <div>Loading...</div>;
@@ -239,11 +255,21 @@ function PostPage({ user }) {
       <h2>{post.title}</h2>
       <p>{post.content}</p>
 
+      {post.locked && <b style={{ color: "red" }}>🔒 Locked</b>}
+
+      {/* COMMENTS */}
       {comments.map((c) => {
         const isModUser = c.username === getModName();
 
         return (
-          <div key={c.id} style={{ borderLeft: "4px solid #ccc", marginBottom: 10, padding: 5 }}>
+          <div
+            key={c.id}
+            style={{
+              borderLeft: "4px solid #ccc",
+              marginBottom: 10,
+              padding: 5
+            }}
+          >
             <b style={{ color: isModUser ? "purple" : "black" }}>
               {c.username || `Anon #${shortId(c.browser_id)}`}
               {c.browser_id === post.browser_id && " (OP)"}
@@ -253,10 +279,22 @@ function PostPage({ user }) {
           </div>
         );
       })}
+
+      {/* COMMENT BOX */}
+      {!post.locked && (
+        <div style={{ marginTop: 10 }}>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Write a comment..."
+          />
+          <br />
+          <button onClick={addComment}>Send</button>
+        </div>
+      )}
     </div>
   );
 }
-
 // ==============================
 // MOD PANEL (FINAL)
 // ==============================
@@ -359,7 +397,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/new" element={<NewPost />} />
         <Route path="/post/:id" element={<PostPage user={user} />} />
-        <Route path="/mod" element={user ? <ModPanel setModName={setModName} /> : <Auth setUser={setUser} />} />
+       <Route path="/mod" element={<ModPanel setModName={setModName} />} />
       </Routes>
     </Router>
   );
