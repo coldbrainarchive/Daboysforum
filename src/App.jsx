@@ -10,6 +10,20 @@ const supabase = createClient(
 // ==============================
 // HELPERS
 // ==============================
+function getUserColor(id) {
+  if (!id) return "#ffffff";
+
+  // simple hash → color
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  const hue = hash % 360;
+
+  return `hsl(${hue}, 70%, 60%)`; // nice vibrant colors
+}
+
 function timeAgo(date) {
   const seconds = Math.floor((new Date() - new Date(date)) / 1000);
   if (seconds < 60) return `${seconds}s ago`;
@@ -130,7 +144,12 @@ function Home() {
             <p>{p.content}</p>
 
             <small>
-              <b style={{ color: isMod ? "purple" : "black" }}>
+              <b
+  style={{
+    color: isMod ? "#c084fc" : getUserColor(p.browser_id),
+    fontWeight: "bold"
+  }}
+>
                 {p.username || `Anon #${shortId(p.browser_id)}`}
               </b>{" "}
               • {timeAgo(p.last_activity || p.created_at)}
@@ -270,7 +289,12 @@ function PostPage({ user }) {
               padding: 5
             }}
           >
-            <b style={{ color: isModUser ? "purple" : "black" }}>
+            <b
+  style={{
+    color: isModUser ? "#c084fc" : getUserColor(c.browser_id),
+    fontWeight: "bold"
+  }}
+>
               {c.username || `Anon #${shortId(c.browser_id)}`}
               {c.browser_id === post.browser_id && " (OP)"}
             </b>
