@@ -397,7 +397,10 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/new" element={<NewPost />} />
         <Route path="/post/:id" element={<PostPage user={user} />} />
-       <Route path="/mod" element={<ModPanel setModName={setModName} />} />
+       <Route
+  path="/mod"
+  element={user ? <ModPanel setModName={setModName} /> : <Auth setUser={setUser} />}
+/>
       </Routes>
     </Router>
   );
