@@ -46,7 +46,7 @@ function Auth({ setUser }) {
 }
 
 // ==============================
-// HOME
+// HOME (BUMP SYSTEM + PINNED)
 // ==============================
 function Home() {
   const [posts, setPosts] = useState([]);
@@ -55,7 +55,8 @@ function Home() {
     const { data } = await supabase
       .from("posts")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("pinned", { ascending: false }) // pinned first
+      .order("last_activity", { ascending: false }); // then bump
 
     setPosts(data || []);
   };
@@ -73,12 +74,13 @@ function Home() {
 
       {posts.map((p) => (
         <div key={p.id} style={{ borderBottom: "1px solid #ccc", padding: "10px" }}>
+          {p.pinned && <b>📌 PINNED</b>}
           <Link to={`/post/${p.id}`}>
             <h3>{p.title}</h3>
           </Link>
           <p>{p.content}</p>
           <small>
-            Anonymous #{shortId(p.ip_hash)} • {timeAgo(p.created_at)}
+            Anonymous #{shortId(p.ip_hash)} • active {timeAgo(p.last_activity || p.created_at)}
           </small>
         </div>
       ))}
@@ -127,7 +129,7 @@ function NewPost() {
   return (
     <div>
       <h2>New Post</h2>
-      <input value={title} placeholder="Title" onChange={(e) => setTitle(e.target.value)} />
+      <input value={title} onChange={(e) => setTitle(e.target.value)} />
       <textarea value={content} onChange={(e) => setContent(e.target.value)} />
       <button onClick={createPost}>Post</button>
     </div>
@@ -135,13 +137,22 @@ function NewPost() {
 }
 
 // ==============================
-// POST PAGE
+// POST PAGE (LOCK + LIMIT)
 // ==============================
 function PostPage() {
   const { id } = useParams();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
+
+  const MAX_COMMENTS = 200;
+  const LOCK_AFTER_HOURS = 24;
+
+  const isLocked = () => {
+    if (!post) return false;
+    const ageHours = (new Date() - new Date(post.created_at)) / (1000 * 60 * 60);
+    return ageHours > LOCK_AFTER_HOURS || comments.length >= MAX_COMMENTS;
+  };
 
   const load = async () => {
     const { data: post } = await supabase.from("posts").select("*").eq("id", id).single();
@@ -163,6 +174,11 @@ function PostPage() {
 
   const addComment = async () => {
     if (!text.trim()) return;
+
+    if (isLocked()) {
+      alert("Thread is locked");
+      return;
+    }
 
     try {
       const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/add-comment", {
@@ -198,6 +214,8 @@ function PostPage() {
       <h2>{post.title}</h2>
       <p>{post.content}</p>
 
+      {isLocked() && <b style={{ color: "red" }}>🔒 Thread Locked</b>}
+
       <div style={{ marginTop: "20px" }}>
         {comments.map((c) => (
           <div
@@ -215,19 +233,22 @@ function PostPage() {
         ))}
       </div>
 
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && addComment()}
-        placeholder="Write a reply..."
-      />
-      <button onClick={addComment}>Send</button>
+      {!isLocked() && (
+        <>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Write a reply..."
+          />
+          <button onClick={addComment}>Send</button>
+        </>
+      )}
     </div>
   );
 }
 
 // ==============================
-// MOD PANEL
+// MOD PANEL (PIN + BAN)
 // ==============================
 function ModPanel() {
   const [posts, setPosts] = useState([]);
@@ -246,6 +267,15 @@ function ModPanel() {
     alert("User banned");
   };
 
+  const togglePin = async (post) => {
+    await supabase
+      .from("posts")
+      .update({ pinned: !post.pinned })
+      .eq("id", post.id);
+
+    loadPosts();
+  };
+
   return (
     <div>
       <h2>Moderator Panel</h2>
@@ -254,6 +284,9 @@ function ModPanel() {
         <div key={p.id}>
           <p>{p.title}</p>
           <button onClick={() => banUser(p.ip_hash)}>Ban user</button>
+          <button onClick={() => togglePin(p)}>
+            {p.pinned ? "Unpin" : "Pin"}
+          </button>
         </div>
       ))}
     </div>
