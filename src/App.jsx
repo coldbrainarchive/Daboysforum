@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useParams } from "react-router-dom";
 
@@ -6,6 +6,57 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, message: "" };
+  }
+
+  static getDerivedStateFromError(error) {
+    return {
+      hasError: true,
+      message: error?.message || "Unknown error"
+    };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("App render failed", error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "grid",
+            placeItems: "center",
+            padding: 24,
+            background: "#16171d",
+            color: "#f8fafc"
+          }}
+        >
+          <div
+            style={{
+              width: "min(640px, 100%)",
+              padding: 24,
+              borderRadius: 18,
+              border: "1px solid #2e303a",
+              background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)",
+              boxShadow: "0 18px 50px rgba(0, 0, 0, 0.35)"
+            }}
+          >
+            <h2 style={{ marginBottom: 12 }}>Something went wrong loading the forum</h2>
+            <p style={{ color: "#cbd5e1" }}>{this.state.message}</p>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // ==============================
 // HELPERS
@@ -891,24 +942,26 @@ export default function App() {
   };
 }, []);
   return (
-    <Router>
-      <RealtimeStyles />
-      <nav>
+    <ErrorBoundary>
+      <Router>
+        <RealtimeStyles />
+        <nav>
   <Link to="/">Home</Link> |{" "}
   <Link to="/mod">
     {user ? `👤 ${modName}` : "🔐 Login"}
   </Link>
 </nav>
 
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/new" element={<NewPost />} />
-        <Route path="/post/:id" element={<PostPage user={user} />} />
-       <Route
-  path="/mod"
-  element={user ? <ModPanel setModName={setModName} /> : <Auth setUser={setUser} />}
-/>
-      </Routes>
-    </Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/new" element={<NewPost />} />
+          <Route path="/post/:id" element={<PostPage user={user} />} />
+         <Route
+    path="/mod"
+    element={user ? <ModPanel setModName={setModName} /> : <Auth setUser={setUser} />}
+  />
+        </Routes>
+      </Router>
+    </ErrorBoundary>
   );
 }
