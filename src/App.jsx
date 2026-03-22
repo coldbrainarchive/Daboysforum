@@ -758,6 +758,17 @@ function PostPage({ user }) {
 
     setPost(p);
     setComments(c || []);
+    setPendingComments((current) =>
+      current.filter(
+        (pending) =>
+          !(c || []).some(
+            (comment) =>
+              comment.content === pending.content &&
+              comment.browser_id === pending.browser_id &&
+              Math.abs(new Date(comment.created_at).getTime() - new Date(pending.created_at).getTime()) < 10000
+          )
+      )
+    );
   };
 
   useEffect(() => {
@@ -773,13 +784,15 @@ function PostPage({ user }) {
     try {
       const pendingContent = text;
       const pendingId = crypto.randomUUID();
+      const browserId = getBrowserId();
       setIsSendingComment(true);
       setPendingComments((current) => [
         ...current,
         {
           id: pendingId,
           content: pendingContent,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          browser_id: browserId
         }
       ]);
 
@@ -798,7 +811,7 @@ function PostPage({ user }) {
           body: JSON.stringify({
             content: pendingContent,
             post_id: id,
-            browser_id: getBrowserId(),
+            browser_id: browserId,
             ...modMetadata
           })
         }
@@ -817,11 +830,10 @@ function PostPage({ user }) {
       }
 
       setText("");
-      setPendingComments((current) => current.filter((comment) => comment.id !== pendingId));
       setIsSendingComment(false);
       load();
     } catch (err) {
-      setPendingComments([]);
+      setPendingComments((current) => current.filter((comment) => comment.id !== pendingId));
       setIsSendingComment(false);
       console.error(err);
       alert("Failed to send comment");
