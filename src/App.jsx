@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { BrowserRouter as Router, Routes, Route, Link, NavLink, useParams } from "react-router-dom";
-import "./App.css";
-import modLogo from "./assets/hero.png";
+import { BrowserRouter as Router, Routes, Route, Link, useParams } from "react-router-dom";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -49,37 +47,6 @@ function getBrowserId() {
 
 function getModName() {
   return localStorage.getItem("mod_name") || "Mod";
-}
-
-function isModAuthor(username) {
-  return Boolean(username);
-}
-
-function AuthorName({ username, browserId, isOp = false }) {
-  const modAuthor = isModAuthor(username);
-  const displayName = username || `Anon #${shortId(browserId)}`;
-
-  return (
-    <span className="author-line">
-      <b
-        className={modAuthor ? "author-name mod-author" : "author-name"}
-        style={{
-          color: modAuthor ? "#c084fc" : getUserColor(browserId),
-          fontWeight: "bold"
-        }}
-      >
-        {displayName}
-      </b>
-      {modAuthor && (
-        <img
-          src={modLogo}
-          alt=""
-          className="mod-badge"
-        />
-      )}
-      {isOp && <span className="op-tag">(OP)</span>}
-    </span>
-  );
 }
 
 // ==============================
@@ -163,6 +130,8 @@ function Home() {
       <Link to="/new">Create Post</Link>
 
       {posts.map((p) => {
+        const isMod = p.username === getModName();
+
         return (
           <div key={p.id} style={{ borderBottom: "1px solid #ccc", padding: 10 }}>
             {p.pinned && <b>📌 PINNED</b>}
@@ -175,7 +144,14 @@ function Home() {
             <p>{p.content}</p>
 
             <small>
-              <AuthorName username={p.username} browserId={p.browser_id} />{" "}
+              <b
+  style={{
+    color: isMod ? "#c084fc" : getUserColor(p.browser_id),
+    fontWeight: "bold"
+  }}
+>
+                {p.username || `Anon #${shortId(p.browser_id)}`}
+              </b>{" "}
               • {timeAgo(p.last_activity || p.created_at)}
             </small>
           </div>
@@ -349,6 +325,8 @@ function PostPage({ user }) {
 
       {/* COMMENTS */}
       {comments.map((c) => {
+        const isModUser = c.username === getModName();
+
         return (
           <div
             key={c.id}
@@ -358,11 +336,15 @@ function PostPage({ user }) {
               padding: 5
             }}
           >
-            <AuthorName
-              username={c.username}
-              browserId={c.browser_id}
-              isOp={c.browser_id === post.browser_id}
-            />
+            <b
+              style={{
+                color: isModUser ? "#c084fc" : getUserColor(c.browser_id),
+                fontWeight: "bold"
+              }}
+            >
+              {c.username || `Anon #${shortId(c.browser_id)}`}
+              {c.browser_id === post.browser_id && " (OP)"}
+            </b>
 
             <small> {timeAgo(c.created_at)}</small>
             <p>{c.content}</p>
@@ -582,22 +564,12 @@ export default function App() {
 }, []);
   return (
     <Router>
-      <nav className="top-nav">
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) => `top-tab${isActive ? " active" : ""}`}
-        >
-          Home
-        </NavLink>
-        <NavLink
-          to="/mod"
-          className={({ isActive }) => `top-tab mod-tab${isActive ? " active" : ""}`}
-        >
-          <span className="mod-tab-copy">{user ? modName : "Mods"}</span>
-          <img src={modLogo} alt="" className="mod-tab-logo" />
-        </NavLink>
-      </nav>
+      <nav>
+  <Link to="/">Home</Link> |{" "}
+  <Link to="/mod">
+    {user ? `👤 ${modName}` : "🔐 Login"}
+  </Link>
+</nav>
 
       <Routes>
         <Route path="/" element={<Home />} />
