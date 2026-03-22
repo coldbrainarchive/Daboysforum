@@ -49,6 +49,37 @@ function getModName() {
   return localStorage.getItem("mod_name") || "Mod";
 }
 
+function isModPost(record) {
+  if (!record) return false;
+  if (record.is_mod === true) return true;
+  if (record.moderator === true) return true;
+  if (record.author_role === "mod" || record.role === "mod") return true;
+  if (record.mod_user_id) return true;
+
+  // Legacy fallback for older rows created before explicit mod flags existed.
+  return Boolean(record.username);
+}
+
+function buildModMetadata(user) {
+  if (!user) {
+    return {
+      username: null,
+      is_mod: false,
+      moderator: false,
+      author_role: "user",
+      mod_user_id: null
+    };
+  }
+
+  return {
+    username: getModName(),
+    is_mod: true,
+    moderator: true,
+    author_role: "mod",
+    mod_user_id: user.id
+  };
+}
+
 // ==============================
 // AUTH HEADER
 // ==============================
@@ -130,7 +161,7 @@ function Home() {
       <Link to="/new">Create Post</Link>
 
       {posts.map((p) => {
-        const isMod = p.username === getModName();
+        const isMod = isModPost(p);
 
         return (
           <div key={p.id} style={{ borderBottom: "1px solid #ccc", padding: 10 }}>
@@ -173,16 +204,20 @@ function NewPost() {
     if (!title.trim() || !content.trim()) return alert("Fill all fields");
 
     const { data } = await supabase.auth.getUser();
-    const isMod = !!data.user;
+    const modMetadata = buildModMetadata(data.user);
+    const authHeaders = await getAuthHeader();
 
     const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/create-post", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders
+      },
       body: JSON.stringify({
         title,
         content,
         browser_id: getBrowserId(),
-        username: isMod ? getModName() : null // 🔥 FIX
+        ...modMetadata
       })
     });
 
@@ -250,16 +285,23 @@ function PostPage({ user }) {
     if (!text.trim() || post?.locked) return;
 
     try {
+      const { data } = await supabase.auth.getUser();
+      const modMetadata = buildModMetadata(data.user);
+      const authHeaders = await getAuthHeader();
+
       const res = await fetch(
         "https://daboysforumip.coldbrainarchive.workers.dev/add-comment",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeaders
+          },
           body: JSON.stringify({
             content: text,
             post_id: id,
             browser_id: getBrowserId(),
-            username: isMod ? getModName() : null
+            ...modMetadata
           })
         }
       );
@@ -326,7 +368,7 @@ function PostPage({ user }) {
 
       {/* COMMENTS */}
       {comments.map((c) => {
-        const isModUser = c.username === getModName();
+        const isModUser = isModPost(c);
 
         return (
           <div
