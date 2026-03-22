@@ -49,6 +49,10 @@ function getModName() {
   return localStorage.getItem("mod_name") || "Mod";
 }
 
+function isModAuthor(record) {
+  return Boolean(record?.is_mod ?? record?.username);
+}
+
 // ==============================
 // AUTH HEADER
 // ==============================
@@ -130,7 +134,7 @@ function Home() {
       <Link to="/new">Create Post</Link>
 
       {posts.map((p) => {
-        const isMod = p.username === getModName();
+        const isMod = isModAuthor(p);
 
         return (
           <div key={p.id} style={{ borderBottom: "1px solid #ccc", padding: 10 }}>
@@ -182,7 +186,8 @@ function NewPost() {
         title,
         content,
         browser_id: getBrowserId(),
-        username: isMod ? getModName() : null // 🔥 FIX
+        username: isMod ? getModName() : null,
+        is_mod: isMod
       })
     });
 
@@ -259,7 +264,8 @@ function PostPage({ user }) {
             content: text,
             post_id: id,
             browser_id: getBrowserId(),
-            username: isMod ? getModName() : null
+            username: isMod ? getModName() : null,
+            is_mod: isMod
           })
         }
       );
@@ -326,7 +332,7 @@ function PostPage({ user }) {
 
       {/* COMMENTS */}
       {comments.map((c) => {
-        const isModUser = c.username === getModName();
+        const isModUser = isModAuthor(c);
 
         return (
           <div
