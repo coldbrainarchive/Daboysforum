@@ -394,6 +394,7 @@ function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappe
           alignItems: "center",
           justifyContent: "space-between",
           marginBottom: 12,
+          minHeight: 28,
           padding: 0,
           background: "transparent",
           border: "none",
