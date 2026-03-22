@@ -373,10 +373,14 @@ function BoardsSidebar({ activeBoard = "", showHappening = false }) {
 
       <div style={{ display: "grid", gap: 6 }}>
         {showHappening && (
-          <div className="board-bubble">
+          <Link
+            to="/"
+            className="board-bubble"
+            style={{ textDecoration: "none" }}
+          >
             <span>✨</span>
             <span>Happening now</span>
-          </div>
+          </Link>
         )}
 
         {BOARDS.map((board) => (
@@ -798,7 +802,7 @@ function PostPage({ user }) {
 
   return (
     <div className="home-shell">
-      <BoardsSidebar />
+      <BoardsSidebar showHappening />
 
       <main className="home-feed" style={{ textAlign: "left" }}>
         <div className="content-card" style={{ marginBottom: 16 }}>
