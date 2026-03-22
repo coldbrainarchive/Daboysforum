@@ -400,6 +400,148 @@ function filterPostsForBoard(posts, boardName) {
   return posts.filter((post) => getBoardNameFromPost(post) === boardName);
 }
 
+const BOARD_TAGS_STORAGE_KEY = "board_tags_by_post_id";
+const PENDING_BOARD_TAGS_STORAGE_KEY = "pending_board_tags";
+
+function readStorageJson(key, fallback) {
+  if (typeof window === "undefined") return fallback;
+
+  try {
+    const rawValue = window.localStorage.getItem(key);
+    return rawValue ? JSON.parse(rawValue) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeStorageJson(key, value) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(key, JSON.stringify(value));
+}
+
+function getStoredBoardTagsByPostId() {
+  return readStorageJson(BOARD_TAGS_STORAGE_KEY, {});
+}
+
+function setStoredBoardTagsByPostId(tags) {
+  writeStorageJson(BOARD_TAGS_STORAGE_KEY, tags);
+}
+
+function getPendingBoardTags() {
+  return readStorageJson(PENDING_BOARD_TAGS_STORAGE_KEY, []);
+}
+
+function setPendingBoardTags(tags) {
+  writeStorageJson(PENDING_BOARD_TAGS_STORAGE_KEY, tags);
+}
+
+function queuePendingBoardTag({ title, content, browserId, boardName }) {
+  const pendingTags = getPendingBoardTags();
+  pendingTags.push({
+    title,
+    content,
+    browser_id: browserId,
+    boardName,
+    createdAt: Date.now()
+  });
+  setPendingBoardTags(pendingTags.slice(-30));
+}
+
+function hydratePostsWithBoardTags(posts) {
+  const storedTagsByPostId = getStoredBoardTagsByPostId();
+  const pendingTags = getPendingBoardTags();
+  const nextStoredTagsByPostId = { ...storedTagsByPostId };
+  const remainingPendingTags = [];
+  let didChangeStoredTags = false;
+
+  const hydratedPosts = posts.map((post) => {
+    const existingBoard = getBoardNameFromPost(post);
+    if (existingBoard) {
+      if (post.id && storedTagsByPostId[post.id] !== existingBoard) {
+        nextStoredTagsByPostId[post.id] = existingBoard;
+        didChangeStoredTags = true;
+      }
+
+      return post;
+    }
+
+    const storedBoard = post.id ? storedTagsByPostId[post.id] : "";
+    if (storedBoard) {
+      return { ...post, board: storedBoard };
+    }
+
+    const matchedPendingTagIndex = pendingTags.findIndex((tag) => (
+      tag.browser_id === post.browser_id &&
+      tag.title === post.title &&
+      tag.content === post.content
+    ));
+
+    if (matchedPendingTagIndex >= 0) {
+      const matchedPendingTag = pendingTags[matchedPendingTagIndex];
+
+      if (post.id) {
+        nextStoredTagsByPostId[post.id] = matchedPendingTag.boardName;
+        didChangeStoredTags = true;
+      }
+
+      pendingTags.splice(matchedPendingTagIndex, 1);
+
+      return { ...post, board: matchedPendingTag.boardName };
+    }
+
+    return post;
+  });
+
+  pendingTags.forEach((tag) => {
+    if (Date.now() - tag.createdAt < 1000 * 60 * 60 * 24) {
+      remainingPendingTags.push(tag);
+    }
+  });
+
+  if (didChangeStoredTags) {
+    setStoredBoardTagsByPostId(nextStoredTagsByPostId);
+  }
+
+  if (remainingPendingTags.length !== getPendingBoardTags().length) {
+    setPendingBoardTags(remainingPendingTags);
+  }
+
+  return hydratedPosts;
+}
+
+function hydratePostWithBoardTag(post) {
+  if (!post) return post;
+  const [hydratedPost] = hydratePostsWithBoardTags([post]);
+  return hydratedPost;
+}
+
+function BoardBadge({ boardName }) {
+  const matchedBoard = BOARDS.find((board) => board.name === boardName);
+
+  if (!matchedBoard) return null;
+
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "6px 10px",
+        borderRadius: 999,
+        background: "#20262f",
+        color: "#dbe4ee",
+        fontSize: 12,
+        fontWeight: 800,
+        letterSpacing: "0.04em",
+        textTransform: "uppercase"
+      }}
+    >
+      <span>{matchedBoard.icon}</span>
+      <span>{matchedBoard.name}</span>
+    </span>
+  );
+}
+
 function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappening = false }) {
   const [isOpen, setIsOpen] = useState(() => {
     if (typeof window === "undefined") return true;
@@ -632,7 +774,7 @@ function Home() {
       .order("pinned", { ascending: false })
       .order("last_activity", { ascending: false });
 
-    setPosts(data || []);
+    setPosts(hydratePostsWithBoardTags(data || []));
   }, []);
 
   useEffect(() => {
@@ -655,6 +797,7 @@ function Home() {
       <main className="home-feed">
         {posts.map((p) => {
           const isMod = isModPost(p);
+          const boardName = getBoardNameFromPost(p);
 
           return (
             <Link
@@ -681,10 +824,16 @@ function Home() {
                 <span>{timeAgo(p.last_activity || p.created_at)}</span>
               </div>
 
-              <div style={{ marginBottom: 10, color: "#f8fafc" }}>
-                {p.pinned && <b>📌 PINNED</b>}
-                {p.locked && <b style={{ color: "#f87171" }}> 🔒</b>}
-              </div>
+                <div style={{ marginBottom: 10, color: "#f8fafc" }}>
+                  {p.pinned && <b>📌 PINNED</b>}
+                  {p.locked && <b style={{ color: "#f87171" }}> 🔒</b>}
+                </div>
+
+              {boardName && (
+                <div style={{ marginBottom: 12 }}>
+                  <BoardBadge boardName={boardName} />
+                </div>
+              )}
 
               <h3 className="feed-post-title">
                 {p.title}
@@ -713,7 +862,7 @@ function BoardPage() {
       .order("pinned", { ascending: false })
       .order("last_activity", { ascending: false });
 
-    setPosts(data || []);
+    setPosts(hydratePostsWithBoardTags(data || []));
   }, []);
 
   useEffect(() => {
@@ -836,6 +985,7 @@ function NewPost() {
       const modMetadata = buildModMetadata(data.user);
       const authHeaders = await getOptionalAuthHeader();
       const selectedBoard = getBoardBySlug(selectedBoardSlug) || BOARDS[0];
+      const browserId = getBrowserId();
 
       const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/create-post", {
         method: "POST",
@@ -847,7 +997,7 @@ function NewPost() {
           title,
           content,
           board: selectedBoard.name,
-          browser_id: getBrowserId(),
+          browser_id: browserId,
           ...modMetadata
         })
       });
@@ -862,6 +1012,13 @@ function NewPost() {
         }
         return;
       }
+
+      queuePendingBoardTag({
+        title,
+        content,
+        browserId,
+        boardName: selectedBoard.name
+      });
 
       setTitle("");
       setContent("");
@@ -1047,7 +1204,7 @@ function PostPage({ user }) {
       .eq("deleted", false)
       .order("created_at");
 
-    setPost(p);
+    setPost(hydratePostWithBoardTag(p));
     setComments(c || []);
     setPendingComments((current) => {
       const nextPending = current.filter((pending) => {
