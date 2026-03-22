@@ -742,22 +742,6 @@ function NewPost() {
           />
         </label>
 
-        <div
-          style={{
-            padding: "14px 16px",
-            borderRadius: 14,
-            background: "#1f2028",
-            color: "#f8fafc",
-            border: "1px solid #323745",
-            animation: isSending ? "composerPulse 1s ease-in-out infinite" : "none"
-          }}
-        >
-          <b>{isSending ? "Sending post..." : "Ready to post"}</b>
-          <div style={{ marginTop: 4, fontSize: 14, color: "#9ca3af" }}>
-            {isSending ? "Pushing your thread live now." : "Your title and body will go up together."}
-          </div>
-        </div>
-
         <button
           onClick={createPost}
           disabled={isSending}
@@ -766,12 +750,12 @@ function NewPost() {
             padding: "14px 18px",
             borderRadius: 14,
             border: "none",
-            background: isSending ? "#0f172a" : "#2563eb",
-            color: "#fff",
+            background: isSending ? "#3b1f52" : "#c084fc",
+            color: "#14081d",
             fontWeight: 700,
             fontSize: 15,
             cursor: isSending ? "default" : "pointer",
-            boxShadow: isSending ? "none" : "0 14px 30px rgba(37, 99, 235, 0.28)"
+            boxShadow: isSending ? "none" : "0 14px 30px rgba(192, 132, 252, 0.28)"
           }}
         >
           <span
