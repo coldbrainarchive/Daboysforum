@@ -245,9 +245,12 @@ function RealtimeStyles() {
         gap: 12px;
         padding: 12px 14px;
         border-radius: 14px;
-        background: #252b34;
         color: #f8fafc;
         font-weight: 700;
+      }
+
+      .board-bubble:hover {
+        background: #252b34;
       }
 
       .home-feed {
@@ -378,8 +381,7 @@ function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappe
             className="board-bubble"
             style={{
               textDecoration: "none",
-              background: highlightHappening ? "#252b34" : "transparent",
-              border: "1px solid #2e303a"
+              background: highlightHappening ? "#252b34" : "transparent"
             }}
           >
             <span>✨</span>
