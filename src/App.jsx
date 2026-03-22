@@ -801,6 +801,9 @@ function PostPage({ user }) {
       const pendingContent = text;
       const pendingId = crypto.randomUUID();
       const browserId = getBrowserId();
+      const { data } = await supabase.auth.getUser();
+      const modMetadata = buildModMetadata(data.user);
+      const authHeaders = await getOptionalAuthHeader();
       setIsSendingComment(true);
       setPendingComments((current) => [
         ...current,
@@ -808,13 +811,11 @@ function PostPage({ user }) {
           id: pendingId,
           content: pendingContent,
           created_at: new Date().toISOString(),
-          browser_id: browserId
+          browser_id: browserId,
+          username: modMetadata.username,
+          is_mod: modMetadata.is_mod
         }
       ]);
-
-      const { data } = await supabase.auth.getUser();
-      const modMetadata = buildModMetadata(data.user);
-      const authHeaders = await getOptionalAuthHeader();
 
       const res = await fetch(
         "https://daboysforumip.coldbrainarchive.workers.dev/add-comment",
@@ -962,11 +963,13 @@ function PostPage({ user }) {
                 >
                   <b
                     style={{
-                      color: getUserColor(c.browser_id),
+                      color: c.is_mod ? "#c084fc" : getUserColor(c.browser_id),
                       fontWeight: "bold"
                     }}
                   >
-                    {`Anon #${shortId(c.browser_id)}`}
+                    {c.is_mod && "👤 "}
+                    {c.username || `Anon #${shortId(c.browser_id)}`}
+                    {c.browser_id === post.browser_id && " (OP)"}
                   </b>
                   <small style={{ color: "#cbd5e1" }}> now</small>
                   <p style={{ marginBottom: 0 }}>{c.content}</p>
