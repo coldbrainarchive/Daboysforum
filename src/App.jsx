@@ -371,13 +371,19 @@ function ModPanel({ setModName }) {
   const [name, setName] = useState(localStorage.getItem("mod_name") || "");
   const [users, setUsers] = useState([]);
   const [bans, setBans] = useState([]);
+  const [email, setEmail] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
 
+  // LOAD DATA
   const load = async () => {
     const { data: posts } = await supabase.from("posts").select("*");
     const { data: comments } = await supabase.from("comments").select("*");
     const { data: bans } = await supabase.from("bans").select("*");
+    const { data: userData } = await supabase.auth.getUser();
 
     setBans(bans || []);
+    setEmail(userData?.user?.email || "");
 
     const all = [...(posts || []), ...(comments || [])];
     const map = {};
@@ -398,19 +404,57 @@ function ModPanel({ setModName }) {
     load();
   }, []);
 
-  const save = () => {
+  // SAVE MOD NAME
+  const saveName = () => {
     localStorage.setItem("mod_name", name);
     setModName(name);
     alert("Saved!");
   };
 
+  // LOGOUT
+  const logout = async () => {
+    await supabase.auth.signOut();
+    location.reload();
+  };
+
+  // UPDATE EMAIL
+  const updateEmail = async () => {
+    if (!newEmail) return;
+
+    const { error } = await supabase.auth.updateUser({ email: newEmail });
+
+    if (error) return alert(error.message);
+
+    alert("Check your email to confirm change 📧");
+    setNewEmail("");
+  };
+
+  // UPDATE PASSWORD
+  const updatePassword = async () => {
+    if (!newPassword) return;
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) return alert(error.message);
+
+    alert("Password updated 🔑");
+    setNewPassword("");
+  };
+
+  // BAN SYSTEM
   const isBanned = (id) => bans.some((b) => b.browser_id === id);
 
   const toggleBan = async (u) => {
     if (isBanned(u.browser_id)) {
       await supabase.from("bans").delete().eq("browser_id", u.browser_id);
     } else {
-      await modAction({ type: "ban", browser_id: u.browser_id, username: u.username });
+      await modAction({
+        type: "ban",
+        browser_id: u.browser_id,
+        username: u.username
+      });
     }
     load();
   };
@@ -419,11 +463,43 @@ function ModPanel({ setModName }) {
     <div>
       <h2>Mod Panel</h2>
 
-      <p>Current name: <b>{name || "Mod"}</b></p>
-      <input value={name} onChange={(e) => setName(e.target.value)} />
-      <button onClick={save}>Save</button>
+      {/* ACCOUNT */}
+      <div style={{ marginBottom: 20 }}>
+        <h3>Account</h3>
 
-      <h3 style={{ marginTop: 20 }}>Users</h3>
+        <p><b>Email:</b> {email}</p>
+
+        <button onClick={logout}>🚪 Logout</button>
+
+        <div style={{ marginTop: 10 }}>
+          <input
+            placeholder="New email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+          />
+          <button onClick={updateEmail}>Update Email</button>
+        </div>
+
+        <div style={{ marginTop: 10 }}>
+          <input
+            type="password"
+            placeholder="New password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <button onClick={updatePassword}>Update Password</button>
+        </div>
+      </div>
+
+      {/* MOD NAME */}
+      <div style={{ marginBottom: 20 }}>
+        <h3>Display Name</h3>
+        <input value={name} onChange={(e) => setName(e.target.value)} />
+        <button onClick={saveName}>Save</button>
+      </div>
+
+      {/* USERS */}
+      <h3>Users</h3>
 
       {users.map((u) => (
         <div key={u.browser_id} style={{ borderBottom: "1px solid #ccc", padding: 10 }}>
