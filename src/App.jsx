@@ -150,6 +150,7 @@ function Home() {
     fontWeight: "bold"
   }}
 >
+                {isMod && "👤 "}
                 {p.username || `Anon #${shortId(p.browser_id)}`}
               </b>{" "}
               • {timeAgo(p.last_activity || p.created_at)}
@@ -342,6 +343,7 @@ function PostPage({ user }) {
                 fontWeight: "bold"
               }}
             >
+              {isModUser && "👤 "}
               {c.username || `Anon #${shortId(c.browser_id)}`}
               {c.browser_id === post.browser_id && " (OP)"}
             </b>
