@@ -270,7 +270,7 @@ function RealtimeStyles() {
       .feed-hero-title {
         color: #f8fafc;
         font-family: var(--heading);
-        font-size: 52px;
+        font-size: 38px;
         font-weight: 800;
         letter-spacing: -0.04em;
         line-height: 0.96;
@@ -355,7 +355,7 @@ const BOARDS = [
   { name: "Jail", icon: "🚔" }
 ];
 
-function BoardsSidebar() {
+function BoardsSidebar({ activeBoard = "", showHappening = false }) {
   return (
     <aside className="home-sidebar">
       <div
@@ -372,16 +372,18 @@ function BoardsSidebar() {
       </div>
 
       <div style={{ display: "grid", gap: 6 }}>
-        <div className="board-bubble">
-          <span>✨</span>
-          <span>Happening now</span>
-        </div>
+        {showHappening && (
+          <div className="board-bubble">
+            <span>👻</span>
+            <span>Happening now</span>
+          </div>
+        )}
 
-        {BOARDS.map((board, index) => (
+        {BOARDS.map((board) => (
           <a
             key={board.name}
             href="#"
-            className={`board-link${index === 0 ? " active" : ""}`}
+            className={`board-link${board.name === activeBoard ? " active" : ""}`}
             onClick={(event) => event.preventDefault()}
           >
             <span>{board.icon}</span>
@@ -464,11 +466,11 @@ function Home() {
 
   return (
     <div className="home-shell">
-      <BoardsSidebar />
+      <BoardsSidebar showHappening />
 
       <main className="home-feed">
         <div className="feed-hero">
-          <div className="feed-hero-title">Happening now</div>
+          <div className="feed-hero-title">👻 Happening now</div>
         </div>
 
         {posts.map((p) => {
@@ -800,7 +802,7 @@ function PostPage({ user }) {
 
   return (
     <div className="home-shell">
-      <BoardsSidebar />
+      <BoardsSidebar activeBoard="News" />
 
       <main className="home-feed" style={{ textAlign: "left" }}>
         <div className="feed-hero">
