@@ -654,23 +654,6 @@ function PostCard({ post, commentCount = 0 }) {
         to={`/post/${post.id}`}
         style={{ textDecoration: "none", display: "block" }}
       >
-        {boardName && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-              marginBottom: 10
-            }}
-          >
-            <BoardBadge boardName={boardName} />
-            <span style={{ color: "#94a3b8", fontSize: 14, fontWeight: 600 }}>
-              {timeAgo(post.last_activity || post.created_at)}
-            </span>
-          </div>
-        )}
-
         <div
           style={{
             marginBottom: 14,
@@ -678,6 +661,22 @@ function PostCard({ post, commentCount = 0 }) {
             fontSize: 14
           }}
         >
+          {boardName && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                marginBottom: 6
+              }}
+            >
+              <BoardBadge boardName={boardName} />
+              <span style={{ color: "#94a3b8", fontSize: 14, fontWeight: 600 }}>
+                {timeAgo(post.last_activity || post.created_at)}
+              </span>
+            </div>
+          )}
           <div>
             <span style={{ color: isMod ? "#c084fc" : getUserColor(post.browser_id), fontWeight: 700 }}>
               {isMod && "👤 "}
