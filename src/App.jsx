@@ -1170,64 +1170,200 @@ function ModPanel({ setModName }) {
   };
 
   return (
-    <div>
-      <h2>Mod Panel</h2>
+    <div
+      style={{
+        maxWidth: 900,
+        margin: "32px auto",
+        padding: 24,
+        border: "1px solid #2e303a",
+        borderRadius: 18,
+        background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)",
+        boxShadow: "0 18px 50px rgba(0, 0, 0, 0.35)",
+        textAlign: "left"
+      }}
+    >
+      <h2 style={{ marginBottom: 18 }}>Mod Panel</h2>
 
-      {/* ACCOUNT */}
-      <div style={{ marginBottom: 20 }}>
-        <h3>Account</h3>
+      <div style={{ display: "grid", gap: 16, marginBottom: 24 }}>
+        <div
+          style={{
+            padding: 18,
+            border: "1px solid #2e303a",
+            borderRadius: 16,
+            background: "#161a20"
+          }}
+        >
+          <h3 style={{ marginTop: 0, marginBottom: 12, color: "#f8fafc" }}>Account</h3>
+          <p style={{ marginBottom: 12 }}><b>Email:</b> {email}</p>
 
-        <p><b>Email:</b> {email}</p>
-
-        <button onClick={logout}>🚪 Logout</button>
-
-        <div style={{ marginTop: 10 }}>
-          <input
-            placeholder="New email"
-            value={newEmail}
-            onChange={(e) => setNewEmail(e.target.value)}
-          />
-          <button onClick={updateEmail}>Update Email</button>
-        </div>
-
-        <div style={{ marginTop: 10 }}>
-          <input
-            type="password"
-            placeholder="New password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
-          <button onClick={updatePassword}>Update Password</button>
-        </div>
-      </div>
-
-      {/* MOD NAME */}
-      <div style={{ marginBottom: 20 }}>
-        <h3>Display Name</h3>
-        <input value={name} onChange={(e) => setName(e.target.value)} />
-        <button onClick={saveName}>Save</button>
-      </div>
-
-      {/* USERS */}
-      <h3>Users</h3>
-
-      {users.map((u) => (
-        <div key={u.browser_id} style={{ borderBottom: "1px solid #ccc", padding: 10 }}>
-          <b>{u.username}</b>
-          <br />
-          <small>{u.browser_id}</small>
-          <br />
-
-          <span style={{ color: isBanned(u) ? "red" : "green" }}>
-            {isBanned(u) ? "BANNED" : "ACTIVE"}
-          </span>
-
-          <br />
-          <button onClick={() => toggleBan(u)}>
-            {isBanned(u) ? "Unban" : "Ban"}
+          <button
+            onClick={logout}
+            style={{
+              padding: "12px 16px",
+              borderRadius: 14,
+              border: "none",
+              background: "#1f2937",
+              color: "#f8fafc",
+              fontWeight: 700,
+              cursor: "pointer"
+            }}
+          >
+            🚪 Logout
           </button>
+
+          <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+            <input
+              placeholder="New email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: "1px solid #3f4756",
+                fontSize: 16,
+                background: "#0f1117",
+                color: "#f8fafc"
+              }}
+            />
+            <button
+              onClick={updateEmail}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                borderRadius: 14,
+                border: "none",
+                background: "#c084fc",
+                color: "#14081d",
+                fontWeight: 700,
+                cursor: "pointer"
+              }}
+            >
+              Update Email
+            </button>
+          </div>
+
+          <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+            <input
+              type="password"
+              placeholder="New password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: "1px solid #3f4756",
+                fontSize: 16,
+                background: "#0f1117",
+                color: "#f8fafc"
+              }}
+            />
+            <button
+              onClick={updatePassword}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                borderRadius: 14,
+                border: "none",
+                background: "#c084fc",
+                color: "#14081d",
+                fontWeight: 700,
+                cursor: "pointer"
+              }}
+            >
+              Update Password
+            </button>
+          </div>
         </div>
-      ))}
+
+        <div
+          style={{
+            padding: 18,
+            border: "1px solid #2e303a",
+            borderRadius: 16,
+            background: "#161a20"
+          }}
+        >
+          <h3 style={{ marginTop: 0, marginBottom: 12, color: "#f8fafc" }}>Display Name</h3>
+          <div style={{ display: "grid", gap: 10 }}>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: "1px solid #3f4756",
+                fontSize: 16,
+                background: "#0f1117",
+                color: "#f8fafc"
+              }}
+            />
+            <button
+              onClick={saveName}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                borderRadius: 14,
+                border: "none",
+                background: "#c084fc",
+                color: "#14081d",
+                fontWeight: 700,
+                cursor: "pointer"
+              }}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <h3 style={{ marginBottom: 14, color: "#f8fafc" }}>Users</h3>
+
+      <div style={{ display: "grid", gap: 12 }}>
+        {users.map((u) => (
+          <div
+            key={u.browser_id}
+            style={{
+              padding: 16,
+              border: "1px solid #2e303a",
+              borderRadius: 16,
+              background: "#161a20"
+            }}
+          >
+            <div style={{ marginBottom: 6 }}>
+              <b style={{ color: "#f8fafc" }}>{u.username}</b>
+            </div>
+
+            <small style={{ color: "#94a3b8" }}>{u.browser_id}</small>
+
+            <div style={{ marginTop: 10, marginBottom: 10 }}>
+              <span style={{ color: isBanned(u) ? "#f87171" : "#4ade80", fontWeight: 700 }}>
+                {isBanned(u) ? "BANNED" : "ACTIVE"}
+              </span>
+            </div>
+
+            <button
+              onClick={() => toggleBan(u)}
+              style={{
+                padding: "12px 16px",
+                borderRadius: 14,
+                border: "none",
+                background: isBanned(u) ? "#1f2937" : "#c084fc",
+                color: isBanned(u) ? "#f8fafc" : "#14081d",
+                fontWeight: 700,
+                cursor: "pointer"
+              }}
+            >
+              {isBanned(u) ? "Unban" : "Ban"}
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
