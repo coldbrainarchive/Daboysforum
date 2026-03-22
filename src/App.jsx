@@ -361,22 +361,47 @@ const BOARDS = [
 ];
 
 function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappening = false }) {
+  const [isOpen, setIsOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.innerWidth > 900;
+  });
+
   return (
     <aside className="home-sidebar">
-      <div
+      <button
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
         style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           marginBottom: 12,
+          padding: 0,
+          background: "transparent",
+          border: "none",
           color: "#94a3b8",
           fontSize: 12,
           fontWeight: 800,
           letterSpacing: "0.12em",
-          textTransform: "uppercase"
+          textTransform: "uppercase",
+          cursor: "pointer"
         }}
       >
-        Boards
-      </div>
+        <span>Boards</span>
+        <span
+          style={{
+            fontSize: 16,
+            lineHeight: 1,
+            transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)",
+            transition: "transform 0.18s ease"
+          }}
+        >
+          ▾
+        </span>
+      </button>
 
-      <div style={{ display: "grid", gap: 6 }}>
+      <div style={{ display: isOpen ? "grid" : "none", gap: 6 }}>
         {showHappening && (
           <Link
             to="/"
