@@ -529,11 +529,68 @@ function Auth({ setUser }) {
   };
 
   return (
-    <div>
-      <h2>Moderator Login</h2>
-      <input onChange={(e) => setEmail(e.target.value)} placeholder="email" />
-      <input type="password" onChange={(e) => setPassword(e.target.value)} placeholder="password" />
-      <button onClick={signIn}>Login</button>
+    <div
+      style={{
+        maxWidth: 520,
+        margin: "32px auto",
+        padding: 24,
+        border: "1px solid #2e303a",
+        borderRadius: 18,
+        background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)",
+        boxShadow: "0 18px 50px rgba(0, 0, 0, 0.35)",
+        textAlign: "left"
+      }}
+    >
+      <h2 style={{ marginBottom: 16 }}>Login</h2>
+
+      <div style={{ display: "grid", gap: 12 }}>
+        <input
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="email"
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "14px 16px",
+            borderRadius: 12,
+            border: "1px solid #3f4756",
+            fontSize: 16,
+            background: "#0f1117",
+            color: "#f8fafc"
+          }}
+        />
+        <input
+          type="password"
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="password"
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "14px 16px",
+            borderRadius: 12,
+            border: "1px solid #3f4756",
+            fontSize: 16,
+            background: "#0f1117",
+            color: "#f8fafc"
+          }}
+        />
+        <button
+          onClick={signIn}
+          style={{
+            width: "100%",
+            padding: "14px 18px",
+            borderRadius: 14,
+            border: "none",
+            background: "#c084fc",
+            color: "#14081d",
+            fontWeight: 700,
+            fontSize: 15,
+            cursor: "pointer",
+            boxShadow: "0 14px 30px rgba(192, 132, 252, 0.28)"
+          }}
+        >
+          Login
+        </button>
+      </div>
     </div>
   );
 }
