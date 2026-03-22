@@ -442,6 +442,48 @@ function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappe
   );
 }
 
+function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, isPending = false }) {
+  const isModUser = isModPost(comment);
+
+  return (
+    <div
+      style={{
+        borderLeft: "4px solid #ccc",
+        marginBottom: 10,
+        padding: 10,
+        borderRadius: 10,
+        background: isPending ? "rgba(192, 132, 252, 0.08)" : "transparent",
+        boxShadow: isPending
+          ? "0 0 0 1px rgba(192, 132, 252, 0.45), 0 0 24px rgba(192, 132, 252, 0.22)"
+          : "none",
+        animation: isPending
+          ? "commentLift 0.22s ease-out forwards, composerPulse 1s ease-in-out infinite"
+          : "none"
+      }}
+    >
+      <b
+        style={{
+          color: isModUser ? "#c084fc" : getUserColor(comment.browser_id),
+          fontWeight: "bold"
+        }}
+      >
+        {isModUser && "👤 "}
+        {comment.username || `Anon #${shortId(comment.browser_id)}`}
+        {comment.browser_id === postBrowserId && " (OP)"}
+      </b>
+
+      <small> {timeAgo(comment.created_at)}</small>
+      <p>{comment.content}</p>
+
+      {canDelete && (
+        <button onClick={onDelete}>
+          🗑 Delete
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ==============================
 // MOD ACTION
 // ==============================
@@ -904,76 +946,26 @@ function PostPage({ user }) {
           )}
 
           {/* COMMENTS */}
-          {comments.map((c) => {
-            const isModUser = isModPost(c);
-
-            return (
-              <div
-                key={c.id}
-                style={{
-                  borderLeft: "4px solid #ccc",
-                  marginBottom: 10,
-                  padding: 10,
-                  borderRadius: 10
-                }}
-              >
-                <b
-                  style={{
-                    color: isModUser ? "#c084fc" : getUserColor(c.browser_id),
-                    fontWeight: "bold"
-                  }}
-                >
-                  {isModUser && "👤 "}
-                  {c.username || `Anon #${shortId(c.browser_id)}`}
-                  {c.browser_id === post.browser_id && " (OP)"}
-                </b>
-
-                <small> {timeAgo(c.created_at)}</small>
-                <p>{c.content}</p>
-
-                {/* 🔥 MOD DELETE COMMENT */}
-                {isMod && (
-                  <button
-                    onClick={() =>
-                      modAction({ type: "delete_comment", comment_id: c.id })
-                    }
-                  >
-                    🗑 Delete
-                  </button>
-                )}
-              </div>
-            );
-          })}
+          {comments.map((c) => (
+            <CommentCard
+              key={c.id}
+              comment={c}
+              postBrowserId={post.browser_id}
+              canDelete={isMod}
+              onDelete={() => modAction({ type: "delete_comment", comment_id: c.id })}
+            />
+          ))}
 
           {/* COMMENT BOX */}
           {!post.locked && (
             <div style={{ marginTop: 16, maxWidth: 560 }}>
               {pendingComments.map((c) => (
-                <div
+                <CommentCard
                   key={c.id}
-                  style={{
-                    borderLeft: "4px solid #c084fc",
-                    marginBottom: 10,
-                    padding: 10,
-                    background: "rgba(192, 132, 252, 0.08)",
-                    borderRadius: 10,
-                    boxShadow: "0 0 0 1px rgba(192, 132, 252, 0.45), 0 0 24px rgba(192, 132, 252, 0.22)",
-                    animation: "commentLift 0.22s ease-out forwards, composerPulse 1s ease-in-out infinite"
-                  }}
-                >
-                  <b
-                    style={{
-                      color: c.is_mod ? "#c084fc" : getUserColor(c.browser_id),
-                      fontWeight: "bold"
-                    }}
-                  >
-                    {c.is_mod && "👤 "}
-                    {c.username || `Anon #${shortId(c.browser_id)}`}
-                    {c.browser_id === post.browser_id && " (OP)"}
-                  </b>
-                  <small style={{ color: "#cbd5e1" }}> now</small>
-                  <p style={{ marginBottom: 0 }}>{c.content}</p>
-                </div>
+                  comment={c}
+                  postBrowserId={post.browser_id}
+                  isPending
+                />
               ))}
 
               <textarea
