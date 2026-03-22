@@ -148,6 +148,132 @@ async function getOptionalAuthHeader() {
 function RealtimeStyles() {
   return (
     <style>{`
+      .app-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 20px;
+        border-bottom: 1px solid #2e303a;
+        background: rgba(11, 15, 18, 0.92);
+        backdrop-filter: blur(14px);
+      }
+
+      .app-brand {
+        color: #f8fafc;
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        text-decoration: none;
+      }
+
+      .app-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .app-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: #1f2937;
+        color: #f8fafc;
+        text-decoration: none;
+        font-weight: 700;
+        border: 1px solid #374151;
+      }
+
+      .app-chip.primary {
+        background: #ea580c;
+        border-color: #f97316;
+      }
+
+      .home-shell {
+        display: grid;
+        grid-template-columns: 240px minmax(0, 1fr);
+        gap: 24px;
+        width: min(1280px, 100%);
+        margin: 0 auto;
+        padding: 24px 20px 32px;
+        box-sizing: border-box;
+      }
+
+      .home-sidebar {
+        position: sticky;
+        top: 86px;
+        align-self: start;
+        padding: 18px;
+        border: 1px solid #2e303a;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #161a20 0%, #101318 100%);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+      }
+
+      .board-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        color: #dbe4ee;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .board-link.active,
+      .board-link:hover {
+        background: #252b34;
+      }
+
+      .home-feed {
+        min-width: 0;
+      }
+
+      .feed-hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+        padding: 18px 20px;
+        border: 1px solid #2e303a;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #161a20 0%, #101318 100%);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+      }
+
+      .feed-hero-copy {
+        min-width: 0;
+      }
+
+      .feed-hero-label {
+        margin-bottom: 6px;
+        color: #f97316;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .feed-hero-title {
+        color: #f8fafc;
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+      }
+
+      .feed-hero-meta {
+        margin-top: 6px;
+        color: #94a3b8;
+        font-size: 14px;
+      }
+
       @keyframes composerPulse {
         0% { opacity: 0.55; transform: scale(0.98); }
         50% { opacity: 1; transform: scale(1); }
@@ -163,6 +289,39 @@ function RealtimeStyles() {
       @keyframes livePop {
         0% { opacity: 0; transform: translateY(10px); }
         100% { opacity: 1; transform: translateY(0); }
+      }
+
+      @media (max-width: 900px) {
+        .app-topbar {
+          padding: 12px 14px;
+        }
+
+        .app-brand {
+          font-size: 22px;
+        }
+
+        .app-actions {
+          gap: 8px;
+        }
+
+        .app-chip {
+          padding: 9px 12px;
+          font-size: 14px;
+        }
+
+        .home-shell {
+          grid-template-columns: 1fr;
+          padding: 16px 14px 24px;
+        }
+
+        .home-sidebar {
+          position: static;
+        }
+
+        .feed-hero {
+          flex-direction: column;
+          align-items: flex-start;
+        }
       }
     `}</style>
   );
@@ -219,6 +378,12 @@ function Auth({ setUser }) {
 // ==============================
 function Home() {
   const [posts, setPosts] = useState([]);
+  const boards = [
+    { name: "News", icon: "📰" },
+    { name: "Sports", icon: "🏈" },
+    { name: "Random", icon: "🎲" },
+    { name: "Jail", icon: "🚔" }
+  ];
 
   const fetchPosts = async () => {
     const { data } = await supabase
@@ -238,87 +403,122 @@ function Home() {
   }, []);
 
   return (
-    <div style={{ padding: "24px 20px 32px", textAlign: "left" }}>
-      <div
-        style={{
-          marginBottom: 24,
-          padding: 20,
-          border: "1px solid #2e303a",
-          borderRadius: 18,
-          background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)",
-          boxShadow: "0 18px 50px rgba(0, 0, 0, 0.35)"
-        }}
-      >
-        <h1 style={{ margin: 0 }}>Daboysforum 👻</h1>
-        <div style={{ marginTop: 14 }}>
+    <div className="home-shell">
+      <aside className="home-sidebar">
+        <div
+          style={{
+            marginBottom: 12,
+            color: "#94a3b8",
+            fontSize: 12,
+            fontWeight: 800,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase"
+          }}
+        >
+          Boards
+        </div>
+
+        <div style={{ display: "grid", gap: 6 }}>
+          {boards.map((board, index) => (
+            <a
+              key={board.name}
+              href="#"
+              className={`board-link${index === 0 ? " active" : ""}`}
+              onClick={(event) => event.preventDefault()}
+            >
+              <span>{board.icon}</span>
+              <span>{board.name}</span>
+            </a>
+          ))}
+        </div>
+      </aside>
+
+      <main className="home-feed">
+        <div className="feed-hero">
+          <div className="feed-hero-copy">
+            <div className="feed-hero-label">Latest Posts</div>
+            <div className="feed-hero-title">What’s happening now</div>
+            <div className="feed-hero-meta">
+              Fresh threads land here first, with pinned posts staying up top.
+            </div>
+          </div>
+
           <Link
             to="/new"
             style={{
-              display: "inline-block",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
               padding: "12px 16px",
               borderRadius: 14,
               background: "#2563eb",
               color: "#fff",
               textDecoration: "none",
               fontWeight: 700,
+              whiteSpace: "nowrap",
               boxShadow: "0 14px 30px rgba(37, 99, 235, 0.28)"
             }}
           >
             Create Post
           </Link>
         </div>
-      </div>
 
-      {posts.map((p) => {
-        const isMod = isModPost(p);
+        {posts.map((p) => {
+          const isMod = isModPost(p);
 
-        return (
-          <div
-            key={p.id}
-            style={{
-              marginBottom: 16,
-              padding: 18,
-              border: "1px solid #2e303a",
-              borderRadius: 18,
-              background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)",
-              boxShadow: "0 18px 50px rgba(0, 0, 0, 0.2)"
-            }}
-          >
-            <div style={{ marginBottom: 10, color: "#f8fafc" }}>
-              {p.pinned && <b>📌 PINNED</b>}
-              {p.locked && <b style={{ color: "#f87171" }}> 🔒</b>}
+          return (
+            <div
+              key={p.id}
+              style={{
+                marginBottom: 16,
+                padding: 18,
+                border: "1px solid #2e303a",
+                borderRadius: 18,
+                background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)",
+                boxShadow: "0 18px 50px rgba(0, 0, 0, 0.2)"
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 10,
+                  color: "#94a3b8",
+                  fontSize: 14
+                }}
+              >
+                <span style={{ color: isMod ? "#c084fc" : getUserColor(p.browser_id), fontWeight: 700 }}>
+                  {isMod && "👤 "}
+                  {p.username || `Anon #${shortId(p.browser_id)}`}
+                </span>
+                <span>•</span>
+                <span>{timeAgo(p.last_activity || p.created_at)}</span>
+              </div>
+
+              <div style={{ marginBottom: 10, color: "#f8fafc" }}>
+                {p.pinned && <b>📌 PINNED</b>}
+                {p.locked && <b style={{ color: "#f87171" }}> 🔒</b>}
+              </div>
+
+              <Link to={`/post/${p.id}`} style={{ textDecoration: "none" }}>
+                <h3
+                  style={{
+                    margin: "0 0 10px",
+                    color: "#f8fafc",
+                    fontSize: 24,
+                    lineHeight: 1.2
+                  }}
+                >
+                  {p.title}
+                </h3>
+              </Link>
+
+              <p style={{ marginBottom: 12, color: "#cbd5e1" }}>{p.content}</p>
             </div>
-
-            <Link to={`/post/${p.id}`}>
-              <h3
-                style={{
-                  margin: "0 0 10px",
-                  color: "#f8fafc",
-                  fontSize: 22,
-                  lineHeight: 1.2
-                }}
-              >
-                {p.title}
-              </h3>
-            </Link>
-
-            <p style={{ marginBottom: 12, color: "#cbd5e1" }}>{p.content}</p>
-
-            <small style={{ color: "#94a3b8" }}>
-              <b
-                style={{
-                  color: isMod ? "#c084fc" : getUserColor(p.browser_id),
-                  fontWeight: "bold"
-                }}
-              >
-                {isMod && "👤 "}
-                {p.username || `Anon #${shortId(p.browser_id)}`}
-              </b>{" "}
-              • {timeAgo(p.last_activity || p.created_at)}
-            </small>
-          </div>
-        );
-      })}
+          );
+        })}
+      </main>
     </div>
   );
 }
@@ -945,12 +1145,16 @@ export default function App() {
     <ErrorBoundary>
       <Router>
         <RealtimeStyles />
-        <nav>
-  <Link to="/">Home</Link> |{" "}
-  <Link to="/mod">
-    {user ? `👤 ${modName}` : "🔐 Login"}
-  </Link>
-</nav>
+        <nav className="app-topbar">
+          <Link to="/" className="app-brand">daboysforum</Link>
+
+          <div className="app-actions">
+            <Link to="/new" className="app-chip">New Post</Link>
+            <Link to="/mod" className="app-chip primary">
+              {user ? `👤 ${modName}` : "Log In"}
+            </Link>
+          </div>
+        </nav>
 
         <Routes>
           <Route path="/" element={<Home />} />
