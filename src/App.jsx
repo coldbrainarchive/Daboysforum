@@ -875,24 +875,6 @@ function PostPage({ user }) {
           )}
 
           {/* COMMENTS */}
-          {pendingComments.map((c) => (
-            <div
-              key={c.id}
-              style={{
-                borderLeft: "4px solid #c084fc",
-                marginBottom: 10,
-                padding: 10,
-                background: "#23182f",
-                borderRadius: 10,
-                animation: "livePop 0.25s ease-out, composerPulse 1s ease-in-out infinite"
-              }}
-            >
-              <b style={{ color: "#c084fc" }}>You</b>
-              <small> sending now...</small>
-              <p style={{ marginBottom: 0 }}>{c.content}</p>
-            </div>
-          ))}
-
           {comments.map((c) => {
             const isModUser = isModPost(c);
 
@@ -936,6 +918,24 @@ function PostPage({ user }) {
           {/* COMMENT BOX */}
           {!post.locked && (
             <div style={{ marginTop: 16, maxWidth: 560 }}>
+              {pendingComments.map((c) => (
+                <div
+                  key={c.id}
+                  style={{
+                    borderLeft: "4px solid #c084fc",
+                    marginBottom: 10,
+                    padding: 10,
+                    background: "#23182f",
+                    borderRadius: 10,
+                    animation: "livePop 0.25s ease-out, composerPulse 1s ease-in-out infinite"
+                  }}
+                >
+                  <b style={{ color: "#c084fc" }}>You</b>
+                  <small> sending now...</small>
+                  <p style={{ marginBottom: 0 }}>{c.content}</p>
+                </div>
+              ))}
+
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
