@@ -87,6 +87,13 @@ async function getAuthHeader() {
   };
 }
 
+async function getOptionalAuthHeader() {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token
+    ? { Authorization: `Bearer ${data.session.access_token}` }
+    : {};
+}
+
 // ==============================
 // MOD ACTION
 // ==============================
@@ -207,7 +214,7 @@ function NewPost() {
 
       const { data } = await supabase.auth.getUser();
       const modMetadata = buildModMetadata(data.user);
-      const authHeaders = await getAuthHeader();
+      const authHeaders = await getOptionalAuthHeader();
 
       const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/create-post", {
         method: "POST",
@@ -292,7 +299,7 @@ function PostPage({ user }) {
     try {
       const { data } = await supabase.auth.getUser();
       const modMetadata = buildModMetadata(data.user);
-      const authHeaders = await getAuthHeader();
+      const authHeaders = await getOptionalAuthHeader();
 
       const res = await fetch(
         "https://daboysforumip.coldbrainarchive.workers.dev/add-comment",
