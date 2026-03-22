@@ -403,7 +403,11 @@ function filterPostsForBoard(posts, boardName) {
 const BOARD_TAGS_STORAGE_KEY = "board_tags_by_post_id";
 const PENDING_BOARD_TAGS_STORAGE_KEY = "pending_board_tags";
 const POST_REACTIONS_STORAGE_KEY = "post_reactions_by_browser";
-const STANDARD_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
+const STANDARD_REACTIONS = [
+  "😀", "😁", "😂", "🤣", "😊", "😍", "😘", "😎",
+  "🤔", "😮", "😢", "😭", "😡", "👏", "🙌", "🙏",
+  "👍", "👎", "❤️", "🔥", "🎉", "💯", "👀", "🤝"
+];
 
 function readStorageJson(key, fallback) {
   if (typeof window === "undefined") return fallback;
@@ -639,6 +643,7 @@ function BoardBadge({ boardName }) {
 
 function PostCard({ post, commentCount = 0 }) {
   const [reactionVersion, setReactionVersion] = useState(0);
+  const [isReactionPickerOpen, setIsReactionPickerOpen] = useState(false);
   const isMod = isModPost(post);
   const boardName = getBoardNameFromPost(post);
   const { counts, selectedReaction } = getReactionStateForPost(post.id);
@@ -650,8 +655,19 @@ function PostCard({ post, commentCount = 0 }) {
         style={{ textDecoration: "none", display: "block" }}
       >
         {boardName && (
-          <div style={{ marginBottom: 10 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              marginBottom: 10
+            }}
+          >
             <BoardBadge boardName={boardName} />
+            <span style={{ color: "#94a3b8", fontSize: 14, fontWeight: 600 }}>
+              {timeAgo(post.last_activity || post.created_at)}
+            </span>
           </div>
         )}
 
@@ -662,14 +678,11 @@ function PostCard({ post, commentCount = 0 }) {
             fontSize: 14
           }}
         >
-          <div style={{ marginBottom: 4 }}>
+          <div>
             <span style={{ color: isMod ? "#c084fc" : getUserColor(post.browser_id), fontWeight: 700 }}>
               {isMod && "👤 "}
               {post.username || `Anon #${shortId(post.browser_id)}`}
             </span>
-          </div>
-          <div>
-            <span>{timeAgo(post.last_activity || post.created_at)}</span>
             {(post.pinned || post.locked) && <span> • </span>}
             {post.pinned && <span style={{ color: "#f8fafc", fontWeight: 700 }}>📌 PINNED</span>}
             {post.pinned && post.locked && <span> </span>}
@@ -689,40 +702,85 @@ function PostCard({ post, commentCount = 0 }) {
           display: "flex",
           flexWrap: "wrap",
           alignItems: "center",
-          gap: 10
+          gap: 10,
+          position: "relative"
         }}
       >
-        {STANDARD_REACTIONS.map((emoji) => {
-          const count = counts[emoji] || 0;
-          const isSelected = selectedReaction === emoji;
+        <div style={{ position: "relative" }}>
+          <button
+            type="button"
+            onClick={() => setIsReactionPickerOpen((current) => !current)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "10px 12px",
+              borderRadius: 999,
+              border: selectedReaction ? "1px solid #c084fc" : "1px solid #374151",
+              background: selectedReaction ? "rgba(192, 132, 252, 0.16)" : "#20262f",
+              color: "#f8fafc",
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: "pointer"
+            }}
+          >
+            <span>{selectedReaction || "😊"}</span>
+            <span>React</span>
+            <span style={{ color: "#94a3b8", fontWeight: 600 }}>
+              {Object.values(counts).reduce((sum, count) => sum + count, 0)}
+            </span>
+          </button>
 
-          return (
-            <button
-              key={`${post.id}-${emoji}-${reactionVersion}`}
-              type="button"
-              onClick={() => {
-                toggleReactionForPost(post.id, emoji);
-                setReactionVersion((current) => current + 1);
-              }}
+          {isReactionPickerOpen && (
+            <div
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "10px 12px",
-                borderRadius: 999,
-                border: isSelected ? "1px solid #c084fc" : "1px solid #374151",
-                background: isSelected ? "rgba(192, 132, 252, 0.16)" : "#20262f",
-                color: "#f8fafc",
-                fontSize: 15,
-                fontWeight: 700,
-                cursor: "pointer"
+                position: "absolute",
+                left: 0,
+                bottom: "calc(100% + 10px)",
+                zIndex: 5,
+                width: 280,
+                padding: 12,
+                borderRadius: 18,
+                border: "1px solid #374151",
+                background: "#11161d",
+                boxShadow: "0 22px 50px rgba(0, 0, 0, 0.35)"
               }}
             >
-              <span>{emoji}</span>
-              <span>{count}</span>
-            </button>
-          );
-        })}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(6, 1fr)",
+                  gap: 8
+                }}
+              >
+                {STANDARD_REACTIONS.map((emoji) => (
+                  <button
+                    key={`${post.id}-${emoji}-${reactionVersion}`}
+                    type="button"
+                    onClick={() => {
+                      toggleReactionForPost(post.id, emoji);
+                      setReactionVersion((current) => current + 1);
+                      setIsReactionPickerOpen(false);
+                    }}
+                    style={{
+                      display: "grid",
+                      placeItems: "center",
+                      aspectRatio: "1 / 1",
+                      borderRadius: 12,
+                      border: selectedReaction === emoji ? "1px solid #c084fc" : "1px solid #2e303a",
+                      background: selectedReaction === emoji ? "rgba(192, 132, 252, 0.16)" : "#1a2028",
+                      color: "#f8fafc",
+                      fontSize: 24,
+                      cursor: "pointer"
+                    }}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         <Link
           to={`/post/${post.id}`}
