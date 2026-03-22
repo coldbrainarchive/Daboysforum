@@ -374,7 +374,7 @@ function BoardsSidebar({ activeBoard = "", showHappening = false }) {
       <div style={{ display: "grid", gap: 6 }}>
         {showHappening && (
           <div className="board-bubble">
-            <span>👻</span>
+            <span>✨</span>
             <span>Happening now</span>
           </div>
         )}
@@ -805,12 +805,6 @@ function PostPage({ user }) {
       <BoardsSidebar activeBoard="News" />
 
       <main className="home-feed" style={{ textAlign: "left" }}>
-        <div className="feed-hero">
-          <Link to="/" className="feed-hero-title">
-            Happening now
-          </Link>
-        </div>
-
         <div className="content-card" style={{ marginBottom: 16 }}>
           <h2>{post.title}</h2>
           <p>{post.content}</p>
