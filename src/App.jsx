@@ -61,6 +61,23 @@ class ErrorBoundary extends Component {
 // ==============================
 // HELPERS
 // ==============================
+function getUserColor(id) {
+  if (!id) return "#dbe4ee";
+
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  let hue = Math.abs(hash) % 360;
+
+  // Keep the moderator purple exclusive to mods.
+  if (hue >= 250 && hue <= 320) {
+    hue = (hue + 90) % 360;
+  }
+
+  return `hsl(${hue}, 72%, 68%)`;
+}
 
 function timeAgo(date) {
   const seconds = Math.floor((new Date() - new Date(date)) / 1000);
@@ -454,7 +471,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, isPe
     >
       <b
         style={{
-          color: isModUser ? "#c084fc" : "#dbe4ee",
+          color: isModUser ? "#c084fc" : getUserColor(comment.browser_id),
           fontWeight: "bold"
         }}
       >
@@ -564,7 +581,7 @@ function Home() {
                   fontSize: 14
                 }}
               >
-                <span style={{ color: isMod ? "#c084fc" : "#dbe4ee", fontWeight: 700 }}>
+                <span style={{ color: isMod ? "#c084fc" : getUserColor(p.browser_id), fontWeight: 700 }}>
                   {isMod && "👤 "}
                   {p.username || `Anon #${shortId(p.browser_id)}`}
                 </span>
