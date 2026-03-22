@@ -187,31 +187,79 @@ function Home() {
   }, []);
 
   return (
-    <div>
-      <h1>Daboysforum 👻</h1>
-      <Link to="/new">Create Post</Link>
+    <div style={{ padding: "24px 20px 32px", textAlign: "left" }}>
+      <div
+        style={{
+          marginBottom: 24,
+          padding: 20,
+          border: "1px solid #2e303a",
+          borderRadius: 18,
+          background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)",
+          boxShadow: "0 18px 50px rgba(0, 0, 0, 0.35)"
+        }}
+      >
+        <h1 style={{ margin: 0 }}>Daboysforum 👻</h1>
+        <div style={{ marginTop: 14 }}>
+          <Link
+            to="/new"
+            style={{
+              display: "inline-block",
+              padding: "12px 16px",
+              borderRadius: 14,
+              background: "#2563eb",
+              color: "#fff",
+              textDecoration: "none",
+              fontWeight: 700,
+              boxShadow: "0 14px 30px rgba(37, 99, 235, 0.28)"
+            }}
+          >
+            Create Post
+          </Link>
+        </div>
+      </div>
 
       {posts.map((p) => {
         const isMod = isModPost(p);
 
         return (
-          <div key={p.id} style={{ borderBottom: "1px solid #ccc", padding: 10 }}>
-            {p.pinned && <b>📌 PINNED</b>}
-            {p.locked && <b style={{ color: "red" }}> 🔒</b>}
+          <div
+            key={p.id}
+            style={{
+              marginBottom: 16,
+              padding: 18,
+              border: "1px solid #2e303a",
+              borderRadius: 18,
+              background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)",
+              boxShadow: "0 18px 50px rgba(0, 0, 0, 0.2)"
+            }}
+          >
+            <div style={{ marginBottom: 10, color: "#f8fafc" }}>
+              {p.pinned && <b>📌 PINNED</b>}
+              {p.locked && <b style={{ color: "#f87171" }}> 🔒</b>}
+            </div>
 
             <Link to={`/post/${p.id}`}>
-              <h3>{p.title}</h3>
+              <h3
+                style={{
+                  margin: "0 0 10px",
+                  color: "#f8fafc",
+                  fontSize: 22,
+                  lineHeight: 1.2
+                }}
+              >
+                {p.title}
+              </h3>
             </Link>
 
-            <p>{p.content}</p>
+            <p style={{ marginBottom: 12, color: "#cbd5e1" }}>{p.content}</p>
 
-            <small>
+            <small style={{ color: "#94a3b8" }}>
               <b
-  style={{
-    color: isMod ? "#c084fc" : getUserColor(p.browser_id),
-    fontWeight: "bold"
-  }}
->
+                style={{
+                  color: isMod ? "#c084fc" : getUserColor(p.browser_id),
+                  fontWeight: "bold"
+                }}
+              >
                 {isMod && "👤 "}
                 {p.username || `Anon #${shortId(p.browser_id)}`}
               </b>{" "}
@@ -352,7 +400,7 @@ function NewPost() {
               padding: "16px",
               borderRadius: 14,
               border: "1px solid #3f4756",
-              fontSize: 15,
+              fontSize: 16,
               resize: "vertical",
               background: "#0f1117",
               color: "#f8fafc",
@@ -619,10 +667,12 @@ function PostPage({ user }) {
             style={{
               width: "100%",
               maxWidth: 560,
+              boxSizing: "border-box",
               padding: 12,
               borderRadius: 12,
               border: "1px solid #cbd5e1",
-              resize: "vertical"
+              resize: "vertical",
+              fontSize: 16
             }}
           />
           <div style={{ marginTop: 10 }}>
