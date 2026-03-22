@@ -247,6 +247,7 @@ function RealtimeStyles() {
         border-radius: 14px;
         color: #f8fafc;
         font-weight: 700;
+        transition: background 0.15s ease;
       }
 
       .board-bubble:hover {
