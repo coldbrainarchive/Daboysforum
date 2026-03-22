@@ -392,9 +392,10 @@ function ModPanel({ setModName }) {
       if (!u.browser_id) return;
 
       map[u.browser_id] = {
-        browser_id: u.browser_id,
-        username: u.username || `Anon #${shortId(u.browser_id)}`
-      };
+  browser_id: u.browser_id,
+  username: u.username || `Anon #${shortId(u.browser_id)}`,
+  ip_hash: u.ip_hash // 🔥 ADD THIS
+};
     });
 
     setUsers(Object.values(map));
@@ -412,10 +413,9 @@ function ModPanel({ setModName }) {
   };
 
   // LOGOUT
-const logout = async () => {
-  await supabase.auth.signOut();
-  window.location.href = "/";
-};
+  const logout = async () => {
+    await supabase.auth.signOut();
+  };
 
   // UPDATE EMAIL
   const updateEmail = async () => {
@@ -444,16 +444,23 @@ const logout = async () => {
   };
 
   // BAN SYSTEM
-  const isBanned = (id) => bans.some((b) => b.browser_id === id);
+  const isBanned = (u) =>
+  bans.some(
+    (b) =>
+      b.browser_id === u.browser_id ||
+      b.ip_hash === u.ip_hash ||
+      b.username === u.username
+  );
 
   const toggleBan = async (u) => {
-    if (isBanned(u.browser_id)) {
+    if (isBanned(u)) {
       await supabase.from("bans").delete().eq("browser_id", u.browser_id);
     } else {
       await modAction({
         type: "ban",
         browser_id: u.browser_id,
-        username: u.username
+        username: u.username,
+        ip_hash: u.ip_hash
       });
     }
     load();
@@ -508,13 +515,13 @@ const logout = async () => {
           <small>{u.browser_id}</small>
           <br />
 
-          <span style={{ color: isBanned(u.browser_id) ? "red" : "green" }}>
-            {isBanned(u.browser_id) ? "BANNED" : "ACTIVE"}
+          <span style={{ color: isBanned(u) ? "red" : "green" }}>
+            {isBanned(u) ? "BANNED" : "ACTIVE"}
           </span>
 
           <br />
           <button onClick={() => toggleBan(u)}>
-            {isBanned(u.browser_id) ? "Unban" : "Ban"}
+            {isBanned(u) ? "Unban" : "Ban"}
           </button>
         </div>
       ))}
