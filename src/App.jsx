@@ -383,7 +383,7 @@ function getBoardBySlug(slug) {
 }
 
 function getBoardNameFromPost(post) {
-  const boardValue = post?.board || post?.category || "";
+  const boardValue = post?.board || post?.category || post?.community_id || "";
   const normalizedValue = String(boardValue).trim().toLowerCase();
 
   if (!normalizedValue) return "";
@@ -445,6 +445,57 @@ function queuePendingBoardTag({ title, content, browserId, boardName }) {
     createdAt: Date.now()
   });
   setPendingBoardTags(pendingTags.slice(-30));
+}
+
+function rememberBoardTagForPost(postId, boardName) {
+  if (!postId || !boardName) return;
+  const storedTagsByPostId = getStoredBoardTagsByPostId();
+  setStoredBoardTagsByPostId({
+    ...storedTagsByPostId,
+    [postId]: boardName
+  });
+}
+
+async function syncBoardTagToPostRecord({ title, content, browserId, board }) {
+  const recentCutoff = new Date(Date.now() - 1000 * 60 * 10).toISOString();
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const { data, error } = await supabase
+      .from("posts")
+      .select("id, title, content, browser_id, community_id, created_at")
+      .eq("browser_id", browserId)
+      .gte("created_at", recentCutoff)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (!error) {
+      const matchedPost = (data || []).find((post) => (
+        post.title === title &&
+        post.content === content
+      ));
+
+      if (matchedPost) {
+        rememberBoardTagForPost(matchedPost.id, board.name);
+
+        if (matchedPost.community_id !== board.slug) {
+          const { error: updateError } = await supabase
+            .from("posts")
+            .update({ community_id: board.slug })
+            .eq("id", matchedPost.id);
+
+          if (!updateError) {
+            return matchedPost.id;
+          }
+        } else {
+          return matchedPost.id;
+        }
+      }
+    }
+
+    await new Promise((resolve) => window.setTimeout(resolve, 450));
+  }
+
+  return null;
 }
 
 function hydratePostsWithBoardTags(posts) {
@@ -997,6 +1048,8 @@ function NewPost() {
           title,
           content,
           board: selectedBoard.name,
+          category: selectedBoard.name,
+          community_id: selectedBoard.slug,
           browser_id: browserId,
           ...modMetadata
         })
@@ -1018,6 +1071,12 @@ function NewPost() {
         content,
         browserId,
         boardName: selectedBoard.name
+      });
+      void syncBoardTagToPostRecord({
+        title,
+        content,
+        browserId,
+        board: selectedBoard
       });
 
       setTitle("");
