@@ -50,14 +50,7 @@ function getModName() {
 }
 
 function isModPost(record) {
-  if (!record) return false;
-  if (record.is_mod === true) return true;
-  if (record.moderator === true) return true;
-  if (record.author_role === "mod" || record.role === "mod") return true;
-  if (record.mod_user_id) return true;
-
-  // Legacy fallback for older rows created before explicit mod flags existed.
-  return Boolean(record.username);
+  return record?.is_mod === true;
 }
 
 function buildModMetadata(user) {
