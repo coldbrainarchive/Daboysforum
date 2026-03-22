@@ -1,6 +1,6 @@
-import { Component, useEffect, useState } from "react";
+import { Component, useCallback, useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useParams } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -371,11 +371,34 @@ function RealtimeStyles() {
 }
 
 const BOARDS = [
-  { name: "News", icon: "📰" },
-  { name: "Sports", icon: "🏈" },
-  { name: "Random", icon: "🎲" },
-  { name: "Jail", icon: "🚔" }
+  { name: "News", slug: "news", icon: "📰" },
+  { name: "Sports", slug: "sports", icon: "🏈" },
+  { name: "Random", slug: "random", icon: "🎲" },
+  { name: "Jail", slug: "jail", icon: "🚔" },
+  { name: "Announcements", slug: "announcements", icon: "📢" }
 ];
+
+function getBoardBySlug(slug) {
+  return BOARDS.find((board) => board.slug === slug) || null;
+}
+
+function getBoardNameFromPost(post) {
+  const boardValue = post?.board || post?.category || "";
+  const normalizedValue = String(boardValue).trim().toLowerCase();
+
+  if (!normalizedValue) return "";
+
+  const matchedBoard = BOARDS.find(
+    (board) => board.slug === normalizedValue || board.name.toLowerCase() === normalizedValue
+  );
+
+  return matchedBoard?.name || String(boardValue).trim();
+}
+
+function filterPostsForBoard(posts, boardName) {
+  if (!boardName) return posts;
+  return posts.filter((post) => getBoardNameFromPost(post) === boardName);
+}
 
 function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappening = false }) {
   const [isOpen, setIsOpen] = useState(() => {
@@ -432,15 +455,14 @@ function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappe
         )}
 
         {BOARDS.map((board) => (
-          <a
+          <Link
             key={board.name}
-            href="#"
+            to={`/board/${board.slug}`}
             className={`board-link${board.name === activeBoard ? " active" : ""}`}
-            onClick={(event) => event.preventDefault()}
           >
             <span>{board.icon}</span>
             <span>{board.name}</span>
-          </a>
+          </Link>
         ))}
       </div>
     </aside>
@@ -602,7 +624,7 @@ function Auth({ setUser }) {
 function Home() {
   const [posts, setPosts] = useState([]);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     const { data } = await supabase
       .from("posts")
       .select("*")
@@ -611,13 +633,20 @@ function Home() {
       .order("last_activity", { ascending: false });
 
     setPosts(data || []);
-  };
+  }, []);
 
   useEffect(() => {
-    fetchPosts();
-    const i = setInterval(fetchPosts, 4000);
-    return () => clearInterval(i);
-  }, []);
+    const timeoutId = window.setTimeout(() => {
+      void fetchPosts();
+    }, 0);
+    const i = window.setInterval(() => {
+      void fetchPosts();
+    }, 4000);
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.clearInterval(i);
+    };
+  }, [fetchPosts]);
 
   return (
     <div className="home-shell">
@@ -671,14 +700,130 @@ function Home() {
   );
 }
 
+function BoardPage() {
+  const { slug } = useParams();
+  const [posts, setPosts] = useState([]);
+  const board = getBoardBySlug(slug);
+
+  const fetchPosts = useCallback(async () => {
+    const { data } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("deleted", false)
+      .order("pinned", { ascending: false })
+      .order("last_activity", { ascending: false });
+
+    setPosts(data || []);
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void fetchPosts();
+    }, 0);
+    const i = window.setInterval(() => {
+      void fetchPosts();
+    }, 4000);
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.clearInterval(i);
+    };
+  }, [fetchPosts, slug]);
+
+  if (!board) {
+    return (
+      <div className="home-shell">
+        <BoardsSidebar showHappening />
+        <main className="home-feed">
+          <div className="content-card">
+            <h2 style={{ marginTop: 0 }}>Board not found</h2>
+            <p style={{ color: "#cbd5e1" }}>That board doesn’t exist.</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const filteredPosts = filterPostsForBoard(posts, board.name);
+
+  return (
+    <div className="home-shell">
+      <BoardsSidebar activeBoard={board.name} showHappening />
+
+      <main className="home-feed">
+        <div className="feed-hero">
+          <div className="feed-hero-copy">
+            <div style={{ marginBottom: 10, fontSize: 28 }}>{board.icon}</div>
+            <div className="feed-hero-title">{board.name}</div>
+          </div>
+        </div>
+
+        {filteredPosts.length === 0 && (
+          <div className="content-card" style={{ marginBottom: 16 }}>
+            <h3 style={{ marginTop: 0, marginBottom: 10 }}>No threads yet</h3>
+            <p style={{ color: "#cbd5e1", marginBottom: 0 }}>
+              This board is empty for now. Start the first thread.
+            </p>
+          </div>
+        )}
+
+        {filteredPosts.map((p) => {
+          const isMod = isModPost(p);
+
+          return (
+            <Link
+              key={p.id}
+              to={`/post/${p.id}`}
+              style={{ textDecoration: "none", display: "block" }}
+            >
+              <div className="content-card" style={{ marginBottom: 16 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    marginBottom: 10,
+                    color: "#94a3b8",
+                    fontSize: 14
+                  }}
+                >
+                  <span style={{ color: isMod ? "#c084fc" : getUserColor(p.browser_id), fontWeight: 700 }}>
+                    {isMod && "👤 "}
+                    {p.username || `Anon #${shortId(p.browser_id)}`}
+                  </span>
+                  <span>•</span>
+                  <span>{timeAgo(p.last_activity || p.created_at)}</span>
+                </div>
+
+                <div style={{ marginBottom: 10, color: "#f8fafc" }}>
+                  {p.pinned && <b>📌 PINNED</b>}
+                  {p.locked && <b style={{ color: "#f87171" }}> 🔒</b>}
+                </div>
+
+                <h3 className="feed-post-title">
+                  {p.title}
+                </h3>
+
+                <p style={{ marginBottom: 0, color: "#cbd5e1" }}>{p.content}</p>
+              </div>
+            </Link>
+          );
+        })}
+      </main>
+    </div>
+  );
+}
+
 // ==============================
 // CREATE POST (FIXED)
 // ==============================
 function NewPost() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const requestedBoard = getBoardBySlug(searchParams.get("board"));
+  const [selectedBoardSlug, setSelectedBoardSlug] = useState(requestedBoard?.slug || BOARDS[0].slug);
 
   const createPost = async () => {
     try {
@@ -690,6 +835,7 @@ function NewPost() {
       const { data } = await supabase.auth.getUser();
       const modMetadata = buildModMetadata(data.user);
       const authHeaders = await getOptionalAuthHeader();
+      const selectedBoard = getBoardBySlug(selectedBoardSlug) || BOARDS[0];
 
       const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/create-post", {
         method: "POST",
@@ -700,6 +846,7 @@ function NewPost() {
         body: JSON.stringify({
           title,
           content,
+          board: selectedBoard.name,
           browser_id: getBrowserId(),
           ...modMetadata
         })
@@ -719,7 +866,7 @@ function NewPost() {
       setTitle("");
       setContent("");
       setTimeout(() => {
-        navigate("/");
+        navigate(`/board/${selectedBoard.slug}`);
       }, 450);
     } catch (err) {
       setIsSending(false);
@@ -745,6 +892,41 @@ function NewPost() {
       </div>
 
       <div style={{ display: "grid", gap: 14 }}>
+        <label style={{ display: "grid", gap: 6 }}>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: 0.4,
+              textTransform: "uppercase",
+              color: "#cbd5e1"
+            }}
+          >
+            Board
+          </span>
+          <select
+            value={selectedBoardSlug}
+            onChange={(e) => setSelectedBoardSlug(e.target.value)}
+            disabled={isSending}
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              padding: "14px 16px",
+              borderRadius: 12,
+              border: "1px solid #3f4756",
+              fontSize: 16,
+              background: "#0f1117",
+              color: "#f8fafc"
+            }}
+          >
+            {BOARDS.map((board) => (
+              <option key={board.slug} value={board.slug}>
+                {board.icon} {board.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label style={{ display: "grid", gap: 6 }}>
           <span
             style={{
@@ -851,7 +1033,7 @@ function PostPage({ user }) {
 
   const isMod = !!user;
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const { data: p } = await supabase
       .from("posts")
       .select("*")
@@ -881,21 +1063,29 @@ function PostPage({ user }) {
 
       return nextPending;
     });
-  };
+  }, [id]);
 
   useEffect(() => {
-    load();
-    const i = setInterval(load, 2000);
-    return () => clearInterval(i);
-  }, [id]);
+    const timeoutId = window.setTimeout(() => {
+      void load();
+    }, 0);
+    const i = window.setInterval(() => {
+      void load();
+    }, 2000);
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.clearInterval(i);
+    };
+  }, [load]);
 
   const addComment = async () => {
     if (!text.trim() || post?.locked) return;
     if (isSendingComment) return;
 
+    const pendingId = crypto.randomUUID();
+
     try {
       const pendingContent = text;
-      const pendingId = crypto.randomUUID();
       const browserId = getBrowserId();
       const { data } = await supabase.auth.getUser();
       const modMetadata = buildModMetadata(data.user);
@@ -955,12 +1145,19 @@ function PostPage({ user }) {
 
   if (!post) return <div>Loading...</div>;
 
+  const activeBoard = getBoardNameFromPost(post);
+
   return (
     <div className="home-shell">
-      <BoardsSidebar showHappening />
+      <BoardsSidebar activeBoard={activeBoard} showHappening />
 
       <main className="home-feed" style={{ textAlign: "left" }}>
         <div className="content-card" style={{ marginBottom: 16 }}>
+          {activeBoard && (
+            <div style={{ marginBottom: 12, color: "#94a3b8", fontSize: 14, fontWeight: 700 }}>
+              {BOARDS.find((board) => board.name === activeBoard)?.icon || "🧵"} {activeBoard}
+            </div>
+          )}
           <h2>{post.title}</h2>
           <p>{post.content}</p>
 
@@ -1084,7 +1281,7 @@ function ModPanel({ setModName }) {
   const [newPassword, setNewPassword] = useState("");
 
   // LOAD DATA
-  const load = async () => {
+  const load = useCallback(async () => {
     const { data: posts } = await supabase.from("posts").select("*");
     const { data: comments } = await supabase.from("comments").select("*");
     const { data: bans } = await supabase.from("bans").select("*");
@@ -1107,11 +1304,14 @@ function ModPanel({ setModName }) {
     });
 
     setUsers(Object.values(map));
-  };
+  }, []);
 
   useEffect(() => {
-    load();
-  }, []);
+    const timeoutId = window.setTimeout(() => {
+      void load();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [load]);
 
   // SAVE MOD NAME
   const saveName = () => {
@@ -1409,6 +1609,7 @@ export default function App() {
 
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/board/:slug" element={<BoardPage />} />
           <Route path="/new" element={<NewPost />} />
           <Route path="/post/:id" element={<PostPage user={user} />} />
          <Route
