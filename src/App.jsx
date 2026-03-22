@@ -239,6 +239,17 @@ function RealtimeStyles() {
         background: #252b34;
       }
 
+      .board-bubble {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: #252b34;
+        color: #f8fafc;
+        font-weight: 700;
+      }
+
       .home-feed {
         min-width: 0;
       }
@@ -256,12 +267,13 @@ function RealtimeStyles() {
         min-width: 0;
       }
 
-      .feed-hero-label {
+      .feed-hero-title {
         color: #f8fafc;
-        font-size: 28px;
+        font-family: var(--heading);
+        font-size: 52px;
         font-weight: 800;
         letter-spacing: -0.04em;
-        text-decoration: none;
+        line-height: 0.96;
       }
 
       .content-card {
@@ -327,6 +339,10 @@ function RealtimeStyles() {
         .feed-hero {
           margin-bottom: 14px;
         }
+
+        .feed-hero-title {
+          font-size: 34px;
+        }
       }
     `}</style>
   );
@@ -356,6 +372,11 @@ function BoardsSidebar() {
       </div>
 
       <div style={{ display: "grid", gap: 6 }}>
+        <div className="board-bubble">
+          <span>✨</span>
+          <span>Happening now</span>
+        </div>
+
         {BOARDS.map((board, index) => (
           <a
             key={board.name}
@@ -447,9 +468,7 @@ function Home() {
 
       <main className="home-feed">
         <div className="feed-hero">
-          <Link to="/" className="feed-hero-title">
-            Happening now
-          </Link>
+          <div className="feed-hero-title">Happening now</div>
         </div>
 
         {posts.map((p) => {
