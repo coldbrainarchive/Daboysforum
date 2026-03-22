@@ -148,6 +148,10 @@ async function getOptionalAuthHeader() {
 function RealtimeStyles() {
   return (
     <style>{`
+      .accent-purple {
+        color: #c084fc;
+      }
+
       .app-topbar {
         position: sticky;
         top: 0;
@@ -163,6 +167,9 @@ function RealtimeStyles() {
       }
 
       .app-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
         color: #f8fafc;
         font-size: 28px;
         font-weight: 800;
@@ -190,8 +197,9 @@ function RealtimeStyles() {
       }
 
       .app-chip.primary {
-        background: #ea580c;
-        border-color: #f97316;
+        background: #c084fc;
+        border-color: #d8b4fe;
+        color: #14081d;
       }
 
       .home-shell {
@@ -236,10 +244,6 @@ function RealtimeStyles() {
       }
 
       .feed-hero {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
         margin-bottom: 18px;
         padding: 18px 20px;
         border: 1px solid #2e303a;
@@ -253,25 +257,27 @@ function RealtimeStyles() {
       }
 
       .feed-hero-label {
-        margin-bottom: 6px;
-        color: #f97316;
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-      }
-
-      .feed-hero-title {
         color: #f8fafc;
         font-size: 28px;
         font-weight: 800;
         letter-spacing: -0.04em;
+        text-decoration: none;
       }
 
-      .feed-hero-meta {
-        margin-top: 6px;
-        color: #94a3b8;
-        font-size: 14px;
+      .content-card {
+        padding: 20px;
+        border: 1px solid #2e303a;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #1b1d24 0%, #14161c 100%);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
+      }
+
+      .feed-post-title {
+        margin: 0 0 10px;
+        color: #f8fafc;
+        font-size: 24px;
+        line-height: 1.2;
+        text-decoration: none;
       }
 
       @keyframes composerPulse {
@@ -319,11 +325,50 @@ function RealtimeStyles() {
         }
 
         .feed-hero {
-          flex-direction: column;
-          align-items: flex-start;
+          margin-bottom: 14px;
         }
       }
     `}</style>
+  );
+}
+
+const BOARDS = [
+  { name: "News", icon: "📰" },
+  { name: "Sports", icon: "🏈" },
+  { name: "Random", icon: "🎲" },
+  { name: "Jail", icon: "🚔" }
+];
+
+function BoardsSidebar() {
+  return (
+    <aside className="home-sidebar">
+      <div
+        style={{
+          marginBottom: 12,
+          color: "#94a3b8",
+          fontSize: 12,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase"
+        }}
+      >
+        Boards
+      </div>
+
+      <div style={{ display: "grid", gap: 6 }}>
+        {BOARDS.map((board, index) => (
+          <a
+            key={board.name}
+            href="#"
+            className={`board-link${index === 0 ? " active" : ""}`}
+            onClick={(event) => event.preventDefault()}
+          >
+            <span>{board.icon}</span>
+            <span>{board.name}</span>
+          </a>
+        ))}
+      </div>
+    </aside>
   );
 }
 
@@ -378,12 +423,6 @@ function Auth({ setUser }) {
 // ==============================
 function Home() {
   const [posts, setPosts] = useState([]);
-  const boards = [
-    { name: "News", icon: "📰" },
-    { name: "Sports", icon: "🏈" },
-    { name: "Random", icon: "🎲" },
-    { name: "Jail", icon: "🚔" }
-  ];
 
   const fetchPosts = async () => {
     const { data } = await supabase
@@ -404,62 +443,12 @@ function Home() {
 
   return (
     <div className="home-shell">
-      <aside className="home-sidebar">
-        <div
-          style={{
-            marginBottom: 12,
-            color: "#94a3b8",
-            fontSize: 12,
-            fontWeight: 800,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase"
-          }}
-        >
-          Boards
-        </div>
-
-        <div style={{ display: "grid", gap: 6 }}>
-          {boards.map((board, index) => (
-            <a
-              key={board.name}
-              href="#"
-              className={`board-link${index === 0 ? " active" : ""}`}
-              onClick={(event) => event.preventDefault()}
-            >
-              <span>{board.icon}</span>
-              <span>{board.name}</span>
-            </a>
-          ))}
-        </div>
-      </aside>
+      <BoardsSidebar />
 
       <main className="home-feed">
         <div className="feed-hero">
-          <div className="feed-hero-copy">
-            <div className="feed-hero-label">Latest Posts</div>
-            <div className="feed-hero-title">What’s happening now</div>
-            <div className="feed-hero-meta">
-              Fresh threads land here first, with pinned posts staying up top.
-            </div>
-          </div>
-
-          <Link
-            to="/new"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "12px 16px",
-              borderRadius: 14,
-              background: "#2563eb",
-              color: "#fff",
-              textDecoration: "none",
-              fontWeight: 700,
-              whiteSpace: "nowrap",
-              boxShadow: "0 14px 30px rgba(37, 99, 235, 0.28)"
-            }}
-          >
-            Create Post
+          <Link to="/" className="feed-hero-title">
+            Happening now
           </Link>
         </div>
 
@@ -467,17 +456,7 @@ function Home() {
           const isMod = isModPost(p);
 
           return (
-            <div
-              key={p.id}
-              style={{
-                marginBottom: 16,
-                padding: 18,
-                border: "1px solid #2e303a",
-                borderRadius: 18,
-                background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)",
-                boxShadow: "0 18px 50px rgba(0, 0, 0, 0.2)"
-              }}
-            >
+            <div key={p.id} className="content-card" style={{ marginBottom: 16 }}>
               <div
                 style={{
                   display: "flex",
@@ -501,15 +480,8 @@ function Home() {
                 {p.locked && <b style={{ color: "#f87171" }}> 🔒</b>}
               </div>
 
-              <Link to={`/post/${p.id}`} style={{ textDecoration: "none" }}>
-                <h3
-                  style={{
-                    margin: "0 0 10px",
-                    color: "#f8fafc",
-                    fontSize: 24,
-                    lineHeight: 1.2
-                  }}
-                >
+              <Link to={`/post/${p.id}`} className="feed-post-title">
+                <h3 className="feed-post-title">
                   {p.title}
                 </h3>
               </Link>
@@ -808,152 +780,164 @@ function PostPage({ user }) {
   if (!post) return <div>Loading...</div>;
 
   return (
-    <div style={{ textAlign: "left" }}>
-      <h2>{post.title}</h2>
-      <p>{post.content}</p>
+    <div className="home-shell">
+      <BoardsSidebar />
 
-      {post.locked && <b style={{ color: "red" }}>🔒 Locked</b>}
-
-      {/* 🔥 MOD CONTROLS (POST) */}
-      {isMod && (
-        <div style={{ marginBottom: 10 }}>
-          <button onClick={() => modAction({ type: "delete_post", post_id: post.id })}>
-            🗑 Delete
-          </button>
-
-          <button
-            onClick={async () => {
-              await supabase
-                .from("posts")
-                .update({ pinned: !post.pinned })
-                .eq("id", post.id);
-              load();
-            }}
-          >
-            {post.pinned ? "Unpin" : "📌 Pin"}
-          </button>
-
-          <button
-            onClick={async () => {
-              await supabase
-                .from("posts")
-                .update({ locked: !post.locked })
-                .eq("id", post.id);
-              load();
-            }}
-          >
-            {post.locked ? "Unlock" : "🔒 Lock"}
-          </button>
+      <main className="home-feed" style={{ textAlign: "left" }}>
+        <div className="feed-hero">
+          <Link to="/" className="feed-hero-title">
+            Happening now
+          </Link>
         </div>
-      )}
 
-      {/* COMMENTS */}
-      {pendingComments.map((c) => (
-        <div
-          key={c.id}
-          style={{
-            borderLeft: "4px solid #38bdf8",
-            marginBottom: 10,
-            padding: 10,
-            background: "#f0f9ff",
-            borderRadius: 10,
-            animation: "livePop 0.25s ease-out, composerPulse 1s ease-in-out infinite"
-          }}
-        >
-          <b style={{ color: "#0284c7" }}>You</b>
-          <small> sending now...</small>
-          <p style={{ marginBottom: 0 }}>{c.content}</p>
-        </div>
-      ))}
+        <div className="content-card" style={{ marginBottom: 16 }}>
+          <h2>{post.title}</h2>
+          <p>{post.content}</p>
 
-      {comments.map((c) => {
-        const isModUser = isModPost(c);
+          {post.locked && <b style={{ color: "red" }}>🔒 Locked</b>}
 
-        return (
-          <div
-            key={c.id}
-            style={{
-              borderLeft: "4px solid #ccc",
-              marginBottom: 10,
-              padding: 5
-            }}
-          >
-            <b
-              style={{
-                color: isModUser ? "#c084fc" : getUserColor(c.browser_id),
-                fontWeight: "bold"
-              }}
-            >
-              {isModUser && "👤 "}
-              {c.username || `Anon #${shortId(c.browser_id)}`}
-              {c.browser_id === post.browser_id && " (OP)"}
-            </b>
-
-            <small> {timeAgo(c.created_at)}</small>
-            <p>{c.content}</p>
-
-            {/* 🔥 MOD DELETE COMMENT */}
-            {isMod && (
-              <button
-                onClick={() =>
-                  modAction({ type: "delete_comment", comment_id: c.id })
-                }
-              >
+          {/* 🔥 MOD CONTROLS (POST) */}
+          {isMod && (
+            <div style={{ marginBottom: 10 }}>
+              <button onClick={() => modAction({ type: "delete_post", post_id: post.id })}>
                 🗑 Delete
               </button>
-            )}
-          </div>
-        );
-      })}
 
-      {/* COMMENT BOX */}
-      {!post.locked && (
-        <div style={{ marginTop: 16, maxWidth: 560 }}>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Write a comment..."
-            disabled={isSendingComment}
-            rows={4}
-            style={{
-              width: "100%",
-              maxWidth: 560,
-              boxSizing: "border-box",
-              padding: 12,
-              borderRadius: 12,
-              border: "1px solid #cbd5e1",
-              resize: "vertical",
-              fontSize: 16
-            }}
-          />
-          <div style={{ marginTop: 10 }}>
-            <button
-              onClick={addComment}
-              disabled={isSendingComment}
-              style={{
-                width: "100%",
-                padding: "12px 16px",
-                borderRadius: 14,
-                border: "none",
-                background: isSendingComment ? "#0f172a" : "#2563eb",
-                color: "#fff",
-                fontWeight: 700,
-                fontSize: 15,
-                cursor: isSendingComment ? "default" : "pointer"
-              }}
-            >
-              <span
-                style={{
-                  display: "inline-block",
-                  animation: isSendingComment ? "sendFlight 0.8s ease-in-out infinite" : "none"
+              <button
+                onClick={async () => {
+                  await supabase
+                    .from("posts")
+                    .update({ pinned: !post.pinned })
+                    .eq("id", post.id);
+                  load();
                 }}
               >
-                {isSendingComment ? "Sending..." : "Send"}
-              </span>
-            </button>
-          </div>
+                {post.pinned ? "Unpin" : "📌 Pin"}
+              </button>
+
+              <button
+                onClick={async () => {
+                  await supabase
+                    .from("posts")
+                    .update({ locked: !post.locked })
+                    .eq("id", post.id);
+                  load();
+                }}
+              >
+                {post.locked ? "Unlock" : "🔒 Lock"}
+              </button>
+            </div>
+          )}
+
+          {/* COMMENTS */}
+          {pendingComments.map((c) => (
+            <div
+              key={c.id}
+              style={{
+                borderLeft: "4px solid #c084fc",
+                marginBottom: 10,
+                padding: 10,
+                background: "#23182f",
+                borderRadius: 10,
+                animation: "livePop 0.25s ease-out, composerPulse 1s ease-in-out infinite"
+              }}
+            >
+              <b style={{ color: "#c084fc" }}>You</b>
+              <small> sending now...</small>
+              <p style={{ marginBottom: 0 }}>{c.content}</p>
+            </div>
+          ))}
+
+          {comments.map((c) => {
+            const isModUser = isModPost(c);
+
+            return (
+              <div
+                key={c.id}
+                style={{
+                  borderLeft: "4px solid #ccc",
+                  marginBottom: 10,
+                  padding: 5
+                }}
+              >
+                <b
+                  style={{
+                    color: isModUser ? "#c084fc" : getUserColor(c.browser_id),
+                    fontWeight: "bold"
+                  }}
+                >
+                  {isModUser && "👤 "}
+                  {c.username || `Anon #${shortId(c.browser_id)}`}
+                  {c.browser_id === post.browser_id && " (OP)"}
+                </b>
+
+                <small> {timeAgo(c.created_at)}</small>
+                <p>{c.content}</p>
+
+                {/* 🔥 MOD DELETE COMMENT */}
+                {isMod && (
+                  <button
+                    onClick={() =>
+                      modAction({ type: "delete_comment", comment_id: c.id })
+                    }
+                  >
+                    🗑 Delete
+                  </button>
+                )}
+              </div>
+            );
+          })}
+
+          {/* COMMENT BOX */}
+          {!post.locked && (
+            <div style={{ marginTop: 16, maxWidth: 560 }}>
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Write a comment..."
+                disabled={isSendingComment}
+                rows={4}
+                style={{
+                  width: "100%",
+                  maxWidth: 560,
+                  boxSizing: "border-box",
+                  padding: 12,
+                  borderRadius: 12,
+                  border: "1px solid #cbd5e1",
+                  resize: "vertical",
+                  fontSize: 16
+                }}
+              />
+              <div style={{ marginTop: 10 }}>
+                <button
+                  onClick={addComment}
+                  disabled={isSendingComment}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    borderRadius: 14,
+                    border: "none",
+                    background: isSendingComment ? "#3b1f52" : "#c084fc",
+                    color: "#14081d",
+                    fontWeight: 700,
+                    fontSize: 15,
+                    cursor: isSendingComment ? "default" : "pointer"
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "inline-block",
+                      animation: isSendingComment ? "sendFlight 0.8s ease-in-out infinite" : "none"
+                    }}
+                  >
+                    {isSendingComment ? "Sending..." : "Send"}
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </main>
     </div>
   );
 }
@@ -1146,7 +1130,7 @@ export default function App() {
       <Router>
         <RealtimeStyles />
         <nav className="app-topbar">
-          <Link to="/" className="app-brand">daboysforum</Link>
+          <Link to="/" className="app-brand">👻 daboysforum</Link>
 
           <div className="app-actions">
             <Link to="/new" className="app-chip">New Post</Link>
