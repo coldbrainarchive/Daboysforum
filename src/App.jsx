@@ -316,9 +316,9 @@ function RealtimeStyles() {
 
       @keyframes purpleSettle {
         0% {
-          box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.95), 0 0 26px rgba(192, 132, 252, 0.35);
+          box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.75), 0 0 24px rgba(192, 132, 252, 0.28);
           border-left-color: #c084fc;
-          background: rgba(88, 28, 135, 0.22);
+          background: rgba(192, 132, 252, 0.12);
         }
         100% {
           box-shadow: none;
@@ -932,7 +932,7 @@ function PostPage({ user }) {
                 style={{
                   borderLeft: "4px solid #ccc",
                   marginBottom: 10,
-                  padding: 5,
+                  padding: 10,
                   borderRadius: 10,
                   animation: isRecentComment ? "purpleSettle 0.9s ease-out forwards" : "none"
                 }}
@@ -975,15 +975,22 @@ function PostPage({ user }) {
                     borderLeft: "4px solid #c084fc",
                     marginBottom: 10,
                     padding: 10,
-                    background: "rgba(88, 28, 135, 0.22)",
+                    background: "rgba(192, 132, 252, 0.12)",
                     borderRadius: 10,
-                    boxShadow: "0 0 0 1px rgba(192, 132, 252, 0.95), 0 0 26px rgba(192, 132, 252, 0.35)",
+                    boxShadow: "0 0 0 1px rgba(192, 132, 252, 0.75), 0 0 24px rgba(192, 132, 252, 0.28)",
                     animation: "livePop 0.25s ease-out, composerPulse 1s ease-in-out infinite"
                   }}
                 >
-                  <b style={{ color: "#c084fc", fontWeight: "bold" }}>You</b>
-                  <small style={{ color: "#cbd5e1" }}> sending now...</small>
-                  <p style={{ marginBottom: 0, color: "#f8fafc" }}>{c.content}</p>
+                  <b
+                    style={{
+                      color: getUserColor(c.browser_id),
+                      fontWeight: "bold"
+                    }}
+                  >
+                    {`Anon #${shortId(c.browser_id)}`}
+                  </b>
+                  <small style={{ color: "#cbd5e1" }}> now</small>
+                  <p style={{ marginBottom: 0 }}>{c.content}</p>
                 </div>
               ))}
 
