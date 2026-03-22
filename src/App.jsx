@@ -598,6 +598,7 @@ function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappe
     if (typeof window === "undefined") return true;
     return window.innerWidth > 900;
   });
+  const sidebarLabel = activeBoard ? `Boards: ${activeBoard}` : "Boards: Feed";
 
   return (
     <aside className="home-sidebar">
@@ -622,7 +623,7 @@ function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappe
           cursor: "pointer"
         }}
       >
-        <span>Boards</span>
+        <span>{sidebarLabel}</span>
         <span
           style={{
             fontSize: 16,
@@ -950,13 +951,6 @@ function BoardPage() {
       <BoardsSidebar activeBoard={board.name} showHappening />
 
       <main className="home-feed">
-        <div className="feed-hero">
-          <div className="feed-hero-copy">
-            <div style={{ marginBottom: 10, fontSize: 28 }}>{board.icon}</div>
-            <div className="feed-hero-title">{board.name}</div>
-          </div>
-        </div>
-
         {filteredPosts.length === 0 && (
           <div className="content-card" style={{ marginBottom: 16 }}>
             <h3 style={{ marginTop: 0, marginBottom: 10 }}>No threads yet</h3>
