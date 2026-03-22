@@ -314,16 +314,16 @@ function RealtimeStyles() {
         100% { opacity: 1; transform: translateY(0); }
       }
 
-      @keyframes purpleSettle {
+      @keyframes commentLift {
         0% {
-          box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.75), 0 0 24px rgba(192, 132, 252, 0.28);
-          border-left-color: #c084fc;
-          background: rgba(192, 132, 252, 0.12);
+          opacity: 0;
+          transform: translateY(18px);
+          box-shadow: 0 0 0 0 rgba(192, 132, 252, 0);
         }
         100% {
-          box-shadow: none;
-          border-left-color: #ccc;
-          background: transparent;
+          opacity: 1;
+          transform: translateY(0);
+          box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.45), 0 0 24px rgba(192, 132, 252, 0.22);
         }
       }
 
@@ -752,7 +752,6 @@ function PostPage({ user }) {
   const [text, setText] = useState("");
   const [isSendingComment, setIsSendingComment] = useState(false);
   const [pendingComments, setPendingComments] = useState([]);
-  const [recentCommentIds, setRecentCommentIds] = useState([]);
 
   const isMod = !!user;
 
@@ -773,7 +772,6 @@ function PostPage({ user }) {
     setPost(p);
     setComments(c || []);
     setPendingComments((current) => {
-      const matchedCommentIds = [];
       const nextPending = current.filter((pending) => {
         const matchedComment = (c || []).find(
           (comment) =>
@@ -782,25 +780,8 @@ function PostPage({ user }) {
             Math.abs(new Date(comment.created_at).getTime() - new Date(pending.created_at).getTime()) < 10000
         );
 
-        if (matchedComment) {
-          matchedCommentIds.push(matchedComment.id);
-          return false;
-        }
-
-        return true;
+        return !matchedComment;
       });
-
-      if (matchedCommentIds.length) {
-        setRecentCommentIds((currentIds) => [
-          ...new Set([...currentIds, ...matchedCommentIds])
-        ]);
-
-        setTimeout(() => {
-          setRecentCommentIds((currentIds) =>
-            currentIds.filter((commentId) => !matchedCommentIds.includes(commentId))
-          );
-        }, 900);
-      }
 
       return nextPending;
     });
@@ -924,7 +905,6 @@ function PostPage({ user }) {
           {/* COMMENTS */}
           {comments.map((c) => {
             const isModUser = isModPost(c);
-            const isRecentComment = recentCommentIds.includes(c.id);
 
             return (
               <div
@@ -933,8 +913,7 @@ function PostPage({ user }) {
                   borderLeft: "4px solid #ccc",
                   marginBottom: 10,
                   padding: 10,
-                  borderRadius: 10,
-                  animation: isRecentComment ? "purpleSettle 0.9s ease-out forwards" : "none"
+                  borderRadius: 10
                 }}
               >
                 <b
@@ -975,10 +954,10 @@ function PostPage({ user }) {
                     borderLeft: "4px solid #c084fc",
                     marginBottom: 10,
                     padding: 10,
-                    background: "rgba(192, 132, 252, 0.12)",
+                    background: "rgba(192, 132, 252, 0.08)",
                     borderRadius: 10,
-                    boxShadow: "0 0 0 1px rgba(192, 132, 252, 0.75), 0 0 24px rgba(192, 132, 252, 0.28)",
-                    animation: "livePop 0.25s ease-out, composerPulse 1s ease-in-out infinite"
+                    boxShadow: "0 0 0 1px rgba(192, 132, 252, 0.45), 0 0 24px rgba(192, 132, 252, 0.22)",
+                    animation: "commentLift 0.22s ease-out forwards, composerPulse 1s ease-in-out infinite"
                   }}
                 >
                   <b
