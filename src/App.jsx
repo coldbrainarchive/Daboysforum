@@ -384,7 +384,7 @@ function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappe
             style={{ textDecoration: "none" }}
           >
             <span>✨</span>
-            <span>Happening now</span>
+            <span>Feed</span>
           </Link>
         )}
 
