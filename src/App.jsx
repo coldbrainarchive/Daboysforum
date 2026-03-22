@@ -402,6 +402,8 @@ function filterPostsForBoard(posts, boardName) {
 
 const BOARD_TAGS_STORAGE_KEY = "board_tags_by_post_id";
 const PENDING_BOARD_TAGS_STORAGE_KEY = "pending_board_tags";
+const POST_REACTIONS_STORAGE_KEY = "post_reactions_by_browser";
+const STANDARD_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
 
 function readStorageJson(key, fallback) {
   if (typeof window === "undefined") return fallback;
@@ -566,6 +568,48 @@ function hydratePostWithBoardTag(post) {
   return hydratedPost;
 }
 
+function getStoredPostReactions() {
+  return readStorageJson(POST_REACTIONS_STORAGE_KEY, {});
+}
+
+function setStoredPostReactions(reactions) {
+  writeStorageJson(POST_REACTIONS_STORAGE_KEY, reactions);
+}
+
+function getReactionStateForPost(postId) {
+  const reactionsByPost = getStoredPostReactions();
+  const postReactions = reactionsByPost[postId] || {};
+  const counts = {};
+
+  Object.values(postReactions).forEach((emoji) => {
+    counts[emoji] = (counts[emoji] || 0) + 1;
+  });
+
+  return {
+    counts,
+    selectedReaction: postReactions[getBrowserId()] || ""
+  };
+}
+
+function toggleReactionForPost(postId, emoji) {
+  const browserId = getBrowserId();
+  const reactionsByPost = getStoredPostReactions();
+  const postReactions = {
+    ...(reactionsByPost[postId] || {})
+  };
+
+  if (postReactions[browserId] === emoji) {
+    delete postReactions[browserId];
+  } else {
+    postReactions[browserId] = emoji;
+  }
+
+  setStoredPostReactions({
+    ...reactionsByPost,
+    [postId]: postReactions
+  });
+}
+
 function BoardBadge({ boardName }) {
   const matchedBoard = BOARDS.find((board) => board.name === boardName);
 
@@ -590,6 +634,117 @@ function BoardBadge({ boardName }) {
       <span>{matchedBoard.icon}</span>
       <span>{matchedBoard.name}</span>
     </span>
+  );
+}
+
+function PostCard({ post, commentCount = 0 }) {
+  const [reactionVersion, setReactionVersion] = useState(0);
+  const isMod = isModPost(post);
+  const boardName = getBoardNameFromPost(post);
+  const { counts, selectedReaction } = getReactionStateForPost(post.id);
+
+  return (
+    <div className="content-card" style={{ marginBottom: 16 }}>
+      <Link
+        to={`/post/${post.id}`}
+        style={{ textDecoration: "none", display: "block" }}
+      >
+        {boardName && (
+          <div style={{ marginBottom: 10 }}>
+            <BoardBadge boardName={boardName} />
+          </div>
+        )}
+
+        <div
+          style={{
+            marginBottom: 14,
+            color: "#94a3b8",
+            fontSize: 14
+          }}
+        >
+          <div style={{ marginBottom: 4 }}>
+            <span style={{ color: isMod ? "#c084fc" : getUserColor(post.browser_id), fontWeight: 700 }}>
+              {isMod && "👤 "}
+              {post.username || `Anon #${shortId(post.browser_id)}`}
+            </span>
+          </div>
+          <div>
+            <span>{timeAgo(post.last_activity || post.created_at)}</span>
+            {(post.pinned || post.locked) && <span> • </span>}
+            {post.pinned && <span style={{ color: "#f8fafc", fontWeight: 700 }}>📌 PINNED</span>}
+            {post.pinned && post.locked && <span> </span>}
+            {post.locked && <span style={{ color: "#f87171", fontWeight: 700 }}>🔒 LOCKED</span>}
+          </div>
+        </div>
+
+        <h3 className="feed-post-title">
+          {post.title}
+        </h3>
+
+        <p style={{ marginBottom: 16, color: "#cbd5e1" }}>{post.content}</p>
+      </Link>
+
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 10
+        }}
+      >
+        {STANDARD_REACTIONS.map((emoji) => {
+          const count = counts[emoji] || 0;
+          const isSelected = selectedReaction === emoji;
+
+          return (
+            <button
+              key={`${post.id}-${emoji}-${reactionVersion}`}
+              type="button"
+              onClick={() => {
+                toggleReactionForPost(post.id, emoji);
+                setReactionVersion((current) => current + 1);
+              }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "10px 12px",
+                borderRadius: 999,
+                border: isSelected ? "1px solid #c084fc" : "1px solid #374151",
+                background: isSelected ? "rgba(192, 132, 252, 0.16)" : "#20262f",
+                color: "#f8fafc",
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: "pointer"
+              }}
+            >
+              <span>{emoji}</span>
+              <span>{count}</span>
+            </button>
+          );
+        })}
+
+        <Link
+          to={`/post/${post.id}`}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "10px 12px",
+            borderRadius: 999,
+            border: "1px solid #374151",
+            background: "#20262f",
+            color: "#f8fafc",
+            textDecoration: "none",
+            fontSize: 15,
+            fontWeight: 700
+          }}
+        >
+          <span>💬</span>
+          <span>{commentCount}</span>
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -817,16 +972,29 @@ function Auth({ setUser }) {
 // ==============================
 function Home() {
   const [posts, setPosts] = useState([]);
+  const [commentCounts, setCommentCounts] = useState({});
 
   const fetchPosts = useCallback(async () => {
-    const { data } = await supabase
-      .from("posts")
-      .select("*")
-      .eq("deleted", false)
-      .order("pinned", { ascending: false })
-      .order("last_activity", { ascending: false });
+    const [{ data: postsData }, { data: commentsData }] = await Promise.all([
+      supabase
+        .from("posts")
+        .select("*")
+        .eq("deleted", false)
+        .order("pinned", { ascending: false })
+        .order("last_activity", { ascending: false }),
+      supabase
+        .from("comments")
+        .select("post_id")
+        .eq("deleted", false)
+    ]);
 
-    setPosts(hydratePostsWithBoardTags(data || []));
+    const counts = {};
+    (commentsData || []).forEach((comment) => {
+      counts[comment.post_id] = (counts[comment.post_id] || 0) + 1;
+    });
+
+    setCommentCounts(counts);
+    setPosts(hydratePostsWithBoardTags(postsData || []));
   }, []);
 
   useEffect(() => {
@@ -848,52 +1016,12 @@ function Home() {
 
       <main className="home-feed">
         {posts.map((p) => {
-          const isMod = isModPost(p);
-          const boardName = getBoardNameFromPost(p);
-
           return (
-            <Link
+            <PostCard
               key={p.id}
-              to={`/post/${p.id}`}
-              style={{ textDecoration: "none", display: "block" }}
-            >
-              <div className="content-card" style={{ marginBottom: 16 }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  marginBottom: 10,
-                  color: "#94a3b8",
-                  fontSize: 14
-                }}
-              >
-                <span style={{ color: isMod ? "#c084fc" : getUserColor(p.browser_id), fontWeight: 700 }}>
-                  {isMod && "👤 "}
-                  {p.username || `Anon #${shortId(p.browser_id)}`}
-                </span>
-                <span>•</span>
-                <span>{timeAgo(p.last_activity || p.created_at)}</span>
-              </div>
-
-                <div style={{ marginBottom: 10, color: "#f8fafc" }}>
-                  {p.pinned && <b>📌 PINNED</b>}
-                  {p.locked && <b style={{ color: "#f87171" }}> 🔒</b>}
-                </div>
-
-              {boardName && (
-                <div style={{ marginBottom: 12 }}>
-                  <BoardBadge boardName={boardName} />
-                </div>
-              )}
-
-              <h3 className="feed-post-title">
-                {p.title}
-              </h3>
-
-              <p style={{ marginBottom: 12, color: "#cbd5e1" }}>{p.content}</p>
-              </div>
-            </Link>
+              post={p}
+              commentCount={commentCounts[p.id] || 0}
+            />
           );
         })}
       </main>
@@ -904,17 +1032,30 @@ function Home() {
 function BoardPage() {
   const { slug } = useParams();
   const [posts, setPosts] = useState([]);
+  const [commentCounts, setCommentCounts] = useState({});
   const board = getBoardBySlug(slug);
 
   const fetchPosts = useCallback(async () => {
-    const { data } = await supabase
-      .from("posts")
-      .select("*")
-      .eq("deleted", false)
-      .order("pinned", { ascending: false })
-      .order("last_activity", { ascending: false });
+    const [{ data: postsData }, { data: commentsData }] = await Promise.all([
+      supabase
+        .from("posts")
+        .select("*")
+        .eq("deleted", false)
+        .order("pinned", { ascending: false })
+        .order("last_activity", { ascending: false }),
+      supabase
+        .from("comments")
+        .select("post_id")
+        .eq("deleted", false)
+    ]);
 
-    setPosts(hydratePostsWithBoardTags(data || []));
+    const counts = {};
+    (commentsData || []).forEach((comment) => {
+      counts[comment.post_id] = (counts[comment.post_id] || 0) + 1;
+    });
+
+    setCommentCounts(counts);
+    setPosts(hydratePostsWithBoardTags(postsData || []));
   }, []);
 
   useEffect(() => {
@@ -961,45 +1102,12 @@ function BoardPage() {
         )}
 
         {filteredPosts.map((p) => {
-          const isMod = isModPost(p);
-
           return (
-            <Link
+            <PostCard
               key={p.id}
-              to={`/post/${p.id}`}
-              style={{ textDecoration: "none", display: "block" }}
-            >
-              <div className="content-card" style={{ marginBottom: 16 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    marginBottom: 10,
-                    color: "#94a3b8",
-                    fontSize: 14
-                  }}
-                >
-                  <span style={{ color: isMod ? "#c084fc" : getUserColor(p.browser_id), fontWeight: 700 }}>
-                    {isMod && "👤 "}
-                    {p.username || `Anon #${shortId(p.browser_id)}`}
-                  </span>
-                  <span>•</span>
-                  <span>{timeAgo(p.last_activity || p.created_at)}</span>
-                </div>
-
-                <div style={{ marginBottom: 10, color: "#f8fafc" }}>
-                  {p.pinned && <b>📌 PINNED</b>}
-                  {p.locked && <b style={{ color: "#f87171" }}> 🔒</b>}
-                </div>
-
-                <h3 className="feed-post-title">
-                  {p.title}
-                </h3>
-
-                <p style={{ marginBottom: 0, color: "#cbd5e1" }}>{p.content}</p>
-              </div>
-            </Link>
+              post={p}
+              commentCount={commentCounts[p.id] || 0}
+            />
           );
         })}
       </main>
