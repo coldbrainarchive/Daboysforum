@@ -289,7 +289,8 @@ function NewPost() {
         border: "1px solid #d4d4d8",
         borderRadius: 18,
         background: "linear-gradient(180deg, #ffffff 0%, #f5f7fb 100%)",
-        boxShadow: "0 18px 50px rgba(15, 23, 42, 0.08)"
+        boxShadow: "0 18px 50px rgba(15, 23, 42, 0.08)",
+        textAlign: "left"
       }}
     >
       <div style={{ marginBottom: 18 }}>
@@ -310,10 +311,13 @@ function NewPost() {
             placeholder="Give the thread a title"
             disabled={isSending}
             style={{
+              width: "100%",
+              boxSizing: "border-box",
               padding: "14px 16px",
               borderRadius: 12,
               border: "1px solid #cbd5e1",
-              fontSize: 16
+              fontSize: 16,
+              background: "#fff"
             }}
           />
         </label>
@@ -329,11 +333,15 @@ function NewPost() {
             disabled={isSending}
             rows={8}
             style={{
+              width: "100%",
+              boxSizing: "border-box",
               padding: "16px",
               borderRadius: 14,
               border: "1px solid #cbd5e1",
               fontSize: 15,
-              resize: "vertical"
+              resize: "vertical",
+              background: "#fff",
+              minHeight: 220
             }}
           />
         </label>
@@ -358,14 +366,16 @@ function NewPost() {
           onClick={createPost}
           disabled={isSending}
           style={{
-            justifySelf: "start",
-            padding: "12px 18px",
-            borderRadius: 999,
+            width: "100%",
+            padding: "14px 18px",
+            borderRadius: 14,
             border: "none",
             background: isSending ? "#0f172a" : "#2563eb",
             color: "#fff",
             fontWeight: 700,
-            cursor: isSending ? "default" : "pointer"
+            fontSize: 15,
+            cursor: isSending ? "default" : "pointer",
+            boxShadow: isSending ? "none" : "0 14px 30px rgba(37, 99, 235, 0.28)"
           }}
         >
           <span
@@ -484,7 +494,7 @@ function PostPage({ user }) {
   if (!post) return <div>Loading...</div>;
 
   return (
-    <div>
+    <div style={{ textAlign: "left" }}>
       <h2>{post.title}</h2>
       <p>{post.content}</p>
 
@@ -584,7 +594,7 @@ function PostPage({ user }) {
 
       {/* COMMENT BOX */}
       {!post.locked && (
-        <div style={{ marginTop: 10 }}>
+        <div style={{ marginTop: 16, maxWidth: 560 }}>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -605,12 +615,14 @@ function PostPage({ user }) {
               onClick={addComment}
               disabled={isSendingComment}
               style={{
-                padding: "10px 16px",
-                borderRadius: 999,
+                width: "100%",
+                padding: "12px 16px",
+                borderRadius: 14,
                 border: "none",
                 background: isSendingComment ? "#0f172a" : "#2563eb",
                 color: "#fff",
                 fontWeight: 700,
+                fontSize: 15,
                 cursor: isSendingComment ? "default" : "pointer"
               }}
             >
