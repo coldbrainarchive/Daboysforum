@@ -286,23 +286,28 @@ function NewPost() {
         maxWidth: 720,
         margin: "24px auto",
         padding: 20,
-        border: "1px solid #d4d4d8",
+        border: "1px solid #2e303a",
         borderRadius: 18,
-        background: "linear-gradient(180deg, #ffffff 0%, #f5f7fb 100%)",
-        boxShadow: "0 18px 50px rgba(15, 23, 42, 0.08)",
+        background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)",
+        boxShadow: "0 18px 50px rgba(0, 0, 0, 0.35)",
         textAlign: "left"
       }}
     >
       <div style={{ marginBottom: 18 }}>
-        <h2 style={{ marginBottom: 6 }}>New Post</h2>
-        <p style={{ margin: 0, color: "#475569" }}>
-          Drop the title first, then write the full post underneath.
-        </p>
+        <h2 style={{ marginBottom: 0 }}>New Post</h2>
       </div>
 
       <div style={{ display: "grid", gap: 14 }}>
         <label style={{ display: "grid", gap: 6 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase" }}>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: 0.4,
+              textTransform: "uppercase",
+              color: "#cbd5e1"
+            }}
+          >
             Title
           </span>
           <input
@@ -315,15 +320,24 @@ function NewPost() {
               boxSizing: "border-box",
               padding: "14px 16px",
               borderRadius: 12,
-              border: "1px solid #cbd5e1",
+              border: "1px solid #3f4756",
               fontSize: 16,
-              background: "#fff"
+              background: "#0f1117",
+              color: "#f8fafc"
             }}
           />
         </label>
 
         <label style={{ display: "grid", gap: 6 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase" }}>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: 0.4,
+              textTransform: "uppercase",
+              color: "#cbd5e1"
+            }}
+          >
             Body
           </span>
           <textarea
@@ -337,10 +351,11 @@ function NewPost() {
               boxSizing: "border-box",
               padding: "16px",
               borderRadius: 14,
-              border: "1px solid #cbd5e1",
+              border: "1px solid #3f4756",
               fontSize: 15,
               resize: "vertical",
-              background: "#fff",
+              background: "#0f1117",
+              color: "#f8fafc",
               minHeight: 220
             }}
           />
@@ -350,14 +365,14 @@ function NewPost() {
           style={{
             padding: "14px 16px",
             borderRadius: 14,
-            background: "#e0f2fe",
-            color: "#0f172a",
-            border: "1px solid #bae6fd",
+            background: "#1f2028",
+            color: "#f8fafc",
+            border: "1px solid #323745",
             animation: isSending ? "composerPulse 1s ease-in-out infinite" : "none"
           }}
         >
           <b>{isSending ? "Sending post..." : "Ready to post"}</b>
-          <div style={{ marginTop: 4, fontSize: 14, color: "#334155" }}>
+          <div style={{ marginTop: 4, fontSize: 14, color: "#9ca3af" }}>
             {isSending ? "Pushing your thread live now." : "Your title and body will go up together."}
           </div>
         </div>
