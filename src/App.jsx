@@ -78,8 +78,12 @@ function buildModMetadata(user) {
 // ==============================
 async function getAuthHeader() {
   const { data } = await supabase.auth.getSession();
+  if (!data.session?.access_token) {
+    throw new Error("No active moderator session. Please log in again.");
+  }
+
   return {
-    Authorization: `Bearer ${data.session?.access_token}`
+    Authorization: `Bearer ${data.session.access_token}`
   };
 }
 
@@ -87,19 +91,23 @@ async function getAuthHeader() {
 // MOD ACTION
 // ==============================
 async function modAction(action) {
-  const headers = await getAuthHeader();
+  try {
+    const headers = await getAuthHeader();
 
-  const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/mod-action", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...headers
-    },
-    body: JSON.stringify(action)
-  });
+    const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/mod-action", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...headers
+      },
+      body: JSON.stringify(action)
+    });
 
-  const data = await res.json();
-  if (!res.ok) alert(data.error);
+    const data = await res.json();
+    if (!res.ok) alert(data.error);
+  } catch (err) {
+    alert(err.message);
+  }
 }
 
 // ==============================
@@ -194,39 +202,43 @@ function NewPost() {
   const [content, setContent] = useState("");
 
   const createPost = async () => {
-    if (!title.trim() || !content.trim()) return alert("Fill all fields");
+    try {
+      if (!title.trim() || !content.trim()) return alert("Fill all fields");
 
-    const { data } = await supabase.auth.getUser();
-    const modMetadata = buildModMetadata(data.user);
-    const authHeaders = await getAuthHeader();
+      const { data } = await supabase.auth.getUser();
+      const modMetadata = buildModMetadata(data.user);
+      const authHeaders = await getAuthHeader();
 
-    const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/create-post", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders
-      },
-      body: JSON.stringify({
-        title,
-        content,
-        browser_id: getBrowserId(),
-        ...modMetadata
-      })
-    });
+      const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/create-post", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders
+        },
+        body: JSON.stringify({
+          title,
+          content,
+          browser_id: getBrowserId(),
+          ...modMetadata
+        })
+      });
 
-    const result = await res.json();
-    if (!res.ok) {
-      if (result.error === "Banned") {
-        alert("🚫 You are banned from posting");
-      } else {
-        alert(result.error);
+      const result = await res.json();
+      if (!res.ok) {
+        if (result.error === "Banned") {
+          alert("🚫 You are banned from posting");
+        } else {
+          alert(result.error);
+        }
+        return;
       }
-      return;
-    }
 
-    setTitle("");
-    setContent("");
-    alert("Posted!");
+      setTitle("");
+      setContent("");
+      alert("Posted!");
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   return (
@@ -468,6 +480,19 @@ function ModPanel({ setModName }) {
     await supabase.auth.signOut();
   };
 
+  const checkModAuth = async () => {
+    try {
+      const headers = await getAuthHeader();
+      const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/debug-auth", {
+        headers
+      });
+      const data = await res.json();
+      alert(JSON.stringify(data, null, 2));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   // UPDATE EMAIL
   const updateEmail = async () => {
     if (!newEmail) return;
@@ -528,6 +553,7 @@ function ModPanel({ setModName }) {
         <p><b>Email:</b> {email}</p>
 
         <button onClick={logout}>🚪 Logout</button>
+        <button onClick={checkModAuth}>Check Mod Auth</button>
 
         <div style={{ marginTop: 10 }}>
           <input
