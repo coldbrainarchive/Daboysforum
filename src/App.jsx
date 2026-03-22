@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { BrowserRouter as Router, Routes, Route, Link, useParams } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useParams } from "react-router-dom";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -92,6 +92,29 @@ async function getOptionalAuthHeader() {
   return data.session?.access_token
     ? { Authorization: `Bearer ${data.session.access_token}` }
     : {};
+}
+
+function RealtimeStyles() {
+  return (
+    <style>{`
+      @keyframes composerPulse {
+        0% { opacity: 0.55; transform: scale(0.98); }
+        50% { opacity: 1; transform: scale(1); }
+        100% { opacity: 0.55; transform: scale(0.98); }
+      }
+
+      @keyframes sendFlight {
+        0% { transform: translateX(0) translateY(0) scale(1); opacity: 1; }
+        70% { transform: translateX(14px) translateY(-10px) scale(1.08); opacity: 1; }
+        100% { transform: translateX(22px) translateY(-18px) scale(0.9); opacity: 0; }
+      }
+
+      @keyframes livePop {
+        0% { opacity: 0; transform: translateY(10px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+    `}</style>
+  );
 }
 
 // ==============================
@@ -205,12 +228,17 @@ function Home() {
 // CREATE POST (FIXED)
 // ==============================
 function NewPost() {
+  const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
   const createPost = async () => {
     try {
       if (!title.trim() || !content.trim()) return alert("Fill all fields");
+      if (isSending) return;
+
+      setIsSending(true);
 
       const { data } = await supabase.auth.getUser();
       const modMetadata = buildModMetadata(data.user);
@@ -232,6 +260,7 @@ function NewPost() {
 
       const result = await res.json();
       if (!res.ok) {
+        setIsSending(false);
         if (result.error === "Banned") {
           alert("🚫 You are banned from posting");
         } else {
@@ -242,18 +271,113 @@ function NewPost() {
 
       setTitle("");
       setContent("");
-      alert("Posted!");
+      setTimeout(() => {
+        navigate("/");
+      }, 450);
     } catch (err) {
+      setIsSending(false);
       alert(err.message);
     }
   };
 
   return (
-    <div>
-      <h2>New Post</h2>
-      <input value={title} onChange={(e) => setTitle(e.target.value)} />
-      <textarea value={content} onChange={(e) => setContent(e.target.value)} />
-      <button onClick={createPost}>Post</button>
+    <div
+      style={{
+        maxWidth: 720,
+        margin: "24px auto",
+        padding: 20,
+        border: "1px solid #d4d4d8",
+        borderRadius: 18,
+        background: "linear-gradient(180deg, #ffffff 0%, #f5f7fb 100%)",
+        boxShadow: "0 18px 50px rgba(15, 23, 42, 0.08)"
+      }}
+    >
+      <div style={{ marginBottom: 18 }}>
+        <h2 style={{ marginBottom: 6 }}>New Post</h2>
+        <p style={{ margin: 0, color: "#475569" }}>
+          Drop the title first, then write the full post underneath.
+        </p>
+      </div>
+
+      <div style={{ display: "grid", gap: 14 }}>
+        <label style={{ display: "grid", gap: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase" }}>
+            Title
+          </span>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Give the thread a title"
+            disabled={isSending}
+            style={{
+              padding: "14px 16px",
+              borderRadius: 12,
+              border: "1px solid #cbd5e1",
+              fontSize: 16
+            }}
+          />
+        </label>
+
+        <label style={{ display: "grid", gap: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase" }}>
+            Body
+          </span>
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="What’s going on?"
+            disabled={isSending}
+            rows={8}
+            style={{
+              padding: "16px",
+              borderRadius: 14,
+              border: "1px solid #cbd5e1",
+              fontSize: 15,
+              resize: "vertical"
+            }}
+          />
+        </label>
+
+        <div
+          style={{
+            padding: "14px 16px",
+            borderRadius: 14,
+            background: "#e0f2fe",
+            color: "#0f172a",
+            border: "1px solid #bae6fd",
+            animation: isSending ? "composerPulse 1s ease-in-out infinite" : "none"
+          }}
+        >
+          <b>{isSending ? "Sending post..." : "Ready to post"}</b>
+          <div style={{ marginTop: 4, fontSize: 14, color: "#334155" }}>
+            {isSending ? "Pushing your thread live now." : "Your title and body will go up together."}
+          </div>
+        </div>
+
+        <button
+          onClick={createPost}
+          disabled={isSending}
+          style={{
+            justifySelf: "start",
+            padding: "12px 18px",
+            borderRadius: 999,
+            border: "none",
+            background: isSending ? "#0f172a" : "#2563eb",
+            color: "#fff",
+            fontWeight: 700,
+            cursor: isSending ? "default" : "pointer"
+          }}
+        >
+          <span
+            style={{
+              display: "inline-block",
+              animation: isSending ? "sendFlight 0.8s ease-in-out infinite" : "none"
+            }}
+          >
+            {isSending ? "Sending..." : "Post Thread"}
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
@@ -266,6 +390,8 @@ function PostPage({ user }) {
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
+  const [isSendingComment, setIsSendingComment] = useState(false);
+  const [pendingComments, setPendingComments] = useState([]);
 
   const isMod = !!user;
 
@@ -295,8 +421,21 @@ function PostPage({ user }) {
 
   const addComment = async () => {
     if (!text.trim() || post?.locked) return;
+    if (isSendingComment) return;
 
     try {
+      const pendingContent = text;
+      const pendingId = crypto.randomUUID();
+      setIsSendingComment(true);
+      setPendingComments((current) => [
+        ...current,
+        {
+          id: pendingId,
+          content: pendingContent,
+          created_at: new Date().toISOString()
+        }
+      ]);
+
       const { data } = await supabase.auth.getUser();
       const modMetadata = buildModMetadata(data.user);
       const authHeaders = await getOptionalAuthHeader();
@@ -310,7 +449,7 @@ function PostPage({ user }) {
             ...authHeaders
           },
           body: JSON.stringify({
-            content: text,
+            content: pendingContent,
             post_id: id,
             browser_id: getBrowserId(),
             ...modMetadata
@@ -320,6 +459,8 @@ function PostPage({ user }) {
 
       const result = await res.json();
       if (!res.ok) {
+        setPendingComments((current) => current.filter((comment) => comment.id !== pendingId));
+        setIsSendingComment(false);
         if (result.error === "Banned") {
           alert("🚫 You are banned from commenting");
         } else {
@@ -329,8 +470,12 @@ function PostPage({ user }) {
       }
 
       setText("");
+      setPendingComments((current) => current.filter((comment) => comment.id !== pendingId));
+      setIsSendingComment(false);
       load();
     } catch (err) {
+      setPendingComments([]);
+      setIsSendingComment(false);
       console.error(err);
       alert("Failed to send comment");
     }
@@ -379,6 +524,24 @@ function PostPage({ user }) {
       )}
 
       {/* COMMENTS */}
+      {pendingComments.map((c) => (
+        <div
+          key={c.id}
+          style={{
+            borderLeft: "4px solid #38bdf8",
+            marginBottom: 10,
+            padding: 10,
+            background: "#f0f9ff",
+            borderRadius: 10,
+            animation: "livePop 0.25s ease-out, composerPulse 1s ease-in-out infinite"
+          }}
+        >
+          <b style={{ color: "#0284c7" }}>You</b>
+          <small> sending now...</small>
+          <p style={{ marginBottom: 0 }}>{c.content}</p>
+        </div>
+      ))}
+
       {comments.map((c) => {
         const isModUser = isModPost(c);
 
@@ -426,9 +589,41 @@ function PostPage({ user }) {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Write a comment..."
+            disabled={isSendingComment}
+            rows={4}
+            style={{
+              width: "100%",
+              maxWidth: 560,
+              padding: 12,
+              borderRadius: 12,
+              border: "1px solid #cbd5e1",
+              resize: "vertical"
+            }}
           />
-          <br />
-          <button onClick={addComment}>Send</button>
+          <div style={{ marginTop: 10 }}>
+            <button
+              onClick={addComment}
+              disabled={isSendingComment}
+              style={{
+                padding: "10px 16px",
+                borderRadius: 999,
+                border: "none",
+                background: isSendingComment ? "#0f172a" : "#2563eb",
+                color: "#fff",
+                fontWeight: 700,
+                cursor: isSendingComment ? "default" : "pointer"
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  animation: isSendingComment ? "sendFlight 0.8s ease-in-out infinite" : "none"
+                }}
+              >
+                {isSendingComment ? "Sending..." : "Send"}
+              </span>
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -620,6 +815,7 @@ export default function App() {
 }, []);
   return (
     <Router>
+      <RealtimeStyles />
       <nav>
   <Link to="/">Home</Link> |{" "}
   <Link to="/mod">
