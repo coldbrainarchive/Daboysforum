@@ -469,10 +469,6 @@ function Home() {
       <BoardsSidebar showHappening />
 
       <main className="home-feed">
-        <div className="feed-hero">
-          <div className="feed-hero-title">👻 Happening now</div>
-        </div>
-
         {posts.map((p) => {
           const isMod = isModPost(p);
 
@@ -802,7 +798,7 @@ function PostPage({ user }) {
 
   return (
     <div className="home-shell">
-      <BoardsSidebar activeBoard="News" />
+      <BoardsSidebar />
 
       <main className="home-feed" style={{ textAlign: "left" }}>
         <div className="content-card" style={{ marginBottom: 16 }}>
