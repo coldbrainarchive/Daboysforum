@@ -314,6 +314,19 @@ function RealtimeStyles() {
         100% { opacity: 1; transform: translateY(0); }
       }
 
+      @keyframes purpleSettle {
+        0% {
+          box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.95), 0 0 26px rgba(192, 132, 252, 0.35);
+          border-left-color: #c084fc;
+          background: rgba(88, 28, 135, 0.22);
+        }
+        100% {
+          box-shadow: none;
+          border-left-color: #ccc;
+          background: transparent;
+        }
+      }
+
       @media (max-width: 900px) {
         .app-topbar {
           padding: 12px 14px;
@@ -739,6 +752,7 @@ function PostPage({ user }) {
   const [text, setText] = useState("");
   const [isSendingComment, setIsSendingComment] = useState(false);
   const [pendingComments, setPendingComments] = useState([]);
+  const [recentCommentIds, setRecentCommentIds] = useState([]);
 
   const isMod = !!user;
 
@@ -758,17 +772,38 @@ function PostPage({ user }) {
 
     setPost(p);
     setComments(c || []);
-    setPendingComments((current) =>
-      current.filter(
-        (pending) =>
-          !(c || []).some(
-            (comment) =>
-              comment.content === pending.content &&
-              comment.browser_id === pending.browser_id &&
-              Math.abs(new Date(comment.created_at).getTime() - new Date(pending.created_at).getTime()) < 10000
-          )
-      )
-    );
+    setPendingComments((current) => {
+      const matchedCommentIds = [];
+      const nextPending = current.filter((pending) => {
+        const matchedComment = (c || []).find(
+          (comment) =>
+            comment.content === pending.content &&
+            comment.browser_id === pending.browser_id &&
+            Math.abs(new Date(comment.created_at).getTime() - new Date(pending.created_at).getTime()) < 10000
+        );
+
+        if (matchedComment) {
+          matchedCommentIds.push(matchedComment.id);
+          return false;
+        }
+
+        return true;
+      });
+
+      if (matchedCommentIds.length) {
+        setRecentCommentIds((currentIds) => [
+          ...new Set([...currentIds, ...matchedCommentIds])
+        ]);
+
+        setTimeout(() => {
+          setRecentCommentIds((currentIds) =>
+            currentIds.filter((commentId) => !matchedCommentIds.includes(commentId))
+          );
+        }, 900);
+      }
+
+      return nextPending;
+    });
   };
 
   useEffect(() => {
@@ -889,6 +924,7 @@ function PostPage({ user }) {
           {/* COMMENTS */}
           {comments.map((c) => {
             const isModUser = isModPost(c);
+            const isRecentComment = recentCommentIds.includes(c.id);
 
             return (
               <div
@@ -896,7 +932,9 @@ function PostPage({ user }) {
                 style={{
                   borderLeft: "4px solid #ccc",
                   marginBottom: 10,
-                  padding: 5
+                  padding: 5,
+                  borderRadius: 10,
+                  animation: isRecentComment ? "purpleSettle 0.9s ease-out forwards" : "none"
                 }}
               >
                 <b
@@ -937,14 +975,15 @@ function PostPage({ user }) {
                     borderLeft: "4px solid #c084fc",
                     marginBottom: 10,
                     padding: 10,
-                    background: "#23182f",
+                    background: "rgba(88, 28, 135, 0.22)",
                     borderRadius: 10,
+                    boxShadow: "0 0 0 1px rgba(192, 132, 252, 0.95), 0 0 26px rgba(192, 132, 252, 0.35)",
                     animation: "livePop 0.25s ease-out, composerPulse 1s ease-in-out infinite"
                   }}
                 >
-                  <b style={{ color: "#c084fc" }}>You</b>
-                  <small> sending now...</small>
-                  <p style={{ marginBottom: 0 }}>{c.content}</p>
+                  <b style={{ color: "#c084fc", fontWeight: "bold" }}>You</b>
+                  <small style={{ color: "#cbd5e1" }}> sending now...</small>
+                  <p style={{ marginBottom: 0, color: "#f8fafc" }}>{c.content}</p>
                 </div>
               ))}
 
