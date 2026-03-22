@@ -250,6 +250,7 @@ function RealtimeStyles() {
         transition: background 0.15s ease;
       }
 
+      .board-bubble.active,
       .board-bubble:hover {
         background: #252b34;
       }
@@ -379,11 +380,8 @@ function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappe
         {showHappening && (
           <Link
             to="/"
-            className="board-bubble"
-            style={{
-              textDecoration: "none",
-              background: highlightHappening ? "#252b34" : "transparent"
-            }}
+            className={`board-bubble${highlightHappening ? " active" : ""}`}
+            style={{ textDecoration: "none" }}
           >
             <span>✨</span>
             <span>Happening now</span>
