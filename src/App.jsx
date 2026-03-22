@@ -412,10 +412,10 @@ function ModPanel({ setModName }) {
   };
 
   // LOGOUT
-  const logout = async () => {
-    await supabase.auth.signOut();
-    location.reload();
-  };
+const logout = async () => {
+  await supabase.auth.signOut();
+  window.location.href = "/";
+};
 
   // UPDATE EMAIL
   const updateEmail = async () => {
@@ -529,14 +529,26 @@ export default function App() {
   const [modName, setModName] = useState(localStorage.getItem("mod_name") || "Mod");
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
-  }, []);
+  supabase.auth.getUser().then(({ data }) => setUser(data.user));
 
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    (_event, session) => {
+      setUser(session?.user || null);
+    }
+  );
+
+  return () => {
+    subscription.unsubscribe();
+  };
+}, []);
   return (
     <Router>
       <nav>
-        <Link to="/">Home</Link> | <Link to="/mod">Mod ({modName})</Link>
-      </nav>
+  <Link to="/">Home</Link> |{" "}
+  <Link to="/mod">
+    {user ? `👤 ${modName}` : "🔐 Login"}
+  </Link>
+</nav>
 
       <Routes>
         <Route path="/" element={<Home />} />
