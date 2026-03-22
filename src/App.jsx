@@ -186,7 +186,14 @@ function NewPost() {
     });
 
     const result = await res.json();
-    if (!res.ok) return alert(result.error);
+    if (!res.ok) {
+      if (result.error === "Banned") {
+        alert("🚫 You are banned from posting");
+      } else {
+        alert(result.error);
+      }
+      return;
+    }
 
     setTitle("");
     setContent("");
@@ -257,7 +264,14 @@ function PostPage({ user }) {
       );
 
       const result = await res.json();
-      if (!res.ok) return alert(result.error);
+      if (!res.ok) {
+        if (result.error === "Banned") {
+          alert("🚫 You are banned from commenting");
+        } else {
+          alert(result.error);
+        }
+        return;
+      }
 
       setText("");
       load();
