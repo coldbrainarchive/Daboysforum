@@ -628,7 +628,12 @@ function Home() {
           const isMod = isModPost(p);
 
           return (
-            <div key={p.id} className="content-card" style={{ marginBottom: 16 }}>
+            <Link
+              key={p.id}
+              to={`/post/${p.id}`}
+              style={{ textDecoration: "none", display: "block" }}
+            >
+              <div className="content-card" style={{ marginBottom: 16 }}>
               <div
                 style={{
                   display: "flex",
@@ -652,14 +657,13 @@ function Home() {
                 {p.locked && <b style={{ color: "#f87171" }}> 🔒</b>}
               </div>
 
-              <Link to={`/post/${p.id}`} className="feed-post-title">
-                <h3 className="feed-post-title">
-                  {p.title}
-                </h3>
-              </Link>
+              <h3 className="feed-post-title">
+                {p.title}
+              </h3>
 
               <p style={{ marginBottom: 12, color: "#cbd5e1" }}>{p.content}</p>
-            </div>
+              </div>
+            </Link>
           );
         })}
       </main>
