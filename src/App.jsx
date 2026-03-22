@@ -355,7 +355,7 @@ const BOARDS = [
   { name: "Jail", icon: "🚔" }
 ];
 
-function BoardsSidebar({ activeBoard = "", showHappening = false }) {
+function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappening = false }) {
   return (
     <aside className="home-sidebar">
       <div
@@ -376,7 +376,11 @@ function BoardsSidebar({ activeBoard = "", showHappening = false }) {
           <Link
             to="/"
             className="board-bubble"
-            style={{ textDecoration: "none" }}
+            style={{
+              textDecoration: "none",
+              background: highlightHappening ? "#252b34" : "transparent",
+              border: "1px solid #2e303a"
+            }}
           >
             <span>✨</span>
             <span>Happening now</span>
@@ -470,7 +474,7 @@ function Home() {
 
   return (
     <div className="home-shell">
-      <BoardsSidebar showHappening />
+      <BoardsSidebar showHappening highlightHappening />
 
       <main className="home-feed">
         {posts.map((p) => {
