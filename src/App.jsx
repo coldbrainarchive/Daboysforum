@@ -444,6 +444,10 @@ function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappe
 
 function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, isPending = false }) {
   const isModUser = isModPost(comment);
+  const displayName =
+    isPending && !isModUser && !comment.username
+      ? "Anonymous"
+      : (comment.username || `Anon #${shortId(comment.browser_id)}`);
 
   return (
     <div
@@ -468,7 +472,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, isPe
         }}
       >
         {isModUser && "👤 "}
-        {comment.username || `Anon #${shortId(comment.browser_id)}`}
+        {displayName}
         {comment.browser_id === postBrowserId && " (OP)"}
       </b>
 
