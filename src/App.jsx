@@ -487,19 +487,6 @@ function ModPanel({ setModName }) {
     await supabase.auth.signOut();
   };
 
-  const checkModAuth = async () => {
-    try {
-      const headers = await getAuthHeader();
-      const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/debug-auth", {
-        headers
-      });
-      const data = await res.json();
-      alert(JSON.stringify(data, null, 2));
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
   // UPDATE EMAIL
   const updateEmail = async () => {
     if (!newEmail) return;
@@ -560,7 +547,6 @@ function ModPanel({ setModName }) {
         <p><b>Email:</b> {email}</p>
 
         <button onClick={logout}>🚪 Logout</button>
-        <button onClick={checkModAuth}>Check Mod Auth</button>
 
         <div style={{ marginTop: 10 }}>
           <input
