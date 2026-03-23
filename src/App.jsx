@@ -1800,26 +1800,63 @@ function PostPage({ user }) {
   if (!post) return <div>Loading...</div>;
 
   const activeBoard = getBoardNameFromPost(post);
+  const postIsMod = isModPost(post);
+  const postAuthorLabel = post.username || `Anon #${shortId(post.browser_id)}`;
 
   return (
     <div className="home-shell">
       <BoardsTabs activeBoard={activeBoard} showHappening />
 
       <main className="home-feed" style={{ textAlign: "left" }}>
-        <div className="content-card" style={{ marginBottom: 16 }}>
-          {activeBoard && (
-            <div style={{ marginBottom: 12, color: "#94a3b8", fontSize: 14, fontWeight: 700 }}>
-              {BOARDS.find((board) => board.name === activeBoard)?.icon || "🧵"} {activeBoard}
-            </div>
-          )}
-          <h2>{post.title}</h2>
-          <p>{post.content}</p>
+        <div className="content-card feed-post-card" style={{ marginBottom: 16 }}>
+          <div className="feed-post-header">
+            {activeBoard && (
+              <div className="feed-post-board-row">
+                <span className="feed-post-board-group">
+                  <BoardBadge boardName={activeBoard} />
+                  {(post.pinned || post.locked) && (
+                    <span className="feed-post-statuses">
+                      {post.pinned && (
+                        <span className="feed-post-status" style={{ color: "#f8fafc" }}>
+                          📌
+                        </span>
+                      )}
+                      {post.locked && (
+                        <span className="feed-post-status" style={{ color: "#f87171" }}>
+                          🔒
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </span>
+                <span className="feed-post-time">
+                  {timeAgo(post.last_activity || post.created_at)}
+                </span>
+              </div>
+            )}
+          </div>
 
-          {post.locked && <b style={{ color: "red" }}>🔒 Locked</b>}
+          <div className="feed-post-main">
+            <div className="feed-post-author-row">
+              <span
+                className="feed-post-author"
+                style={{ color: postIsMod ? "#c084fc" : getUserColor(post.browser_id) }}
+              >
+                {postIsMod && "👤 "}
+                {postAuthorLabel}
+                <span style={{ color: "#8fa0b6", fontWeight: 500 }}> - Posted {timeAgo(post.created_at)}</span>
+              </span>
+            </div>
+
+            <h2 className="feed-post-title" style={{ fontSize: 32, marginBottom: 12 }}>
+              {post.title}
+            </h2>
+            <p className="feed-post-content">{post.content}</p>
+          </div>
 
           {/* 🔥 MOD CONTROLS (POST) */}
           {isMod && (
-            <div style={{ marginBottom: 10 }}>
+            <div style={{ marginTop: 14, marginBottom: 10 }}>
               <button onClick={() => modAction({ type: "delete_post", post_id: post.id })}>
                 🗑 Delete
               </button>
