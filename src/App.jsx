@@ -215,8 +215,12 @@ function RealtimeStyles() {
       }
 
       .boards-tabs-shell {
-        position: relative;
+        position: sticky;
+        top: 73px;
+        z-index: 15;
         margin: 0 0 16px;
+        padding-top: 8px;
+        background: #16171d;
       }
 
       .boards-tabs-shell::after {
@@ -287,10 +291,10 @@ function RealtimeStyles() {
       .boards-tab.active::after {
         content: "";
         position: absolute;
-        left: -1px;
-        right: -1px;
-        bottom: -2px;
-        height: 4px;
+        left: -2px;
+        right: -2px;
+        bottom: -4px;
+        height: 7px;
         background: #16171d;
       }
 
@@ -539,7 +543,9 @@ function RealtimeStyles() {
         }
 
         .boards-tabs-shell {
+          top: 62px;
           margin-bottom: 12px;
+          padding-top: 6px;
         }
 
         .boards-tabs {
