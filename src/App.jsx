@@ -857,8 +857,24 @@ function PostCard({ post, commentCount = 0 }) {
           {boardName && (
             <div className="feed-post-board-row">
               <BoardBadge boardName={boardName} />
-              <span style={{ color: "#94a3b8", fontSize: 14, fontWeight: 600 }}>
-                {timeAgo(post.last_activity || post.created_at)}
+              <span className="feed-post-meta">
+                <span className="feed-post-time">
+                  {timeAgo(post.last_activity || post.created_at)}
+                </span>
+                {(post.pinned || post.locked) && (
+                  <span className="feed-post-statuses">
+                    {post.pinned && (
+                      <span className="feed-post-status" style={{ color: "#f8fafc" }}>
+                        📌
+                      </span>
+                    )}
+                    {post.locked && (
+                      <span className="feed-post-status" style={{ color: "#f87171" }}>
+                        🔒
+                      </span>
+                    )}
+                  </span>
+                )}
               </span>
             </div>
           )}
@@ -870,20 +886,6 @@ function PostCard({ post, commentCount = 0 }) {
               {isMod && "👤 "}
               {post.username || `Anon #${shortId(post.browser_id)}`}
             </span>
-            {(post.pinned || post.locked) && (
-              <span className="feed-post-statuses">
-                {post.pinned && (
-                  <span className="feed-post-status" style={{ color: "#f8fafc" }}>
-                    📌 PINNED
-                  </span>
-                )}
-                {post.locked && (
-                  <span className="feed-post-status" style={{ color: "#f87171" }}>
-                    🔒 LOCKED
-                  </span>
-                )}
-              </span>
-            )}
           </div>
         </div>
 
