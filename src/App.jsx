@@ -537,6 +537,13 @@ function RealtimeStyles() {
         gap: 12px;
       }
 
+      .comment-children {
+        margin-top: 12px;
+        margin-left: 2px;
+        padding-left: 16px;
+        border-left: 2px solid rgba(148, 163, 184, 0.18);
+      }
+
       .comment-rail {
         display: flex;
         flex-direction: column;
@@ -841,6 +848,11 @@ function RealtimeStyles() {
           margin-top: 8px;
           gap: 8px;
         }
+
+        .comment-children {
+          margin-top: 10px;
+          padding-left: 12px;
+        }
       }
     `}</style>
   );
@@ -1048,6 +1060,38 @@ function hydratePostWithBoardTag(post) {
   if (!post) return post;
   const [hydratedPost] = hydratePostsWithBoardTags([post]);
   return hydratedPost;
+}
+
+function buildCommentTree(comments, sortOrder = "newest") {
+  const commentsById = new Map(comments.map((comment) => [comment.id, comment]));
+  const childrenByParentId = new Map();
+
+  comments.forEach((comment) => {
+    const parentId = comment.parent_comment_id && commentsById.has(comment.parent_comment_id)
+      ? comment.parent_comment_id
+      : null;
+
+    const currentChildren = childrenByParentId.get(parentId) || [];
+    currentChildren.push(comment);
+    childrenByParentId.set(parentId, currentChildren);
+  });
+
+  const sortItems = (items) => [...items].sort((a, b) => {
+    const timeA = new Date(a.created_at).getTime();
+    const timeB = new Date(b.created_at).getTime();
+    return sortOrder === "oldest" ? timeA - timeB : timeB - timeA;
+  });
+
+  const buildBranch = (parentId = null) => {
+    const branchItems = sortItems(childrenByParentId.get(parentId) || []);
+
+    return branchItems.map((comment) => ({
+      ...comment,
+      children: buildBranch(comment.id)
+    }));
+  };
+
+  return buildBranch(null);
 }
 
 function getStoredPostReactions() {
@@ -1347,13 +1391,15 @@ function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappenin
   );
 }
 
-function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply, isPending = false }) {
+function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply }) {
   const isModUser = isModPost(comment);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const isPending = comment.isPending === true;
   const displayName =
     isPending && !isModUser && !comment.username
       ? "Anonymous"
       : (comment.username || `Anon #${shortId(comment.browser_id)}`);
+  const childComments = comment.children || [];
 
   return (
     <div className={`comment-thread${isPending ? " pending" : ""}${isCollapsed ? " collapsed" : ""}`}>
@@ -1389,7 +1435,11 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
 
             <div className="comment-card-actions">
               {onReply && (
-                <button type="button" className="comment-action" onClick={() => onReply(displayName)}>
+                <button
+                  type="button"
+                  className="comment-action"
+                  onClick={() => onReply({ id: comment.id, name: displayName })}
+                >
                   Reply
                 </button>
               )}
@@ -1400,6 +1450,21 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
                 </button>
               )}
             </div>
+
+            {childComments.length > 0 && (
+              <div className="comment-children">
+                {childComments.map((childComment) => (
+                  <CommentCard
+                    key={childComment.id}
+                    comment={childComment}
+                    postBrowserId={postBrowserId}
+                    canDelete={canDelete}
+                    onDelete={onDelete}
+                    onReply={onReply}
+                  />
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -1918,6 +1983,7 @@ function PostPage({ user }) {
           (comment) =>
             comment.content === pending.content &&
             comment.browser_id === pending.browser_id &&
+            comment.parent_comment_id === pending.parent_comment_id &&
             Math.abs(new Date(comment.created_at).getTime() - new Date(pending.created_at).getTime()) < 10000
         );
 
@@ -1948,7 +2014,7 @@ function PostPage({ user }) {
     const pendingId = crypto.randomUUID();
 
     try {
-      const pendingContent = replyTarget ? `@${replyTarget} ${text}` : text;
+      const pendingContent = text;
       const browserId = getBrowserId();
       const { data } = await supabase.auth.getUser();
       const modMetadata = buildModMetadata(data.user);
@@ -1961,8 +2027,10 @@ function PostPage({ user }) {
           content: pendingContent,
           created_at: new Date().toISOString(),
           browser_id: browserId,
+          parent_comment_id: replyTarget?.id || null,
           username: modMetadata.username,
-          is_mod: modMetadata.is_mod
+          is_mod: modMetadata.is_mod,
+          isPending: true
         }
       ]);
 
@@ -1977,6 +2045,7 @@ function PostPage({ user }) {
           body: JSON.stringify({
             content: pendingContent,
             post_id: id,
+            parent_comment_id: replyTarget?.id || null,
             browser_id: browserId,
             ...modMetadata
           })
@@ -2012,11 +2081,7 @@ function PostPage({ user }) {
   const activeBoard = getBoardNameFromPost(post);
   const postIsMod = isModPost(post);
   const postAuthorLabel = post.username || `Anon #${shortId(post.browser_id)}`;
-  const sortedComments = [...comments].sort((a, b) => {
-    const timeA = new Date(a.created_at).getTime();
-    const timeB = new Date(b.created_at).getTime();
-    return commentSort === "oldest" ? timeA - timeB : timeB - timeA;
-  });
+  const commentTree = buildCommentTree([...comments, ...pendingComments], commentSort);
 
   return (
     <div className="home-shell">
@@ -2124,23 +2189,14 @@ function PostPage({ user }) {
             </div>
 
             <div className="comments-list">
-              {pendingComments.map((c) => (
-                <CommentCard
-                  key={c.id}
-                  comment={c}
-                  postBrowserId={post.browser_id}
-                  isPending
-                />
-              ))}
-
-              {sortedComments.map((c) => (
+              {commentTree.map((c) => (
                 <CommentCard
                   key={c.id}
                   comment={c}
                   postBrowserId={post.browser_id}
                   canDelete={isMod}
                   onDelete={() => modAction({ type: "delete_comment", comment_id: c.id })}
-                  onReply={(displayName) => setReplyTarget(displayName)}
+                  onReply={(target) => setReplyTarget(target)}
                 />
               ))}
             </div>
@@ -2149,7 +2205,7 @@ function PostPage({ user }) {
               <div className="comment-composer">
                 {replyTarget && (
                   <div className="reply-banner">
-                    <span>Replying to {replyTarget}</span>
+                    <span>Replying to {replyTarget.name}</span>
                     <button
                       type="button"
                       className="comment-action"
@@ -2163,7 +2219,7 @@ function PostPage({ user }) {
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  placeholder={replyTarget ? `Reply to ${replyTarget}...` : "Write a comment..."}
+                  placeholder={replyTarget ? `Reply to ${replyTarget.name}...` : "Write a comment..."}
                   disabled={isSendingComment}
                   rows={4}
                   style={{
