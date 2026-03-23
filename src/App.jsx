@@ -295,9 +295,6 @@ function RealtimeStyles() {
 
       .feed-post-card {
         padding: 20px 26px;
-        width: 100%;
-        box-sizing: border-box;
-        overflow: hidden;
       }
 
       .feed-post-title {
@@ -307,7 +304,6 @@ function RealtimeStyles() {
         line-height: 1.2;
         text-decoration: none;
         text-align: left;
-        overflow-wrap: anywhere;
       }
 
       .feed-post-header {
@@ -353,14 +349,12 @@ function RealtimeStyles() {
         display: block;
         text-align: left;
         width: min(100%, 920px);
-        max-width: 100%;
       }
 
       .feed-post-content {
         margin: 0 0 16px;
         color: #cbd5e1;
         text-align: left;
-        overflow-wrap: anywhere;
       }
 
       .feed-post-actions {
@@ -369,7 +363,6 @@ function RealtimeStyles() {
         align-items: center;
         gap: 8px;
         width: min(100%, 920px);
-        max-width: 100%;
       }
 
       .feed-post-vote-group,
@@ -498,38 +491,6 @@ function RealtimeStyles() {
         .feed-post-statuses {
           width: 100%;
           justify-content: flex-end;
-        }
-
-        .feed-post-card {
-          padding: 14px 16px;
-          margin-bottom: 12px !important;
-        }
-
-        .feed-post-title {
-          font-size: 18px;
-          margin-bottom: 8px;
-        }
-
-        .feed-post-header {
-          margin-bottom: 10px;
-          font-size: 13px;
-        }
-
-        .feed-post-content {
-          margin-bottom: 12px;
-          font-size: 14px;
-          line-height: 1.45;
-        }
-
-        .feed-post-actions {
-          gap: 6px;
-        }
-
-        .feed-post-vote-group,
-        .feed-post-action-pill {
-          min-height: 30px;
-          padding: 0 9px;
-          font-size: 11px;
         }
       }
     `}</style>
