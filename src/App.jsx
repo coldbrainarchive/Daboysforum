@@ -294,20 +294,20 @@ function RealtimeStyles() {
       }
 
       .feed-post-card {
-        padding: 20px 26px;
+        padding: 18px 22px;
       }
 
       .feed-post-title {
-        margin: 0 0 10px;
+        margin: 0 0 8px;
         color: #f8fafc;
-        font-size: 24px;
-        line-height: 1.2;
+        font-size: 23px;
+        line-height: 1.18;
         text-decoration: none;
         text-align: left;
       }
 
       .feed-post-header {
-        margin-bottom: 14px;
+        margin-bottom: 12px;
         color: #94a3b8;
         font-size: 14px;
         text-align: left;
@@ -317,7 +317,7 @@ function RealtimeStyles() {
         display: flex;
         align-items: center;
         gap: 12px;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
       }
 
       .feed-post-board-group {
@@ -330,7 +330,7 @@ function RealtimeStyles() {
       .feed-post-time {
         margin-left: auto;
         color: #94a3b8;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
         white-space: nowrap;
       }
@@ -345,6 +345,8 @@ function RealtimeStyles() {
       .feed-post-author {
         min-width: 0;
         font-weight: 700;
+        font-size: 14px;
+        line-height: 1.2;
       }
 
       .feed-post-statuses {
@@ -367,8 +369,10 @@ function RealtimeStyles() {
       }
 
       .feed-post-content {
-        margin: 0 0 16px;
+        margin: 0 0 14px;
         color: #cbd5e1;
+        font-size: 15px;
+        line-height: 1.5;
         text-align: left;
         overflow-wrap: anywhere;
       }
@@ -377,7 +381,7 @@ function RealtimeStyles() {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         width: min(100%, 920px);
       }
 
@@ -385,34 +389,34 @@ function RealtimeStyles() {
       .feed-post-action-pill {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        min-height: 34px;
-        padding: 0 10px;
+        gap: 6px;
+        min-height: 30px;
+        padding: 0 8px;
         border-radius: 999px;
         border: 1px solid #374151;
         background: #20262f;
         color: #f8fafc;
         text-decoration: none;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 800;
         letter-spacing: 0.01em;
       }
 
       .feed-post-vote-group {
-        padding: 0 6px;
+        padding: 0 5px;
       }
 
       .feed-post-action-button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 24px;
-        height: 24px;
+        width: 20px;
+        height: 20px;
         border: 0;
         border-radius: 999px;
         background: transparent;
         color: #e2e8f0;
-        font-size: 14px;
+        font-size: 12px;
         cursor: pointer;
       }
 
@@ -426,7 +430,7 @@ function RealtimeStyles() {
       }
 
       .feed-post-vote-score {
-        min-width: 18px;
+        min-width: 16px;
         text-align: center;
       }
 
@@ -519,7 +523,52 @@ function RealtimeStyles() {
         .feed-post-time {
           margin-left: auto;
           align-self: flex-start;
-          font-size: 12px;
+          font-size: 11px;
+        }
+
+        .feed-post-card {
+          padding: 14px 16px;
+        }
+
+        .feed-post-header {
+          margin-bottom: 10px;
+        }
+
+        .feed-post-board-row {
+          margin-bottom: 8px;
+          gap: 10px;
+        }
+
+        .feed-post-author {
+          font-size: 13px;
+        }
+
+        .feed-post-title {
+          font-size: 18px;
+          margin-bottom: 7px;
+        }
+
+        .feed-post-content {
+          margin-bottom: 12px;
+          font-size: 14px;
+          line-height: 1.45;
+        }
+
+        .feed-post-actions {
+          gap: 5px;
+        }
+
+        .feed-post-vote-group,
+        .feed-post-action-pill {
+          min-height: 28px;
+          padding: 0 7px;
+          font-size: 10px;
+        }
+
+        .feed-post-action-button {
+          width: 18px;
+          height: 18px;
+          font-size: 11px;
         }
       }
     `}</style>
