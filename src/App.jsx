@@ -227,6 +227,30 @@ function RealtimeStyles() {
         box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
       }
 
+      .boards-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-height: 32px;
+        padding: 0 12px;
+        margin-bottom: 12px;
+        background: #1b2129;
+        border: 1px solid #303744;
+        border-radius: 999px;
+        color: #94a3b8;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .boards-toggle.expanded {
+        width: 100%;
+        display: flex;
+      }
+
       .board-link {
         display: flex;
         align-items: center;
@@ -308,7 +332,7 @@ function RealtimeStyles() {
       }
 
       .feed-post-header {
-        margin-bottom: 10px;
+        margin-bottom: 0;
         color: #94a3b8;
         font-size: 14px;
         text-align: left;
@@ -318,6 +342,7 @@ function RealtimeStyles() {
         display: flex;
         align-items: center;
         gap: 12px;
+        min-height: 24px;
         margin-bottom: 0;
       }
 
@@ -372,6 +397,7 @@ function RealtimeStyles() {
       }
 
       .feed-post-main {
+        margin-top: 10px;
         padding: 12px 0 14px;
         border-top: 1px solid rgba(148, 163, 184, 0.12);
         border-bottom: 1px solid rgba(148, 163, 184, 0.12);
@@ -506,6 +532,16 @@ function RealtimeStyles() {
           position: static;
         }
 
+        .boards-toggle {
+          min-height: 30px;
+          padding: 0 10px;
+          margin-bottom: 10px;
+        }
+
+        .boards-toggle.expanded {
+          width: 100%;
+        }
+
         .feed-hero {
           margin-bottom: 14px;
         }
@@ -516,7 +552,7 @@ function RealtimeStyles() {
 
         .feed-post-board-row {
           flex-wrap: nowrap;
-          align-items: flex-start;
+          align-items: center;
         }
 
         .feed-post-author-row {
@@ -543,10 +579,11 @@ function RealtimeStyles() {
         }
 
         .feed-post-header {
-          margin-bottom: 8px;
+          margin-bottom: 0;
         }
 
         .feed-post-board-row {
+          min-height: 22px;
           gap: 10px;
         }
 
@@ -555,6 +592,7 @@ function RealtimeStyles() {
         }
 
         .feed-post-main {
+          margin-top: 8px;
           padding: 10px 0 12px;
         }
 
@@ -1057,23 +1095,7 @@ function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappe
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 12,
-          minHeight: 28,
-          padding: 0,
-          background: "transparent",
-          border: "none",
-          color: "#94a3b8",
-          fontSize: 12,
-          fontWeight: 800,
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          cursor: "pointer"
-        }}
+        className={`boards-toggle${isOpen ? " expanded" : ""}`}
       >
         <span>{sidebarLabel}</span>
         <span
