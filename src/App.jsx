@@ -535,6 +535,7 @@ function RealtimeStyles() {
         display: grid;
         grid-template-columns: 22px minmax(0, 1fr);
         gap: 12px;
+        align-items: start;
       }
 
       .comment-children {
@@ -576,7 +577,19 @@ function RealtimeStyles() {
       }
 
       .comment-thread.collapsed .comment-rail-line {
-        opacity: 0.35;
+        display: none;
+      }
+
+      .comment-thread.collapsed {
+        align-items: center;
+      }
+
+      .comment-thread.collapsed .comment-card {
+        padding-top: 0;
+      }
+
+      .comment-thread.collapsed .comment-card-header {
+        margin-bottom: 0;
       }
 
       .comment-card {
