@@ -293,6 +293,10 @@ function RealtimeStyles() {
         box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
       }
 
+      .feed-post-card {
+        padding: 20px 26px;
+      }
+
       .feed-post-title {
         margin: 0 0 10px;
         color: #f8fafc;
@@ -344,6 +348,7 @@ function RealtimeStyles() {
       .feed-post-link {
         display: block;
         text-align: left;
+        width: min(100%, 920px);
       }
 
       .feed-post-content {
@@ -356,40 +361,42 @@ function RealtimeStyles() {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
+        width: min(100%, 920px);
       }
 
       .feed-post-vote-group,
       .feed-post-action-pill {
         display: inline-flex;
         align-items: center;
-        gap: 10px;
-        min-height: 48px;
-        padding: 0 14px;
+        gap: 8px;
+        min-height: 34px;
+        padding: 0 10px;
         border-radius: 999px;
         border: 1px solid #374151;
         background: #20262f;
         color: #f8fafc;
         text-decoration: none;
-        font-size: 15px;
-        font-weight: 700;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.01em;
       }
 
       .feed-post-vote-group {
-        padding: 0 8px;
+        padding: 0 6px;
       }
 
       .feed-post-action-button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 38px;
-        height: 38px;
+        width: 24px;
+        height: 24px;
         border: 0;
         border-radius: 999px;
         background: transparent;
         color: #e2e8f0;
-        font-size: 21px;
+        font-size: 14px;
         cursor: pointer;
       }
 
@@ -403,7 +410,7 @@ function RealtimeStyles() {
       }
 
       .feed-post-vote-score {
-        min-width: 22px;
+        min-width: 18px;
         text-align: center;
       }
 
@@ -840,7 +847,7 @@ function PostCard({ post, commentCount = 0 }) {
   }
 
   return (
-    <div className="content-card" style={{ marginBottom: 16 }}>
+    <div className="content-card feed-post-card" style={{ marginBottom: 16 }}>
       <Link
         to={`/post/${post.id}`}
         className="feed-post-link"
