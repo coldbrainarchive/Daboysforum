@@ -528,28 +528,65 @@ function RealtimeStyles() {
 
       .comments-list {
         display: grid;
-        gap: 10px;
+        gap: 14px;
+      }
+
+      .comment-thread {
+        display: grid;
+        grid-template-columns: 22px minmax(0, 1fr);
+        gap: 12px;
+      }
+
+      .comment-rail {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100%;
+      }
+
+      .comment-collapse-toggle {
+        width: 22px;
+        height: 22px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        border: 1px solid #4b5563;
+        background: #16171d;
+        color: #f8fafc;
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      .comment-rail-line {
+        width: 2px;
+        flex: 1;
+        margin-top: 6px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.28);
+      }
+
+      .comment-thread.collapsed .comment-rail-line {
+        opacity: 0.35;
       }
 
       .comment-card {
-        padding: 12px 14px;
-        border: 1px solid rgba(148, 163, 184, 0.14);
-        border-radius: 14px;
-        background: rgba(255, 255, 255, 0.02);
+        padding: 2px 0 0;
+        background: transparent;
       }
 
-      .comment-card.pending {
-        background: rgba(192, 132, 252, 0.08);
-        box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.45), 0 0 24px rgba(192, 132, 252, 0.22);
+      .comment-thread.pending .comment-card {
         animation: commentLift 0.22s ease-out forwards, composerPulse 1s ease-in-out infinite;
       }
 
       .comment-card-header {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-start;
         gap: 12px;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
       }
 
       .comment-card-meta {
@@ -559,7 +596,7 @@ function RealtimeStyles() {
         gap: 8px;
         flex-wrap: wrap;
         color: #8fa0b6;
-        font-size: 12px;
+        font-size: 13px;
       }
 
       .comment-card-author {
@@ -569,24 +606,25 @@ function RealtimeStyles() {
       .comment-card-actions {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 10px;
+        margin-top: 10px;
       }
 
       .comment-action {
-        min-height: 26px;
-        padding: 0 9px;
-        border-radius: 999px;
-        border: 1px solid #374151;
+        min-height: 20px;
+        padding: 0;
+        border: none;
+        border-radius: 0;
         background: transparent;
-        color: #cbd5e1;
-        font-size: 11px;
+        color: #8fa0b6;
+        font-size: 12px;
         font-weight: 700;
         cursor: pointer;
       }
 
       .comment-body {
         color: #d4dde7;
-        font-size: 14px;
+        font-size: 15px;
         line-height: 1.5;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
@@ -789,17 +827,19 @@ function RealtimeStyles() {
         }
 
         .comment-card {
-          padding: 11px 12px;
+          padding: 2px 0 0;
         }
 
         .comment-card-header {
           align-items: flex-start;
           flex-direction: column;
-          gap: 8px;
+          gap: 6px;
         }
 
         .comment-card-actions {
           width: 100%;
+          margin-top: 8px;
+          gap: 8px;
         }
       }
     `}</style>
@@ -1307,7 +1347,7 @@ function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappenin
   );
 }
 
-function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, isPending = false }) {
+function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply, isPending = false }) {
   const isModUser = isModPost(comment);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const displayName =
@@ -1316,38 +1356,53 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, isPe
       : (comment.username || `Anon #${shortId(comment.browser_id)}`);
 
   return (
-    <div className={`comment-card${isPending ? " pending" : ""}`}>
-      <div className="comment-card-header">
-        <div className="comment-card-meta">
-          <span
-            className="comment-card-author"
-            style={{ color: isModUser ? "#c084fc" : getUserColor(comment.browser_id) }}
-          >
-            {isModUser && "👤 "}
-            {displayName}
-            {comment.browser_id === postBrowserId && " (OP)"}
-          </span>
-          <span>{timeAgo(comment.created_at)}</span>
-        </div>
-
-        <div className="comment-card-actions">
-          <button
-            type="button"
-            className="comment-action"
-            onClick={() => setIsCollapsed((current) => !current)}
-          >
-            {isCollapsed ? "Expand" : "Collapse"}
-          </button>
-
-          {canDelete && (
-            <button type="button" className="comment-action" onClick={onDelete}>
-              Delete
-            </button>
-          )}
-        </div>
+    <div className={`comment-thread${isPending ? " pending" : ""}${isCollapsed ? " collapsed" : ""}`}>
+      <div className="comment-rail">
+        <button
+          type="button"
+          className="comment-collapse-toggle"
+          onClick={() => setIsCollapsed((current) => !current)}
+        >
+          {isCollapsed ? "+" : "-"}
+        </button>
+        <span className="comment-rail-line" />
       </div>
 
-      {!isCollapsed && <div className="comment-body">{comment.content}</div>}
+      <div className="comment-card">
+        <div className="comment-card-header">
+          <div className="comment-card-meta">
+            <span
+              className="comment-card-author"
+              style={{ color: isModUser ? "#c084fc" : getUserColor(comment.browser_id) }}
+            >
+              {isModUser && "👤 "}
+              {displayName}
+              {comment.browser_id === postBrowserId && " (OP)"}
+            </span>
+            <span>{timeAgo(comment.created_at)}</span>
+          </div>
+        </div>
+
+        {!isCollapsed && (
+          <>
+            <div className="comment-body">{comment.content}</div>
+
+            <div className="comment-card-actions">
+              {onReply && (
+                <button type="button" className="comment-action" onClick={() => onReply(displayName)}>
+                  Reply
+                </button>
+              )}
+
+              {canDelete && (
+                <button type="button" className="comment-action" onClick={onDelete}>
+                  Delete
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -2079,26 +2134,14 @@ function PostPage({ user }) {
               ))}
 
               {sortedComments.map((c) => (
-                <div key={c.id}>
-                  <CommentCard
-                    comment={c}
-                    postBrowserId={post.browser_id}
-                    canDelete={isMod}
-                    onDelete={() => modAction({ type: "delete_comment", comment_id: c.id })}
-                  />
-                  <div style={{ marginTop: 6, marginLeft: 6 }}>
-                    <button
-                      type="button"
-                      className="comment-action"
-                      onClick={() => {
-                        const displayName = c.username || `Anon #${shortId(c.browser_id)}`;
-                        setReplyTarget(displayName);
-                      }}
-                    >
-                      Reply
-                    </button>
-                  </div>
-                </div>
+                <CommentCard
+                  key={c.id}
+                  comment={c}
+                  postBrowserId={post.browser_id}
+                  canDelete={isMod}
+                  onDelete={() => modAction({ type: "delete_comment", comment_id: c.id })}
+                  onReply={(displayName) => setReplyTarget(displayName)}
+                />
               ))}
             </div>
 
