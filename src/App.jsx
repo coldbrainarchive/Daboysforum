@@ -164,10 +164,10 @@ function RealtimeStyles() {
         align-items: center;
         justify-content: space-between;
         gap: 16px;
-        padding: 12px 18px;
-        border-bottom: 1px solid #2a2f38;
-        background: rgba(14, 17, 22, 0.94);
-        backdrop-filter: blur(12px);
+        padding: 14px 20px;
+        border-bottom: 1px solid #2e303a;
+        background: rgba(11, 15, 18, 0.92);
+        backdrop-filter: blur(14px);
       }
 
       .app-brand {
@@ -175,9 +175,9 @@ function RealtimeStyles() {
         align-items: center;
         gap: 10px;
         color: #f8fafc;
-        font-size: 24px;
+        font-size: 28px;
         font-weight: 800;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.03em;
         text-decoration: none;
       }
 
@@ -191,30 +191,28 @@ function RealtimeStyles() {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 38px;
-        padding: 0 14px;
+        padding: 10px 16px;
         border-radius: 999px;
-        background: #1a1f27;
+        background: #1f2937;
         color: #f8fafc;
         text-decoration: none;
-        font-size: 14px;
         font-weight: 700;
-        border: 1px solid #313844;
+        border: 1px solid #374151;
       }
 
       .app-chip.primary {
-        background: #d97706;
-        border-color: #f59e0b;
-        color: #fff7ed;
+        background: #c084fc;
+        border-color: #d8b4fe;
+        color: #14081d;
       }
 
       .home-shell {
         display: grid;
         grid-template-columns: 240px minmax(0, 1fr);
-        gap: 20px;
-        width: min(1180px, 100%);
+        gap: 24px;
+        width: min(1280px, 100%);
         margin: 0 auto;
-        padding: 18px 16px 28px;
+        padding: 24px 20px 32px;
         box-sizing: border-box;
       }
 
@@ -222,69 +220,43 @@ function RealtimeStyles() {
         position: sticky;
         top: 86px;
         align-self: start;
-        padding: 14px;
-        border: 1px solid #2a2f38;
-        border-radius: 16px;
-        background: #13171d;
-      }
-
-      .home-sidebar-toggle {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 10px;
-        min-height: 28px;
-        padding: 0;
-        background: transparent;
-        border: none;
-        color: #94a3b8;
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        cursor: pointer;
-      }
-
-      .board-list {
-        display: grid;
-        gap: 6px;
+        padding: 18px;
+        border: 1px solid #2e303a;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #161a20 0%, #101318 100%);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
       }
 
       .board-link {
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 10px 12px;
-        border-radius: 12px;
-        color: #cbd5e1;
+        padding: 12px 14px;
+        border-radius: 14px;
+        color: #dbe4ee;
         text-decoration: none;
         font-weight: 600;
-        border: 1px solid transparent;
       }
 
       .board-link.active,
       .board-link:hover {
-        background: #1b212a;
-        border-color: #313844;
+        background: #252b34;
       }
 
       .board-bubble {
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 10px 12px;
-        border-radius: 12px;
+        padding: 12px 14px;
+        border-radius: 14px;
         color: #f8fafc;
         font-weight: 700;
-        border: 1px solid transparent;
         transition: background 0.15s ease;
       }
 
       .board-bubble.active,
       .board-bubble:hover {
-        background: #1b212a;
-        border-color: #313844;
+        background: #252b34;
       }
 
       .home-feed {
@@ -294,9 +266,10 @@ function RealtimeStyles() {
       .feed-hero {
         margin-bottom: 18px;
         padding: 18px 20px;
-        border: 1px solid #2a2f38;
+        border: 1px solid #2e303a;
         border-radius: 18px;
-        background: #13171d;
+        background: linear-gradient(180deg, #161a20 0%, #101318 100%);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
       }
 
       .feed-hero-copy {
@@ -306,36 +279,37 @@ function RealtimeStyles() {
       .feed-hero-title {
         color: #f8fafc;
         font-family: var(--heading);
-        font-size: 34px;
+        font-size: 38px;
         font-weight: 800;
         letter-spacing: -0.04em;
-        line-height: 1;
+        line-height: 0.96;
       }
 
       .content-card {
-        padding: 18px;
-        border: 1px solid #2a2f38;
-        border-radius: 16px;
-        background: #171b21;
+        padding: 20px;
+        border: 1px solid #2e303a;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #1b1d24 0%, #14161c 100%);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
       }
 
       .feed-post-card {
-        padding: 16px 18px;
+        padding: 20px 26px;
       }
 
       .feed-post-title {
-        margin: 0 0 8px;
+        margin: 0 0 10px;
         color: #f8fafc;
-        font-size: 22px;
+        font-size: 24px;
         line-height: 1.2;
         text-decoration: none;
         text-align: left;
       }
 
       .feed-post-header {
-        margin-bottom: 10px;
+        margin-bottom: 14px;
         color: #94a3b8;
-        font-size: 13px;
+        font-size: 14px;
         text-align: left;
       }
 
@@ -344,7 +318,7 @@ function RealtimeStyles() {
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
       }
 
       .feed-post-author-row {
@@ -357,7 +331,6 @@ function RealtimeStyles() {
       .feed-post-author {
         min-width: 0;
         font-weight: 700;
-        font-size: 13px;
       }
 
       .feed-post-statuses {
@@ -379,10 +352,8 @@ function RealtimeStyles() {
       }
 
       .feed-post-content {
-        margin: 0 0 12px;
-        color: #d0d7e2;
-        font-size: 15px;
-        line-height: 1.45;
+        margin: 0 0 16px;
+        color: #cbd5e1;
         text-align: left;
       }
 
@@ -390,7 +361,7 @@ function RealtimeStyles() {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         width: min(100%, 920px);
       }
 
@@ -399,15 +370,16 @@ function RealtimeStyles() {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        min-height: 32px;
+        min-height: 34px;
         padding: 0 10px;
         border-radius: 999px;
-        border: 1px solid #313844;
-        background: #1c222b;
-        color: #dbe4ee;
+        border: 1px solid #374151;
+        background: #20262f;
+        color: #f8fafc;
         text-decoration: none;
         font-size: 12px;
-        font-weight: 700;
+        font-weight: 800;
+        letter-spacing: 0.01em;
       }
 
       .feed-post-vote-group {
@@ -423,13 +395,13 @@ function RealtimeStyles() {
         border: 0;
         border-radius: 999px;
         background: transparent;
-        color: #cbd5e1;
+        color: #e2e8f0;
         font-size: 14px;
         cursor: pointer;
       }
 
       .feed-post-action-button.active {
-        background: rgba(148, 163, 184, 0.16);
+        background: rgba(148, 163, 184, 0.2);
         color: #f8fafc;
       }
 
@@ -478,118 +450,47 @@ function RealtimeStyles() {
 
       @media (max-width: 900px) {
         .app-topbar {
-          padding: 10px 12px;
-          gap: 10px;
-          align-items: flex-start;
+          padding: 12px 14px;
         }
 
         .app-brand {
-          font-size: 18px;
-          line-height: 1.1;
+          font-size: 22px;
         }
 
         .app-actions {
-          gap: 6px;
-          flex-shrink: 0;
+          gap: 8px;
         }
 
         .app-chip {
-          min-height: 32px;
-          padding: 0 10px;
-          font-size: 12px;
+          padding: 9px 12px;
+          font-size: 14px;
         }
 
         .home-shell {
           grid-template-columns: 1fr;
-          gap: 12px;
-          padding: 12px 10px 20px;
+          padding: 16px 14px 24px;
         }
 
         .home-sidebar {
           position: static;
-          top: auto;
-          padding: 0;
-          border: none;
-          border-radius: 0;
-          background: transparent;
-        }
-
-        .home-sidebar-toggle {
-          display: none;
-        }
-
-        .board-list {
-          display: flex;
-          gap: 8px;
-          overflow-x: auto;
-          padding-bottom: 2px;
-          scrollbar-width: none;
-        }
-
-        .board-list::-webkit-scrollbar {
-          display: none;
-        }
-
-        .board-link,
-        .board-bubble {
-          flex: 0 0 auto;
-          gap: 8px;
-          padding: 8px 12px;
-          border-radius: 999px;
-          white-space: nowrap;
-          border-color: #313844;
-          background: #171b21;
-          font-size: 13px;
         }
 
         .feed-hero {
-          margin-bottom: 12px;
-          padding: 16px;
+          margin-bottom: 14px;
         }
 
         .feed-hero-title {
-          font-size: 28px;
+          font-size: 34px;
         }
 
         .feed-post-board-row,
         .feed-post-author-row {
           flex-wrap: wrap;
-          gap: 6px;
         }
 
         .feed-post-statuses {
           width: 100%;
-          justify-content: flex-start;
-          gap: 8px;
-        }
-
-        .content-card {
-          padding: 14px;
-          border-radius: 14px;
-        }
-
-        .feed-post-card {
-          padding: 14px;
-        }
-
-        .feed-post-title {
-          font-size: 18px;
-        }
-
-        .feed-post-content {
-          margin-bottom: 10px;
-          font-size: 14px;
-        }
-
-        .feed-post-actions {
-          gap: 5px;
-        }
-
-        .feed-post-vote-group,
-        .feed-post-action-pill {
-          min-height: 30px;
-          padding: 0 9px;
-          font-size: 11px;
+          justify-content: flex-end;
         }
       }
     `}</style>
@@ -1046,7 +947,10 @@ function PostCard({ post, commentCount = 0 }) {
 }
 
 function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappening = false }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.innerWidth > 900;
+  });
   const sidebarLabel = activeBoard ? `Boards: ${activeBoard}` : "Boards: Feed";
 
   return (
@@ -1054,7 +958,23 @@ function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappe
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        className="home-sidebar-toggle"
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 12,
+          minHeight: 28,
+          padding: 0,
+          background: "transparent",
+          border: "none",
+          color: "#94a3b8",
+          fontSize: 12,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          cursor: "pointer"
+        }}
       >
         <span>{sidebarLabel}</span>
         <span
@@ -1069,7 +989,7 @@ function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappe
         </span>
       </button>
 
-      <div className="board-list" style={{ display: isOpen ? undefined : "none" }}>
+      <div style={{ display: isOpen ? "grid" : "none", gap: 6 }}>
         {showHappening && (
           <Link
             to="/"
