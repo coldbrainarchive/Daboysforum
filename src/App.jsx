@@ -483,6 +483,135 @@ function RealtimeStyles() {
         cursor: pointer;
       }
 
+      .comments-shell {
+        margin-top: 18px;
+      }
+
+      .comments-panel {
+        padding: 18px 20px;
+      }
+
+      .comments-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .comments-panel-title {
+        color: #f8fafc;
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+
+      .comments-panel-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: #8fa0b6;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .comments-sort {
+        min-height: 32px;
+        padding: 0 12px;
+        border-radius: 999px;
+        border: 1px solid #374151;
+        background: #20262f;
+        color: #dbe4ee;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .comments-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .comment-card {
+        padding: 12px 14px;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .comment-card.pending {
+        background: rgba(192, 132, 252, 0.08);
+        box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.45), 0 0 24px rgba(192, 132, 252, 0.22);
+        animation: commentLift 0.22s ease-out forwards, composerPulse 1s ease-in-out infinite;
+      }
+
+      .comment-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .comment-card-meta {
+        min-width: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        color: #8fa0b6;
+        font-size: 12px;
+      }
+
+      .comment-card-author {
+        font-weight: 800;
+      }
+
+      .comment-card-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .comment-action {
+        min-height: 26px;
+        padding: 0 9px;
+        border-radius: 999px;
+        border: 1px solid #374151;
+        background: transparent;
+        color: #cbd5e1;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .comment-body {
+        color: #d4dde7;
+        font-size: 14px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .comment-composer {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(148, 163, 184, 0.12);
+      }
+
+      .reply-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+        padding: 8px 10px;
+        border-radius: 12px;
+        background: rgba(192, 132, 252, 0.12);
+        color: #e9d5ff;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
       @keyframes composerPulse {
         0% { opacity: 0.55; transform: scale(0.98); }
         50% { opacity: 1; transform: scale(1); }
@@ -647,6 +776,30 @@ function RealtimeStyles() {
           width: 18px;
           height: 18px;
           font-size: 11px;
+        }
+
+        .comments-panel {
+          padding: 14px;
+        }
+
+        .comments-panel-header {
+          align-items: flex-start;
+          flex-direction: column;
+          margin-bottom: 12px;
+        }
+
+        .comment-card {
+          padding: 11px 12px;
+        }
+
+        .comment-card-header {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .comment-card-actions {
+          width: 100%;
         }
       }
     `}</style>
@@ -1156,46 +1309,45 @@ function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappenin
 
 function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, isPending = false }) {
   const isModUser = isModPost(comment);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const displayName =
     isPending && !isModUser && !comment.username
       ? "Anonymous"
       : (comment.username || `Anon #${shortId(comment.browser_id)}`);
 
   return (
-    <div
-      style={{
-        borderLeft: "4px solid #ccc",
-        marginBottom: 10,
-        padding: 10,
-        borderRadius: 10,
-        background: isPending ? "rgba(192, 132, 252, 0.08)" : "transparent",
-        boxShadow: isPending
-          ? "0 0 0 1px rgba(192, 132, 252, 0.45), 0 0 24px rgba(192, 132, 252, 0.22)"
-          : "none",
-        animation: isPending
-          ? "commentLift 0.22s ease-out forwards, composerPulse 1s ease-in-out infinite"
-          : "none"
-      }}
-    >
-      <b
-        style={{
-          color: isModUser ? "#c084fc" : getUserColor(comment.browser_id),
-          fontWeight: "bold"
-        }}
-      >
-        {isModUser && "👤 "}
-        {displayName}
-        {comment.browser_id === postBrowserId && " (OP)"}
-      </b>
+    <div className={`comment-card${isPending ? " pending" : ""}`}>
+      <div className="comment-card-header">
+        <div className="comment-card-meta">
+          <span
+            className="comment-card-author"
+            style={{ color: isModUser ? "#c084fc" : getUserColor(comment.browser_id) }}
+          >
+            {isModUser && "👤 "}
+            {displayName}
+            {comment.browser_id === postBrowserId && " (OP)"}
+          </span>
+          <span>{timeAgo(comment.created_at)}</span>
+        </div>
 
-      <small> {timeAgo(comment.created_at)}</small>
-      <p>{comment.content}</p>
+        <div className="comment-card-actions">
+          <button
+            type="button"
+            className="comment-action"
+            onClick={() => setIsCollapsed((current) => !current)}
+          >
+            {isCollapsed ? "Expand" : "Collapse"}
+          </button>
 
-      {canDelete && (
-        <button onClick={onDelete}>
-          🗑 Delete
-        </button>
-      )}
+          {canDelete && (
+            <button type="button" className="comment-action" onClick={onDelete}>
+              Delete
+            </button>
+          )}
+        </div>
+      </div>
+
+      {!isCollapsed && <div className="comment-body">{comment.content}</div>}
     </div>
   );
 }
@@ -1684,6 +1836,8 @@ function PostPage({ user }) {
   const [text, setText] = useState("");
   const [isSendingComment, setIsSendingComment] = useState(false);
   const [pendingComments, setPendingComments] = useState([]);
+  const [commentSort, setCommentSort] = useState("newest");
+  const [replyTarget, setReplyTarget] = useState(null);
 
   const isMod = !!user;
 
@@ -1739,7 +1893,7 @@ function PostPage({ user }) {
     const pendingId = crypto.randomUUID();
 
     try {
-      const pendingContent = text;
+      const pendingContent = replyTarget ? `@${replyTarget} ${text}` : text;
       const browserId = getBrowserId();
       const { data } = await supabase.auth.getUser();
       const modMetadata = buildModMetadata(data.user);
@@ -1787,6 +1941,7 @@ function PostPage({ user }) {
       }
 
       setText("");
+      setReplyTarget(null);
       setIsSendingComment(false);
       load();
     } catch (err) {
@@ -1802,6 +1957,11 @@ function PostPage({ user }) {
   const activeBoard = getBoardNameFromPost(post);
   const postIsMod = isModPost(post);
   const postAuthorLabel = post.username || `Anon #${shortId(post.browser_id)}`;
+  const sortedComments = [...comments].sort((a, b) => {
+    const timeA = new Date(a.created_at).getTime();
+    const timeB = new Date(b.created_at).getTime();
+    return commentSort === "oldest" ? timeA - timeB : timeB - timeA;
+  });
 
   return (
     <div className="home-shell">
@@ -1886,21 +2046,29 @@ function PostPage({ user }) {
               </button>
             </div>
           )}
+        </div>
 
-          {/* COMMENTS */}
-          {comments.map((c) => (
-            <CommentCard
-              key={c.id}
-              comment={c}
-              postBrowserId={post.browser_id}
-              canDelete={isMod}
-              onDelete={() => modAction({ type: "delete_comment", comment_id: c.id })}
-            />
-          ))}
+        <section className="comments-shell">
+          <div className="content-card comments-panel">
+            <div className="comments-panel-header">
+              <div className="comments-panel-title">
+                {comments.length + pendingComments.length} Comments
+              </div>
 
-          {/* COMMENT BOX */}
-          {!post.locked && (
-            <div style={{ marginTop: 16, maxWidth: 560 }}>
+              <div className="comments-panel-controls">
+                <span>Sort</span>
+                <select
+                  className="comments-sort"
+                  value={commentSort}
+                  onChange={(e) => setCommentSort(e.target.value)}
+                >
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="comments-list">
               {pendingComments.map((c) => (
                 <CommentCard
                   key={c.id}
@@ -1910,52 +2078,91 @@ function PostPage({ user }) {
                 />
               ))}
 
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Write a comment..."
-                disabled={isSendingComment}
-                rows={4}
-                style={{
-                  width: "100%",
-                  maxWidth: 560,
-                  boxSizing: "border-box",
-                  padding: 12,
-                  borderRadius: 12,
-                  border: "1px solid #cbd5e1",
-                  resize: "vertical",
-                  fontSize: 16
-                }}
-              />
-              <div style={{ marginTop: 10 }}>
-                <button
-                  onClick={addComment}
+              {sortedComments.map((c) => (
+                <div key={c.id}>
+                  <CommentCard
+                    comment={c}
+                    postBrowserId={post.browser_id}
+                    canDelete={isMod}
+                    onDelete={() => modAction({ type: "delete_comment", comment_id: c.id })}
+                  />
+                  <div style={{ marginTop: 6, marginLeft: 6 }}>
+                    <button
+                      type="button"
+                      className="comment-action"
+                      onClick={() => {
+                        const displayName = c.username || `Anon #${shortId(c.browser_id)}`;
+                        setReplyTarget(displayName);
+                      }}
+                    >
+                      Reply
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {!post.locked && (
+              <div className="comment-composer">
+                {replyTarget && (
+                  <div className="reply-banner">
+                    <span>Replying to {replyTarget}</span>
+                    <button
+                      type="button"
+                      className="comment-action"
+                      onClick={() => setReplyTarget(null)}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+
+                <textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder={replyTarget ? `Reply to ${replyTarget}...` : "Write a comment..."}
                   disabled={isSendingComment}
+                  rows={4}
                   style={{
                     width: "100%",
-                    padding: "12px 16px",
-                    borderRadius: 14,
-                    border: "none",
-                    background: isSendingComment ? "#3b1f52" : "#c084fc",
-                    color: "#14081d",
-                    fontWeight: 700,
-                    fontSize: 15,
-                    cursor: isSendingComment ? "default" : "pointer"
+                    boxSizing: "border-box",
+                    padding: 12,
+                    borderRadius: 12,
+                    border: "1px solid #cbd5e1",
+                    resize: "vertical",
+                    fontSize: 16
                   }}
-                >
-                  <span
+                />
+                <div style={{ marginTop: 10 }}>
+                  <button
+                    onClick={addComment}
+                    disabled={isSendingComment}
                     style={{
-                      display: "inline-block",
-                      animation: isSendingComment ? "sendFlight 0.8s ease-in-out infinite" : "none"
+                      width: "100%",
+                      padding: "12px 16px",
+                      borderRadius: 14,
+                      border: "none",
+                      background: isSendingComment ? "#3b1f52" : "#c084fc",
+                      color: "#14081d",
+                      fontWeight: 700,
+                      fontSize: 15,
+                      cursor: isSendingComment ? "default" : "pointer"
                     }}
                   >
-                    {isSendingComment ? "Sending..." : "Send"}
-                  </span>
-                </button>
+                    <span
+                      style={{
+                        display: "inline-block",
+                        animation: isSendingComment ? "sendFlight 0.8s ease-in-out infinite" : "none"
+                      }}
+                    >
+                      {isSendingComment ? "Sending..." : "Send"}
+                    </span>
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </section>
       </main>
     </div>
   );
