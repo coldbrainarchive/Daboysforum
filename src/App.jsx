@@ -386,7 +386,7 @@ function RealtimeStyles() {
       .feed-post-link {
         display: block;
         text-align: left;
-        width: min(100%, 920px);
+        width: 100%;
         max-width: 100%;
       }
 
@@ -412,7 +412,7 @@ function RealtimeStyles() {
         align-items: center;
         gap: 6px;
         margin-top: 13px;
-        width: min(100%, 920px);
+        width: 100%;
       }
 
       .feed-post-vote-group,
