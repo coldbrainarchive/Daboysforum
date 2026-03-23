@@ -230,14 +230,14 @@ function RealtimeStyles() {
       .boards-toggle {
         display: inline-flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        min-height: 32px;
-        padding: 0 12px;
+        justify-content: center;
+        gap: 6px;
+        min-height: 24px;
+        padding: 0 2px;
         margin-bottom: 12px;
-        background: #1b2129;
-        border: 1px solid #303744;
-        border-radius: 999px;
+        background: transparent;
+        border: none;
+        border-radius: 0;
         color: #94a3b8;
         font-size: 12px;
         font-weight: 800;
@@ -249,6 +249,19 @@ function RealtimeStyles() {
       .boards-toggle.expanded {
         width: 100%;
         display: flex;
+        justify-content: space-between;
+        min-height: 28px;
+        padding: 0;
+      }
+
+      .boards-toggle-caret {
+        font-size: 16px;
+        line-height: 1;
+        transition: transform 0.18s ease, opacity 0.18s ease;
+      }
+
+      .boards-toggle:not(.expanded) .boards-toggle-caret {
+        display: none;
       }
 
       .board-link {
@@ -533,13 +546,14 @@ function RealtimeStyles() {
         }
 
         .boards-toggle {
-          min-height: 30px;
-          padding: 0 10px;
+          min-height: 24px;
+          padding: 0 2px;
           margin-bottom: 10px;
         }
 
         .boards-toggle.expanded {
           width: 100%;
+          min-height: 28px;
         }
 
         .feed-hero {
@@ -1099,11 +1113,9 @@ function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappe
       >
         <span>{sidebarLabel}</span>
         <span
+          className="boards-toggle-caret"
           style={{
-            fontSize: 16,
-            lineHeight: 1,
-            transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)",
-            transition: "transform 0.18s ease"
+            transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)"
           }}
         >
           ▾
