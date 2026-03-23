@@ -215,13 +215,27 @@ function RealtimeStyles() {
       }
 
       .boards-tabs {
+        position: relative;
         display: flex;
         align-items: flex-end;
         gap: 6px;
         margin: 0 0 16px;
         overflow-x: auto;
+        overflow-y: hidden;
         padding: 0 2px;
         scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x;
+      }
+
+      .boards-tabs::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 1px;
+        background: rgba(48, 55, 68, 0.9);
       }
 
       .boards-tabs::-webkit-scrollbar {
@@ -239,14 +253,15 @@ function RealtimeStyles() {
         border: 1px solid #303744;
         border-bottom: 0;
         border-radius: 16px 16px 0 0;
-        background: linear-gradient(180deg, #202733 0%, #161b23 100%);
+        background: linear-gradient(180deg, #212937 0%, #181f29 100%);
         color: #a8b6c8;
         text-decoration: none;
         font-size: 13px;
         font-weight: 700;
         line-height: 1;
         transform: translateY(6px);
-        transition: transform 0.16s ease, color 0.16s ease, background 0.16s ease;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        transition: transform 0.16s ease, color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
       }
 
       .boards-tab:hover {
@@ -256,9 +271,12 @@ function RealtimeStyles() {
 
       .boards-tab.active {
         z-index: 1;
-        background: linear-gradient(180deg, #2a3342 0%, #1b222d 100%);
+        background: linear-gradient(180deg, #262d39 0%, #1b1d24 72%, #1b1d24 100%);
         color: #f8fafc;
         transform: translateY(0);
+        box-shadow:
+          0 -1px 0 rgba(255, 255, 255, 0.04),
+          0 12px 24px rgba(0, 0, 0, 0.16);
       }
 
       .boards-tab::after {
@@ -267,12 +285,15 @@ function RealtimeStyles() {
         left: 10px;
         right: 10px;
         bottom: -1px;
-        height: 1px;
-        background: #171b21;
+        height: 2px;
+        background: rgba(23, 27, 33, 0.95);
       }
 
       .boards-tab.active::after {
-        background: #1b1d24;
+        left: 0;
+        right: 0;
+        height: 8px;
+        background: linear-gradient(180deg, rgba(27, 29, 36, 0.96) 0%, rgba(27, 29, 36, 1) 55%, rgba(27, 29, 36, 0) 100%);
       }
 
       .home-feed {
@@ -522,6 +543,8 @@ function RealtimeStyles() {
         .boards-tabs {
           gap: 4px;
           margin-bottom: 12px;
+          padding: 0 1px 2px;
+          scroll-snap-type: x proximity;
         }
 
         .boards-tab {
@@ -530,6 +553,7 @@ function RealtimeStyles() {
           border-radius: 12px 12px 0 0;
           font-size: 12px;
           transform: translateY(4px);
+          scroll-snap-align: start;
         }
 
         .boards-tab:hover {
