@@ -228,6 +228,7 @@ function RealtimeStyles() {
         height: 1px;
         background: rgba(48, 55, 68, 0.9);
         z-index: 0;
+        pointer-events: none;
       }
 
       .boards-tabs {
@@ -236,7 +237,7 @@ function RealtimeStyles() {
         gap: 6px;
         overflow-x: auto;
         overflow-y: visible;
-        padding: 6px 2px 0;
+        padding: 0 2px 0;
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
         touch-action: pan-x;
@@ -264,24 +265,23 @@ function RealtimeStyles() {
         font-size: 13px;
         font-weight: 700;
         line-height: 1;
-        transform: translateY(6px);
+        margin-bottom: -1px;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-        transition: transform 0.16s ease, color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+        transition: color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
       }
 
       .boards-tab:hover {
         color: #dbe4ee;
-        transform: translateY(3px);
       }
 
       .boards-tab.active {
         z-index: 2;
         background: #16171d;
         color: #f8fafc;
-        transform: translateY(0);
+        min-height: 44px;
         box-shadow:
           0 -1px 0 rgba(255, 255, 255, 0.04),
-          0 8px 20px rgba(0, 0, 0, 0.12);
+          0 6px 18px rgba(0, 0, 0, 0.1);
       }
 
       .boards-tab.active::after {
@@ -544,25 +544,20 @@ function RealtimeStyles() {
 
         .boards-tabs {
           gap: 4px;
-          padding: 7px 1px 0;
+          padding: 0 1px 0;
           scroll-snap-type: x proximity;
         }
 
         .boards-tab {
-          min-height: 34px;
+          min-height: 32px;
           padding: 0 11px;
           border-radius: 12px 12px 0 0;
           font-size: 12px;
-          transform: translateY(4px);
           scroll-snap-align: start;
         }
 
-        .boards-tab:hover {
-          transform: translateY(2px);
-        }
-
         .boards-tab.active {
-          transform: translateY(0);
+          min-height: 36px;
         }
 
         .feed-hero {
