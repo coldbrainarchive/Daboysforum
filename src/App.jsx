@@ -214,21 +214,12 @@ function RealtimeStyles() {
         box-sizing: border-box;
       }
 
-      .boards-tabs {
+      .boards-tabs-shell {
         position: relative;
-        display: flex;
-        align-items: flex-end;
-        gap: 6px;
         margin: 0 0 16px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        padding: 0 2px;
-        scrollbar-width: none;
-        -webkit-overflow-scrolling: touch;
-        touch-action: pan-x;
       }
 
-      .boards-tabs::after {
+      .boards-tabs-shell::after {
         content: "";
         position: absolute;
         left: 0;
@@ -236,6 +227,18 @@ function RealtimeStyles() {
         bottom: 0;
         height: 1px;
         background: rgba(48, 55, 68, 0.9);
+      }
+
+      .boards-tabs {
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 0 2px 1px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x;
       }
 
       .boards-tabs::-webkit-scrollbar {
@@ -271,7 +274,7 @@ function RealtimeStyles() {
 
       .boards-tab.active {
         z-index: 1;
-        background: linear-gradient(180deg, #262d39 0%, #1b1d24 72%, #1b1d24 100%);
+        background: linear-gradient(180deg, #242b37 0%, #16171d 70%, #16171d 100%);
         color: #f8fafc;
         transform: translateY(0);
         box-shadow:
@@ -293,7 +296,7 @@ function RealtimeStyles() {
         left: 0;
         right: 0;
         height: 8px;
-        background: linear-gradient(180deg, rgba(27, 29, 36, 0.96) 0%, rgba(27, 29, 36, 1) 55%, rgba(27, 29, 36, 0) 100%);
+        background: linear-gradient(180deg, rgba(22, 23, 29, 0.98) 0%, rgba(22, 23, 29, 1) 60%, rgba(22, 23, 29, 0) 100%);
       }
 
       .home-feed {
@@ -540,10 +543,13 @@ function RealtimeStyles() {
           padding: 16px 14px 24px;
         }
 
+        .boards-tabs-shell {
+          margin-bottom: 12px;
+        }
+
         .boards-tabs {
           gap: 4px;
-          margin-bottom: 12px;
-          padding: 0 1px 2px;
+          padding: 0 1px 1px;
           scroll-snap-type: x proximity;
         }
 
@@ -1107,28 +1113,30 @@ function PostCard({ post, commentCount = 0 }) {
 
 function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappening = false }) {
   return (
-    <nav className="boards-tabs" aria-label="Boards">
-      {showHappening && (
-        <Link
-          to="/"
-          className={`boards-tab${highlightHappening ? " active" : ""}`}
-        >
-          <span>✨</span>
-          <span>Feed</span>
-        </Link>
-      )}
+    <div className="boards-tabs-shell">
+      <nav className="boards-tabs" aria-label="Boards">
+        {showHappening && (
+          <Link
+            to="/"
+            className={`boards-tab${highlightHappening ? " active" : ""}`}
+          >
+            <span>✨</span>
+            <span>Feed</span>
+          </Link>
+        )}
 
-      {BOARDS.map((board) => (
-        <Link
-          key={board.name}
-          to={`/board/${board.slug}`}
-          className={`boards-tab${board.name === activeBoard ? " active" : ""}`}
-        >
-          <span>{board.icon}</span>
-          <span>{board.name}</span>
-        </Link>
-      ))}
-    </nav>
+        {BOARDS.map((board) => (
+          <Link
+            key={board.name}
+            to={`/board/${board.slug}`}
+            className={`boards-tab${board.name === activeBoard ? " active" : ""}`}
+          >
+            <span>{board.icon}</span>
+            <span>{board.name}</span>
+          </Link>
+        ))}
+      </nav>
+    </div>
   );
 }
 
