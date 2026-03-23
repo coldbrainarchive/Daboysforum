@@ -230,14 +230,15 @@ function RealtimeStyles() {
       .boards-toggle {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         gap: 6px;
-        min-height: 24px;
-        padding: 0 2px;
+        width: fit-content;
+        min-height: 26px;
+        padding: 0 10px;
         margin-bottom: 12px;
-        background: transparent;
-        border: none;
-        border-radius: 0;
+        background: #1b2129;
+        border: 1px solid #303744;
+        border-radius: 999px;
         color: #94a3b8;
         font-size: 12px;
         font-weight: 800;
@@ -252,6 +253,9 @@ function RealtimeStyles() {
         justify-content: space-between;
         min-height: 28px;
         padding: 0;
+        background: transparent;
+        border: none;
+        border-radius: 0;
       }
 
       .boards-toggle-caret {
@@ -547,7 +551,7 @@ function RealtimeStyles() {
 
         .boards-toggle {
           min-height: 24px;
-          padding: 0 2px;
+          padding: 0 8px;
           margin-bottom: 10px;
         }
 
