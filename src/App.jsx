@@ -499,7 +499,11 @@ function RealtimeStyles() {
           font-size: 34px;
         }
 
-        .feed-post-board-row,
+        .feed-post-board-row {
+          flex-wrap: nowrap;
+          align-items: flex-start;
+        }
+
         .feed-post-author-row {
           flex-wrap: wrap;
         }
@@ -513,8 +517,8 @@ function RealtimeStyles() {
         }
 
         .feed-post-time {
-          width: 100%;
-          margin-left: 0;
+          margin-left: auto;
+          align-self: flex-start;
           font-size: 12px;
         }
       }
