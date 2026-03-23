@@ -2149,6 +2149,55 @@ function PostPage({ user }) {
               {post.title}
             </h2>
             <p className="feed-post-content">{post.content}</p>
+
+            <div className="feed-post-actions" style={{ marginTop: 14 }}>
+              <div className="feed-post-vote-group">
+                <button
+                  type="button"
+                  className="feed-post-action-button"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    toggleVoteForPost(post.id, 1);
+                  }}
+                >
+                  👍
+                </button>
+                <span className="feed-post-vote-score">
+                  {getVoteStateForPost(post.id).score}
+                </span>
+                <button
+                  type="button"
+                  className="feed-post-action-button downvote"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    toggleVoteForPost(post.id, -1);
+                  }}
+                >
+                  👎
+                </button>
+              </div>
+
+              <span className="feed-post-action-pill">
+                💬 {comments.length + pendingComments.length}
+              </span>
+
+              <button
+                type="button"
+                className="feed-post-action-pill"
+                onClick={async (event) => {
+                  event.preventDefault();
+                  const shareUrl = `${window.location.origin}/post/${post.id}`;
+                  try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    alert("Link copied!");
+                  } catch {
+                    alert("Failed to copy link");
+                  }
+                }}
+              >
+                ↗ Share
+              </button>
+            </div>
           </div>
 
           {/* 🔥 MOD CONTROLS (POST) */}
