@@ -212,7 +212,7 @@ function RealtimeStyles() {
         display: block;
         width: min(1280px, 100%);
         margin: 0 auto;
-        padding: 24px 20px 32px;
+        padding: 0 20px 32px;
         box-sizing: border-box;
       }
 
@@ -521,7 +521,7 @@ function RealtimeStyles() {
         }
 
         .home-shell {
-          padding: 16px 14px 24px;
+          padding: 0 14px 24px;
         }
 
         .boards-tabs-shell {
