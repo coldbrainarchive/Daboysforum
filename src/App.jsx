@@ -909,6 +909,7 @@ function filterPostsForBoard(posts, boardName) {
 const BOARD_TAGS_STORAGE_KEY = "board_tags_by_post_id";
 const PENDING_BOARD_TAGS_STORAGE_KEY = "pending_board_tags";
 const POST_REACTIONS_STORAGE_KEY = "post_reactions_by_browser";
+const POST_VOTE_CACHE_KEY = "post_vote_summary_cache";
 const POST_VOTES_STORAGE_KEY = "post_votes_by_browser";
 const STANDARD_REACTIONS = [
   "😀", "😁", "😂", "🤣", "😊", "😍", "😘", "😎",
@@ -1119,6 +1120,90 @@ function setStoredPostReactions(reactions) {
   writeStorageJson(POST_REACTIONS_STORAGE_KEY, reactions);
 }
 
+function getStoredPostVoteSummaries() {
+  return readStorageJson(POST_VOTE_CACHE_KEY, {});
+}
+
+function setStoredPostVoteSummaries(votes) {
+  writeStorageJson(POST_VOTE_CACHE_KEY, votes);
+}
+
+function rememberPostVoteSummary(postId, summary) {
+  const storedVotes = getStoredPostVoteSummaries();
+  setStoredPostVoteSummaries({
+    ...storedVotes,
+    [postId]: {
+      score: summary?.score || 0,
+      myVote: summary?.myVote || 0
+    }
+  });
+}
+
+async function fetchPostVoteSummary(postId) {
+  const browserId = getBrowserId();
+
+  const res = await fetch(
+    "https://daboysforumip.coldbrainarchive.workers.dev/post-votes?post_id=" + encodeURIComponent(postId) + "&browser_id=" + encodeURIComponent(browserId),
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }
+  );
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.error || "Failed to load votes");
+  }
+
+  const summary = {
+    score: result.score || 0,
+    myVote: result.myVote || 0
+  };
+
+  rememberPostVoteSummary(postId, summary);
+  return summary;
+}
+
+async function submitPostVote(postId, direction, currentVote = 0) {
+  const browserId = getBrowserId();
+  const { data } = await supabase.auth.getUser();
+  const authHeaders = await getOptionalAuthHeader();
+  const modMetadata = buildModMetadata(data.user);
+  const nextValue = currentVote === direction ? 0 : direction;
+
+  const res = await fetch(
+    "https://daboysforumip.coldbrainarchive.workers.dev/vote-post",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders
+      },
+      body: JSON.stringify({
+        post_id: postId,
+        browser_id: browserId,
+        value: nextValue,
+        ...modMetadata
+      })
+    }
+  );
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.error || "Failed to save vote");
+  }
+
+  const summary = {
+    score: result.score || 0,
+    myVote: result.myVote || 0
+  };
+
+  rememberPostVoteSummary(postId, summary);
+  return summary;
+}
+
 function getReactionStateForPost(postId) {
   const reactionsByPost = getStoredPostReactions();
   const postReactions = reactionsByPost[postId] || {};
@@ -1153,43 +1238,6 @@ function toggleReactionForPost(postId, emoji) {
   });
 }
 
-function getStoredPostVotes() {
-  return readStorageJson(POST_VOTES_STORAGE_KEY, {});
-}
-
-function setStoredPostVotes(votes) {
-  writeStorageJson(POST_VOTES_STORAGE_KEY, votes);
-}
-
-function getVoteStateForPost(postId) {
-  const votesByPost = getStoredPostVotes();
-  const postVotes = votesByPost[postId] || {};
-  const values = Object.values(postVotes);
-
-  return {
-    score: values.reduce((sum, value) => sum + value, 0),
-    selectedVote: postVotes[getBrowserId()] || 0
-  };
-}
-
-function toggleVoteForPost(postId, direction) {
-  const browserId = getBrowserId();
-  const votesByPost = getStoredPostVotes();
-  const postVotes = {
-    ...(votesByPost[postId] || {})
-  };
-
-  if (postVotes[browserId] === direction) {
-    delete postVotes[browserId];
-  } else {
-    postVotes[browserId] = direction;
-  }
-
-  setStoredPostVotes({
-    ...votesByPost,
-    [postId]: postVotes
-  });
-}
 
 function BoardBadge({ boardName }) {
   const matchedBoard = BOARDS.find((board) => board.name === boardName);
@@ -1219,11 +1267,50 @@ function BoardBadge({ boardName }) {
 }
 
 function PostCard({ post, commentCount = 0 }) {
-  const [voteVersion, setVoteVersion] = useState(0);
+  const [voteState, setVoteState] = useState(() => {
+    const storedVotes = getStoredPostVoteSummaries();
+    return storedVotes[post.id] || { score: 0, myVote: 0 };
+  });
+  const [isVoting, setIsVoting] = useState(false);
   const [shareLabel, setShareLabel] = useState("Share");
   const isMod = isModPost(post);
   const boardName = getBoardNameFromPost(post);
-  const { score, selectedVote } = getVoteStateForPost(post.id);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetchPostVoteSummary(post.id)
+      .then((summary) => {
+        if (isMounted) {
+          setVoteState(summary);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load post votes", error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [post.id]);
+
+  async function handleVote(event, direction) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (isVoting) return;
+
+    try {
+      setIsVoting(true);
+      const summary = await submitPostVote(post.id, direction, voteState.myVote);
+      setVoteState(summary);
+    } catch (error) {
+      console.error("Failed to save post vote", error);
+      alert(error.message || "Failed to save vote");
+    } finally {
+      setIsVoting(false);
+    }
+  }
 
   async function handleShare(event) {
     event.preventDefault();
@@ -1315,27 +1402,21 @@ function PostCard({ post, commentCount = 0 }) {
           <button
             type="button"
             aria-label="Thumbs up"
-            className={`feed-post-action-button${selectedVote === 1 ? " active" : ""}`}
-            onClick={(event) => {
-              event.preventDefault();
-              toggleVoteForPost(post.id, 1);
-              setVoteVersion((current) => current + 1);
-            }}
+            className={`feed-post-action-button${voteState.myVote === 1 ? " active" : ""}`}
+            onClick={(event) => handleVote(event, 1)}
+            disabled={isVoting}
           >
             <span aria-hidden="true">👍</span>
           </button>
-          <span key={voteVersion} className="feed-post-vote-score">
-            {score}
+          <span className="feed-post-vote-score">
+            {voteState.score}
           </span>
           <button
             type="button"
             aria-label="Thumbs down"
-            className={`feed-post-action-button${selectedVote === -1 ? " active downvote" : ""}`}
-            onClick={(event) => {
-              event.preventDefault();
-              toggleVoteForPost(post.id, -1);
-              setVoteVersion((current) => current + 1);
-            }}
+            className={`feed-post-action-button${voteState.myVote === -1 ? " active downvote" : ""}`}
+            onClick={(event) => handleVote(event, -1)}
+            disabled={isVoting}
           >
             <span aria-hidden="true">👎</span>
           </button>
