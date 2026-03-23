@@ -164,10 +164,10 @@ function RealtimeStyles() {
         align-items: center;
         justify-content: space-between;
         gap: 16px;
-        padding: 14px 20px;
-        border-bottom: 1px solid #2e303a;
-        background: rgba(11, 15, 18, 0.92);
-        backdrop-filter: blur(14px);
+        padding: 12px 18px;
+        border-bottom: 1px solid #2a2f38;
+        background: rgba(14, 17, 22, 0.94);
+        backdrop-filter: blur(12px);
       }
 
       .app-brand {
@@ -175,9 +175,9 @@ function RealtimeStyles() {
         align-items: center;
         gap: 10px;
         color: #f8fafc;
-        font-size: 28px;
+        font-size: 24px;
         font-weight: 800;
-        letter-spacing: -0.03em;
+        letter-spacing: -0.02em;
         text-decoration: none;
       }
 
@@ -191,28 +191,30 @@ function RealtimeStyles() {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 10px 16px;
+        min-height: 38px;
+        padding: 0 14px;
         border-radius: 999px;
-        background: #1f2937;
+        background: #1a1f27;
         color: #f8fafc;
         text-decoration: none;
+        font-size: 14px;
         font-weight: 700;
-        border: 1px solid #374151;
+        border: 1px solid #313844;
       }
 
       .app-chip.primary {
-        background: #c084fc;
-        border-color: #d8b4fe;
-        color: #14081d;
+        background: #d97706;
+        border-color: #f59e0b;
+        color: #fff7ed;
       }
 
       .home-shell {
         display: grid;
         grid-template-columns: 240px minmax(0, 1fr);
-        gap: 24px;
-        width: min(1280px, 100%);
+        gap: 20px;
+        width: min(1180px, 100%);
         margin: 0 auto;
-        padding: 24px 20px 32px;
+        padding: 18px 16px 28px;
         box-sizing: border-box;
       }
 
@@ -220,43 +222,69 @@ function RealtimeStyles() {
         position: sticky;
         top: 86px;
         align-self: start;
-        padding: 18px;
-        border: 1px solid #2e303a;
-        border-radius: 18px;
-        background: linear-gradient(180deg, #161a20 0%, #101318 100%);
-        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+        padding: 14px;
+        border: 1px solid #2a2f38;
+        border-radius: 16px;
+        background: #13171d;
+      }
+
+      .home-sidebar-toggle {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        min-height: 28px;
+        padding: 0;
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .board-list {
+        display: grid;
+        gap: 6px;
       }
 
       .board-link {
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 12px 14px;
-        border-radius: 14px;
-        color: #dbe4ee;
+        padding: 10px 12px;
+        border-radius: 12px;
+        color: #cbd5e1;
         text-decoration: none;
         font-weight: 600;
+        border: 1px solid transparent;
       }
 
       .board-link.active,
       .board-link:hover {
-        background: #252b34;
+        background: #1b212a;
+        border-color: #313844;
       }
 
       .board-bubble {
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 12px 14px;
-        border-radius: 14px;
+        padding: 10px 12px;
+        border-radius: 12px;
         color: #f8fafc;
         font-weight: 700;
+        border: 1px solid transparent;
         transition: background 0.15s ease;
       }
 
       .board-bubble.active,
       .board-bubble:hover {
-        background: #252b34;
+        background: #1b212a;
+        border-color: #313844;
       }
 
       .home-feed {
@@ -266,10 +294,9 @@ function RealtimeStyles() {
       .feed-hero {
         margin-bottom: 18px;
         padding: 18px 20px;
-        border: 1px solid #2e303a;
+        border: 1px solid #2a2f38;
         border-radius: 18px;
-        background: linear-gradient(180deg, #161a20 0%, #101318 100%);
-        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+        background: #13171d;
       }
 
       .feed-hero-copy {
@@ -279,37 +306,36 @@ function RealtimeStyles() {
       .feed-hero-title {
         color: #f8fafc;
         font-family: var(--heading);
-        font-size: 38px;
+        font-size: 34px;
         font-weight: 800;
         letter-spacing: -0.04em;
-        line-height: 0.96;
+        line-height: 1;
       }
 
       .content-card {
-        padding: 20px;
-        border: 1px solid #2e303a;
-        border-radius: 18px;
-        background: linear-gradient(180deg, #1b1d24 0%, #14161c 100%);
-        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
+        padding: 18px;
+        border: 1px solid #2a2f38;
+        border-radius: 16px;
+        background: #171b21;
       }
 
       .feed-post-card {
-        padding: 20px 26px;
+        padding: 16px 18px;
       }
 
       .feed-post-title {
-        margin: 0 0 10px;
+        margin: 0 0 8px;
         color: #f8fafc;
-        font-size: 24px;
+        font-size: 22px;
         line-height: 1.2;
         text-decoration: none;
         text-align: left;
       }
 
       .feed-post-header {
-        margin-bottom: 14px;
+        margin-bottom: 10px;
         color: #94a3b8;
-        font-size: 14px;
+        font-size: 13px;
         text-align: left;
       }
 
@@ -318,7 +344,7 @@ function RealtimeStyles() {
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
       }
 
       .feed-post-author-row {
@@ -331,6 +357,7 @@ function RealtimeStyles() {
       .feed-post-author {
         min-width: 0;
         font-weight: 700;
+        font-size: 13px;
       }
 
       .feed-post-statuses {
@@ -352,8 +379,10 @@ function RealtimeStyles() {
       }
 
       .feed-post-content {
-        margin: 0 0 16px;
-        color: #cbd5e1;
+        margin: 0 0 12px;
+        color: #d0d7e2;
+        font-size: 15px;
+        line-height: 1.45;
         text-align: left;
       }
 
@@ -361,7 +390,7 @@ function RealtimeStyles() {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         width: min(100%, 920px);
       }
 
@@ -370,16 +399,15 @@ function RealtimeStyles() {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        min-height: 34px;
+        min-height: 32px;
         padding: 0 10px;
         border-radius: 999px;
-        border: 1px solid #374151;
-        background: #20262f;
-        color: #f8fafc;
+        border: 1px solid #313844;
+        background: #1c222b;
+        color: #dbe4ee;
         text-decoration: none;
         font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.01em;
+        font-weight: 700;
       }
 
       .feed-post-vote-group {
@@ -395,13 +423,13 @@ function RealtimeStyles() {
         border: 0;
         border-radius: 999px;
         background: transparent;
-        color: #e2e8f0;
+        color: #cbd5e1;
         font-size: 14px;
         cursor: pointer;
       }
 
       .feed-post-action-button.active {
-        background: rgba(148, 163, 184, 0.2);
+        background: rgba(148, 163, 184, 0.16);
         color: #f8fafc;
       }
 
@@ -450,47 +478,118 @@ function RealtimeStyles() {
 
       @media (max-width: 900px) {
         .app-topbar {
-          padding: 12px 14px;
+          padding: 10px 12px;
+          gap: 10px;
+          align-items: flex-start;
         }
 
         .app-brand {
-          font-size: 22px;
+          font-size: 18px;
+          line-height: 1.1;
         }
 
         .app-actions {
-          gap: 8px;
+          gap: 6px;
+          flex-shrink: 0;
         }
 
         .app-chip {
-          padding: 9px 12px;
-          font-size: 14px;
+          min-height: 32px;
+          padding: 0 10px;
+          font-size: 12px;
         }
 
         .home-shell {
           grid-template-columns: 1fr;
-          padding: 16px 14px 24px;
+          gap: 12px;
+          padding: 12px 10px 20px;
         }
 
         .home-sidebar {
           position: static;
+          top: auto;
+          padding: 0;
+          border: none;
+          border-radius: 0;
+          background: transparent;
+        }
+
+        .home-sidebar-toggle {
+          display: none;
+        }
+
+        .board-list {
+          display: flex;
+          gap: 8px;
+          overflow-x: auto;
+          padding-bottom: 2px;
+          scrollbar-width: none;
+        }
+
+        .board-list::-webkit-scrollbar {
+          display: none;
+        }
+
+        .board-link,
+        .board-bubble {
+          flex: 0 0 auto;
+          gap: 8px;
+          padding: 8px 12px;
+          border-radius: 999px;
+          white-space: nowrap;
+          border-color: #313844;
+          background: #171b21;
+          font-size: 13px;
         }
 
         .feed-hero {
-          margin-bottom: 14px;
+          margin-bottom: 12px;
+          padding: 16px;
         }
 
         .feed-hero-title {
-          font-size: 34px;
+          font-size: 28px;
         }
 
         .feed-post-board-row,
         .feed-post-author-row {
           flex-wrap: wrap;
+          gap: 6px;
         }
 
         .feed-post-statuses {
           width: 100%;
-          justify-content: flex-end;
+          justify-content: flex-start;
+          gap: 8px;
+        }
+
+        .content-card {
+          padding: 14px;
+          border-radius: 14px;
+        }
+
+        .feed-post-card {
+          padding: 14px;
+        }
+
+        .feed-post-title {
+          font-size: 18px;
+        }
+
+        .feed-post-content {
+          margin-bottom: 10px;
+          font-size: 14px;
+        }
+
+        .feed-post-actions {
+          gap: 5px;
+        }
+
+        .feed-post-vote-group,
+        .feed-post-action-pill {
+          min-height: 30px;
+          padding: 0 9px;
+          font-size: 11px;
         }
       }
     `}</style>
@@ -947,10 +1046,7 @@ function PostCard({ post, commentCount = 0 }) {
 }
 
 function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappening = false }) {
-  const [isOpen, setIsOpen] = useState(() => {
-    if (typeof window === "undefined") return true;
-    return window.innerWidth > 900;
-  });
+  const [isOpen, setIsOpen] = useState(true);
   const sidebarLabel = activeBoard ? `Boards: ${activeBoard}` : "Boards: Feed";
 
   return (
@@ -958,23 +1054,7 @@ function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappe
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 12,
-          minHeight: 28,
-          padding: 0,
-          background: "transparent",
-          border: "none",
-          color: "#94a3b8",
-          fontSize: 12,
-          fontWeight: 800,
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          cursor: "pointer"
-        }}
+        className="home-sidebar-toggle"
       >
         <span>{sidebarLabel}</span>
         <span
@@ -989,7 +1069,7 @@ function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappe
         </span>
       </button>
 
-      <div style={{ display: isOpen ? "grid" : "none", gap: 6 }}>
+      <div className="board-list" style={{ display: isOpen ? undefined : "none" }}>
         {showHappening && (
           <Link
             to="/"
