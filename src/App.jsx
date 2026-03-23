@@ -301,6 +301,44 @@ function RealtimeStyles() {
         text-decoration: none;
       }
 
+      .feed-post-header {
+        margin-bottom: 14px;
+        color: #94a3b8;
+        font-size: 14px;
+      }
+
+      .feed-post-board-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .feed-post-author-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .feed-post-author {
+        min-width: 0;
+        font-weight: 700;
+      }
+
+      .feed-post-statuses {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+
+      .feed-post-status {
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
       @keyframes composerPulse {
         0% { opacity: 0.55; transform: scale(0.98); }
         50% { opacity: 1; transform: scale(1); }
@@ -364,6 +402,16 @@ function RealtimeStyles() {
 
         .feed-hero-title {
           font-size: 34px;
+        }
+
+        .feed-post-board-row,
+        .feed-post-author-row {
+          flex-wrap: wrap;
+        }
+
+        .feed-post-statuses {
+          width: 100%;
+          justify-content: flex-end;
         }
       }
     `}</style>
@@ -654,38 +702,37 @@ function PostCard({ post, commentCount = 0 }) {
         to={`/post/${post.id}`}
         style={{ textDecoration: "none", display: "block" }}
       >
-        <div
-          style={{
-            marginBottom: 14,
-            color: "#94a3b8",
-            fontSize: 14
-          }}
-        >
+        <div className="feed-post-header">
           {boardName && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 12,
-                marginBottom: 6
-              }}
-            >
+            <div className="feed-post-board-row">
               <BoardBadge boardName={boardName} />
               <span style={{ color: "#94a3b8", fontSize: 14, fontWeight: 600 }}>
                 {timeAgo(post.last_activity || post.created_at)}
               </span>
             </div>
           )}
-          <div>
-            <span style={{ color: isMod ? "#c084fc" : getUserColor(post.browser_id), fontWeight: 700 }}>
+          <div className="feed-post-author-row">
+            <span
+              className="feed-post-author"
+              style={{ color: isMod ? "#c084fc" : getUserColor(post.browser_id) }}
+            >
               {isMod && "👤 "}
               {post.username || `Anon #${shortId(post.browser_id)}`}
             </span>
-            {(post.pinned || post.locked) && <span> • </span>}
-            {post.pinned && <span style={{ color: "#f8fafc", fontWeight: 700 }}>📌 PINNED</span>}
-            {post.pinned && post.locked && <span> </span>}
-            {post.locked && <span style={{ color: "#f87171", fontWeight: 700 }}>🔒 LOCKED</span>}
+            {(post.pinned || post.locked) && (
+              <span className="feed-post-statuses">
+                {post.pinned && (
+                  <span className="feed-post-status" style={{ color: "#f8fafc" }}>
+                    📌 PINNED
+                  </span>
+                )}
+                {post.locked && (
+                  <span className="feed-post-status" style={{ color: "#f87171" }}>
+                    🔒 LOCKED
+                  </span>
+                )}
+              </span>
+            )}
           </div>
         </div>
 
