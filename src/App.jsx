@@ -207,97 +207,72 @@ function RealtimeStyles() {
       }
 
       .home-shell {
-        display: grid;
-        grid-template-columns: 240px minmax(0, 1fr);
-        gap: 24px;
+        display: block;
         width: min(1280px, 100%);
         margin: 0 auto;
         padding: 24px 20px 32px;
         box-sizing: border-box;
       }
 
-      .home-sidebar {
-        position: sticky;
-        top: 86px;
-        align-self: start;
-        padding: 18px;
-        border: 1px solid #2e303a;
-        border-radius: 18px;
-        background: linear-gradient(180deg, #161a20 0%, #101318 100%);
-        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
-      }
-
-      .boards-toggle {
-        display: inline-flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 6px;
-        width: fit-content;
-        min-height: 26px;
-        padding: 0 10px;
-        margin-bottom: 12px;
-        background: #1b2129;
-        border: 1px solid #303744;
-        border-radius: 999px;
-        color: #94a3b8;
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        cursor: pointer;
-      }
-
-      .boards-toggle.expanded {
-        width: 100%;
+      .boards-tabs {
         display: flex;
-        justify-content: space-between;
-        min-height: 28px;
-        padding: 0;
-        background: transparent;
-        border: none;
-        border-radius: 0;
+        align-items: flex-end;
+        gap: 6px;
+        margin: 0 0 16px;
+        overflow-x: auto;
+        padding: 0 2px;
+        scrollbar-width: none;
       }
 
-      .boards-toggle-caret {
-        font-size: 16px;
-        line-height: 1;
-        transition: transform 0.18s ease, opacity 0.18s ease;
-      }
-
-      .boards-toggle:not(.expanded) .boards-toggle-caret {
+      .boards-tabs::-webkit-scrollbar {
         display: none;
       }
 
-      .board-link {
-        display: flex;
+      .boards-tab {
+        position: relative;
+        display: inline-flex;
         align-items: center;
-        gap: 12px;
-        padding: 12px 14px;
-        border-radius: 14px;
-        color: #dbe4ee;
+        gap: 8px;
+        flex: 0 0 auto;
+        min-height: 40px;
+        padding: 0 14px;
+        border: 1px solid #303744;
+        border-bottom: 0;
+        border-radius: 16px 16px 0 0;
+        background: linear-gradient(180deg, #202733 0%, #161b23 100%);
+        color: #a8b6c8;
         text-decoration: none;
-        font-weight: 600;
-      }
-
-      .board-link.active,
-      .board-link:hover {
-        background: #252b34;
-      }
-
-      .board-bubble {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 14px;
-        border-radius: 14px;
-        color: #f8fafc;
+        font-size: 13px;
         font-weight: 700;
-        transition: background 0.15s ease;
+        line-height: 1;
+        transform: translateY(6px);
+        transition: transform 0.16s ease, color 0.16s ease, background 0.16s ease;
       }
 
-      .board-bubble.active,
-      .board-bubble:hover {
-        background: #252b34;
+      .boards-tab:hover {
+        color: #dbe4ee;
+        transform: translateY(3px);
+      }
+
+      .boards-tab.active {
+        z-index: 1;
+        background: linear-gradient(180deg, #2a3342 0%, #1b222d 100%);
+        color: #f8fafc;
+        transform: translateY(0);
+      }
+
+      .boards-tab::after {
+        content: "";
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        bottom: -1px;
+        height: 1px;
+        background: #171b21;
+      }
+
+      .boards-tab.active::after {
+        background: #1b1d24;
       }
 
       .home-feed {
@@ -541,23 +516,28 @@ function RealtimeStyles() {
         }
 
         .home-shell {
-          grid-template-columns: 1fr;
           padding: 16px 14px 24px;
         }
 
-        .home-sidebar {
-          position: static;
+        .boards-tabs {
+          gap: 4px;
+          margin-bottom: 12px;
         }
 
-        .boards-toggle {
-          min-height: 24px;
-          padding: 0 8px;
-          margin-bottom: 10px;
+        .boards-tab {
+          min-height: 34px;
+          padding: 0 11px;
+          border-radius: 12px 12px 0 0;
+          font-size: 12px;
+          transform: translateY(4px);
         }
 
-        .boards-toggle.expanded {
-          width: 100%;
-          min-height: 28px;
+        .boards-tab:hover {
+          transform: translateY(2px);
+        }
+
+        .boards-tab.active {
+          transform: translateY(0);
         }
 
         .feed-hero {
@@ -1101,55 +1081,30 @@ function PostCard({ post, commentCount = 0 }) {
   );
 }
 
-function BoardsSidebar({ activeBoard = "", showHappening = false, highlightHappening = false }) {
-  const [isOpen, setIsOpen] = useState(() => {
-    if (typeof window === "undefined") return true;
-    return window.innerWidth > 900;
-  });
-  const sidebarLabel = activeBoard ? `Boards: ${activeBoard}` : "Boards: Feed";
-
+function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappening = false }) {
   return (
-    <aside className="home-sidebar">
-      <button
-        type="button"
-        onClick={() => setIsOpen((current) => !current)}
-        className={`boards-toggle${isOpen ? " expanded" : ""}`}
-      >
-        <span>{sidebarLabel}</span>
-        <span
-          className="boards-toggle-caret"
-          style={{
-            transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)"
-          }}
+    <nav className="boards-tabs" aria-label="Boards">
+      {showHappening && (
+        <Link
+          to="/"
+          className={`boards-tab${highlightHappening ? " active" : ""}`}
         >
-          ▾
-        </span>
-      </button>
+          <span>✨</span>
+          <span>Feed</span>
+        </Link>
+      )}
 
-      <div style={{ display: isOpen ? "grid" : "none", gap: 6 }}>
-        {showHappening && (
-          <Link
-            to="/"
-            className={`board-bubble${highlightHappening ? " active" : ""}`}
-            style={{ textDecoration: "none" }}
-          >
-            <span>✨</span>
-            <span>Feed</span>
-          </Link>
-        )}
-
-        {BOARDS.map((board) => (
-          <Link
-            key={board.name}
-            to={`/board/${board.slug}`}
-            className={`board-link${board.name === activeBoard ? " active" : ""}`}
-          >
-            <span>{board.icon}</span>
-            <span>{board.name}</span>
-          </Link>
-        ))}
-      </div>
-    </aside>
+      {BOARDS.map((board) => (
+        <Link
+          key={board.name}
+          to={`/board/${board.slug}`}
+          className={`boards-tab${board.name === activeBoard ? " active" : ""}`}
+        >
+          <span>{board.icon}</span>
+          <span>{board.name}</span>
+        </Link>
+      ))}
+    </nav>
   );
 }
 
@@ -1347,7 +1302,7 @@ function Home() {
 
   return (
     <div className="home-shell">
-      <BoardsSidebar showHappening highlightHappening />
+      <BoardsTabs showHappening highlightHappening />
 
       <main className="home-feed">
         {posts.map((p) => {
@@ -1409,7 +1364,7 @@ function BoardPage() {
   if (!board) {
     return (
       <div className="home-shell">
-        <BoardsSidebar showHappening />
+        <BoardsTabs showHappening />
         <main className="home-feed">
           <div className="content-card">
             <h2 style={{ marginTop: 0 }}>Board not found</h2>
@@ -1424,7 +1379,7 @@ function BoardPage() {
 
   return (
     <div className="home-shell">
-      <BoardsSidebar activeBoard={board.name} showHappening />
+      <BoardsTabs activeBoard={board.name} showHappening />
 
       <main className="home-feed">
         {filteredPosts.length === 0 && (
@@ -1802,7 +1757,7 @@ function PostPage({ user }) {
 
   return (
     <div className="home-shell">
-      <BoardsSidebar activeBoard={activeBoard} showHappening />
+      <BoardsTabs activeBoard={activeBoard} showHappening />
 
       <main className="home-feed" style={{ textAlign: "left" }}>
         <div className="content-card" style={{ marginBottom: 16 }}>
