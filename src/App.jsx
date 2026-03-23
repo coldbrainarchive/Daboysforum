@@ -655,8 +655,9 @@ const BOARDS = [
   { name: "News", slug: "news", icon: "📰" },
   { name: "Sports", slug: "sports", icon: "🏈" },
   { name: "Random", slug: "random", icon: "🎲" },
-  { name: "Jail", slug: "jail", icon: "🚔" },
-  { name: "Announcements", slug: "announcements", icon: "📢" }
+  { name: "Announcements", slug: "announcements", icon: "📢" },
+  { name: "Feedback", slug: "feedback", icon: "💬" },
+  { name: "Jail", slug: "jail", icon: "🚔" }
 ];
 
 function getBoardBySlug(slug) {
