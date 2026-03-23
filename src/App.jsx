@@ -242,11 +242,12 @@ function RealtimeStyles() {
         align-items: flex-end;
         gap: 6px;
         overflow-x: auto;
-        overflow-y: visible;
+        overflow-y: hidden;
         padding: 0 2px 0;
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
         touch-action: pan-x;
+        overscroll-behavior-x: contain;
       }
 
       .boards-tabs::-webkit-scrollbar {
@@ -548,6 +549,7 @@ function RealtimeStyles() {
 
         .boards-tabs {
           gap: 4px;
+          overflow-y: hidden;
           padding: 0 1px 0;
           scroll-snap-type: x proximity;
         }
