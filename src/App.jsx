@@ -316,9 +316,23 @@ function RealtimeStyles() {
       .feed-post-board-row {
         display: flex;
         align-items: center;
-        justify-content: space-between;
         gap: 12px;
         margin-bottom: 8px;
+      }
+
+      .feed-post-board-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .feed-post-time {
+        margin-left: auto;
+        color: #94a3b8;
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
       }
 
       .feed-post-author-row {
@@ -349,12 +363,14 @@ function RealtimeStyles() {
         display: block;
         text-align: left;
         width: min(100%, 920px);
+        max-width: 100%;
       }
 
       .feed-post-content {
         margin: 0 0 16px;
         color: #cbd5e1;
         text-align: left;
+        overflow-wrap: anywhere;
       }
 
       .feed-post-actions {
@@ -488,9 +504,18 @@ function RealtimeStyles() {
           flex-wrap: wrap;
         }
 
+        .feed-post-board-group {
+          min-width: 0;
+        }
+
         .feed-post-statuses {
+          gap: 6px;
+        }
+
+        .feed-post-time {
           width: 100%;
-          justify-content: flex-end;
+          margin-left: 0;
+          font-size: 12px;
         }
       }
     `}</style>
@@ -856,11 +881,8 @@ function PostCard({ post, commentCount = 0 }) {
         <div className="feed-post-header">
           {boardName && (
             <div className="feed-post-board-row">
-              <BoardBadge boardName={boardName} />
-              <span className="feed-post-meta">
-                <span className="feed-post-time">
-                  {timeAgo(post.last_activity || post.created_at)}
-                </span>
+              <span className="feed-post-board-group">
+                <BoardBadge boardName={boardName} />
                 {(post.pinned || post.locked) && (
                   <span className="feed-post-statuses">
                     {post.pinned && (
@@ -875,6 +897,9 @@ function PostCard({ post, commentCount = 0 }) {
                     )}
                   </span>
                 )}
+              </span>
+              <span className="feed-post-time">
+                {timeAgo(post.last_activity || post.created_at)}
               </span>
             </div>
           )}
