@@ -294,20 +294,21 @@ function RealtimeStyles() {
       }
 
       .feed-post-card {
-        padding: 18px 22px;
+        padding: 18px 20px 17px;
       }
 
       .feed-post-title {
-        margin: 0 0 8px;
+        margin: 0 0 10px;
         color: #f8fafc;
-        font-size: 23px;
-        line-height: 1.18;
+        font-size: 22px;
+        line-height: 1.22;
+        letter-spacing: -0.01em;
         text-decoration: none;
         text-align: left;
       }
 
       .feed-post-header {
-        margin-bottom: 12px;
+        margin-bottom: 10px;
         color: #94a3b8;
         font-size: 14px;
         text-align: left;
@@ -317,7 +318,7 @@ function RealtimeStyles() {
         display: flex;
         align-items: center;
         gap: 12px;
-        margin-bottom: 10px;
+        margin-bottom: 0;
       }
 
       .feed-post-board-group {
@@ -329,9 +330,10 @@ function RealtimeStyles() {
 
       .feed-post-time {
         margin-left: auto;
-        color: #94a3b8;
+        color: #8fa0b6;
         font-size: 13px;
         font-weight: 600;
+        line-height: 1;
         white-space: nowrap;
       }
 
@@ -340,6 +342,7 @@ function RealtimeStyles() {
         align-items: center;
         justify-content: space-between;
         gap: 12px;
+        margin-bottom: 10px;
       }
 
       .feed-post-author {
@@ -369,16 +372,16 @@ function RealtimeStyles() {
       }
 
       .feed-post-main {
-        padding: 10px 0 12px;
-        border-top: 1px solid rgba(148, 163, 184, 0.18);
-        border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+        padding: 12px 0 14px;
+        border-top: 1px solid rgba(148, 163, 184, 0.12);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.12);
       }
 
       .feed-post-content {
-        margin: 0 0 14px;
-        color: #cbd5e1;
+        margin: 0;
+        color: #d4dde7;
         font-size: 15px;
-        line-height: 1.5;
+        line-height: 1.52;
         text-align: left;
         overflow-wrap: anywhere;
       }
@@ -388,6 +391,7 @@ function RealtimeStyles() {
         flex-wrap: wrap;
         align-items: center;
         gap: 6px;
+        margin-top: 13px;
         width: min(100%, 920px);
       }
 
@@ -399,13 +403,13 @@ function RealtimeStyles() {
         min-height: 30px;
         padding: 0 8px;
         border-radius: 999px;
-        border: 1px solid #374151;
-        background: #20262f;
-        color: #f8fafc;
+        border: 1px solid #323b48;
+        background: #1d242d;
+        color: #e5edf6;
         text-decoration: none;
         font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 0.01em;
+        font-weight: 700;
+        letter-spacing: 0.02em;
       }
 
       .feed-post-vote-group {
@@ -427,7 +431,7 @@ function RealtimeStyles() {
       }
 
       .feed-post-action-button.active {
-        background: rgba(148, 163, 184, 0.2);
+        background: rgba(148, 163, 184, 0.16);
         color: #f8fafc;
       }
 
@@ -437,6 +441,7 @@ function RealtimeStyles() {
 
       .feed-post-vote-score {
         min-width: 16px;
+        line-height: 1;
         text-align: center;
       }
 
@@ -533,15 +538,14 @@ function RealtimeStyles() {
         }
 
         .feed-post-card {
-          padding: 14px 16px;
+          padding: 14px 14px 13px;
         }
 
         .feed-post-header {
-          margin-bottom: 10px;
+          margin-bottom: 8px;
         }
 
         .feed-post-board-row {
-          margin-bottom: 8px;
           gap: 10px;
         }
 
@@ -550,22 +554,23 @@ function RealtimeStyles() {
         }
 
         .feed-post-main {
-          padding: 9px 0 10px;
+          padding: 10px 0 12px;
         }
 
         .feed-post-title {
           font-size: 18px;
-          margin-bottom: 7px;
+          margin-bottom: 8px;
+          line-height: 1.24;
         }
 
         .feed-post-content {
-          margin-bottom: 12px;
           font-size: 14px;
-          line-height: 1.45;
+          line-height: 1.5;
         }
 
         .feed-post-actions {
           gap: 5px;
+          margin-top: 11px;
         }
 
         .feed-post-vote-group,
@@ -962,7 +967,7 @@ function PostCard({ post, commentCount = 0 }) {
                 )}
               </span>
               <span className="feed-post-time">
-              {timeAgo(post.last_activity || post.created_at)}
+                {timeAgo(post.last_activity || post.created_at)}
               </span>
             </div>
           )}
