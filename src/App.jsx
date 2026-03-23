@@ -220,19 +220,8 @@ function RealtimeStyles() {
         z-index: 15;
         margin: 0 0 16px;
         padding-top: 8px;
+        border-bottom: 1px solid rgba(48, 55, 68, 0.9);
         background: #16171d;
-      }
-
-      .boards-tabs-shell::after {
-        content: "";
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 1px;
-        background: rgba(48, 55, 68, 0.9);
-        z-index: 0;
-        pointer-events: none;
       }
 
       .boards-tabs {
