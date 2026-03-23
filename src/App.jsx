@@ -527,15 +527,15 @@ function RealtimeStyles() {
       }
 
       .comments-list {
-        display: grid;
+        display: flex;
+        flex-direction: column;
         gap: 14px;
       }
 
       .comment-thread {
-        display: grid;
-        grid-template-columns: 22px minmax(0, 1fr);
+        display: flex;
+        align-items: flex-start;
         gap: 12px;
-        align-items: start;
       }
 
       .comment-children {
@@ -546,10 +546,11 @@ function RealtimeStyles() {
       }
 
       .comment-rail {
+        flex: 0 0 22px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        min-height: 100%;
+        align-self: stretch;
       }
 
       .comment-collapse-toggle {
@@ -571,6 +572,7 @@ function RealtimeStyles() {
       .comment-rail-line {
         width: 2px;
         flex: 1;
+        min-height: 16px;
         margin-top: 6px;
         border-radius: 999px;
         background: rgba(148, 163, 184, 0.28);
@@ -593,8 +595,10 @@ function RealtimeStyles() {
       }
 
       .comment-card {
+        flex: 1 1 auto;
         padding: 2px 0 0;
         background: transparent;
+        min-width: 0;
       }
 
       .comment-thread.pending .comment-card {
