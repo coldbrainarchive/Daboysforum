@@ -299,12 +299,14 @@ function RealtimeStyles() {
         font-size: 24px;
         line-height: 1.2;
         text-decoration: none;
+        text-align: left;
       }
 
       .feed-post-header {
         margin-bottom: 14px;
         color: #94a3b8;
         font-size: 14px;
+        text-align: left;
       }
 
       .feed-post-board-row {
@@ -337,6 +339,76 @@ function RealtimeStyles() {
       .feed-post-status {
         font-weight: 700;
         white-space: nowrap;
+      }
+
+      .feed-post-link {
+        display: block;
+        text-align: left;
+      }
+
+      .feed-post-content {
+        margin: 0 0 16px;
+        color: #cbd5e1;
+        text-align: left;
+      }
+
+      .feed-post-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .feed-post-vote-group,
+      .feed-post-action-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 0 14px;
+        border-radius: 999px;
+        border: 1px solid #374151;
+        background: #20262f;
+        color: #f8fafc;
+        text-decoration: none;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .feed-post-vote-group {
+        padding: 0 8px;
+      }
+
+      .feed-post-action-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: #e2e8f0;
+        font-size: 21px;
+        cursor: pointer;
+      }
+
+      .feed-post-action-button.active {
+        background: rgba(148, 163, 184, 0.2);
+        color: #f8fafc;
+      }
+
+      .feed-post-action-button.active.downvote {
+        color: #f87171;
+      }
+
+      .feed-post-vote-score {
+        min-width: 22px;
+        text-align: center;
+      }
+
+      .feed-post-action-pill {
+        cursor: pointer;
       }
 
       @keyframes composerPulse {
@@ -451,6 +523,7 @@ function filterPostsForBoard(posts, boardName) {
 const BOARD_TAGS_STORAGE_KEY = "board_tags_by_post_id";
 const PENDING_BOARD_TAGS_STORAGE_KEY = "pending_board_tags";
 const POST_REACTIONS_STORAGE_KEY = "post_reactions_by_browser";
+const POST_VOTES_STORAGE_KEY = "post_votes_by_browser";
 const STANDARD_REACTIONS = [
   "😀", "😁", "😂", "🤣", "😊", "😍", "😘", "😎",
   "🤔", "😮", "😢", "😭", "😡", "👏", "🙌", "🙏",
@@ -662,6 +735,44 @@ function toggleReactionForPost(postId, emoji) {
   });
 }
 
+function getStoredPostVotes() {
+  return readStorageJson(POST_VOTES_STORAGE_KEY, {});
+}
+
+function setStoredPostVotes(votes) {
+  writeStorageJson(POST_VOTES_STORAGE_KEY, votes);
+}
+
+function getVoteStateForPost(postId) {
+  const votesByPost = getStoredPostVotes();
+  const postVotes = votesByPost[postId] || {};
+  const values = Object.values(postVotes);
+
+  return {
+    score: values.reduce((sum, value) => sum + value, 0),
+    selectedVote: postVotes[getBrowserId()] || 0
+  };
+}
+
+function toggleVoteForPost(postId, direction) {
+  const browserId = getBrowserId();
+  const votesByPost = getStoredPostVotes();
+  const postVotes = {
+    ...(votesByPost[postId] || {})
+  };
+
+  if (postVotes[browserId] === direction) {
+    delete postVotes[browserId];
+  } else {
+    postVotes[browserId] = direction;
+  }
+
+  setStoredPostVotes({
+    ...votesByPost,
+    [postId]: postVotes
+  });
+}
+
 function BoardBadge({ boardName }) {
   const matchedBoard = BOARDS.find((board) => board.name === boardName);
 
@@ -690,16 +801,49 @@ function BoardBadge({ boardName }) {
 }
 
 function PostCard({ post, commentCount = 0 }) {
-  const [reactionVersion, setReactionVersion] = useState(0);
-  const [isReactionPickerOpen, setIsReactionPickerOpen] = useState(false);
+  const [voteVersion, setVoteVersion] = useState(0);
+  const [shareLabel, setShareLabel] = useState("Share");
   const isMod = isModPost(post);
   const boardName = getBoardNameFromPost(post);
-  const { counts, selectedReaction } = getReactionStateForPost(post.id);
+  const { score, selectedVote } = getVoteStateForPost(post.id);
+
+  async function handleShare(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const shareUrl = `${window.location.origin}/post/${post.id}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: post.title,
+          text: post.title,
+          url: shareUrl
+        });
+        setShareLabel("Shared");
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        setShareLabel("Copied");
+      } else {
+        setShareLabel("Link ready");
+      }
+    } catch (error) {
+      if (error?.name !== "AbortError") {
+        setShareLabel("Share failed");
+      }
+      return;
+    }
+
+    window.setTimeout(() => {
+      setShareLabel("Share");
+    }, 1800);
+  }
 
   return (
     <div className="content-card" style={{ marginBottom: 16 }}>
       <Link
         to={`/post/${post.id}`}
+        className="feed-post-link"
         style={{ textDecoration: "none", display: "block" }}
       >
         <div className="feed-post-header">
@@ -740,113 +884,56 @@ function PostCard({ post, commentCount = 0 }) {
           {post.title}
         </h3>
 
-        <p style={{ marginBottom: 16, color: "#cbd5e1" }}>{post.content}</p>
+        <p className="feed-post-content">{post.content}</p>
       </Link>
 
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: 10,
-          position: "relative"
-        }}
-      >
-        <div style={{ position: "relative" }}>
+      <div className="feed-post-actions">
+        <div className="feed-post-vote-group">
           <button
             type="button"
-            onClick={() => setIsReactionPickerOpen((current) => !current)}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "10px 12px",
-              borderRadius: 999,
-              border: selectedReaction ? "1px solid #c084fc" : "1px solid #374151",
-              background: selectedReaction ? "rgba(192, 132, 252, 0.16)" : "#20262f",
-              color: "#f8fafc",
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: "pointer"
+            aria-label="Thumbs up"
+            className={`feed-post-action-button${selectedVote === 1 ? " active" : ""}`}
+            onClick={(event) => {
+              event.preventDefault();
+              toggleVoteForPost(post.id, 1);
+              setVoteVersion((current) => current + 1);
             }}
           >
-            <span>{selectedReaction || "😊"}</span>
-            <span>React</span>
-            <span style={{ color: "#94a3b8", fontWeight: 600 }}>
-              {Object.values(counts).reduce((sum, count) => sum + count, 0)}
-            </span>
+            <span aria-hidden="true">👍</span>
           </button>
-
-          {isReactionPickerOpen && (
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                bottom: "calc(100% + 10px)",
-                zIndex: 5,
-                width: 280,
-                padding: 12,
-                borderRadius: 18,
-                border: "1px solid #374151",
-                background: "#11161d",
-                boxShadow: "0 22px 50px rgba(0, 0, 0, 0.35)"
-              }}
-            >
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(6, 1fr)",
-                  gap: 8
-                }}
-              >
-                {STANDARD_REACTIONS.map((emoji) => (
-                  <button
-                    key={`${post.id}-${emoji}-${reactionVersion}`}
-                    type="button"
-                    onClick={() => {
-                      toggleReactionForPost(post.id, emoji);
-                      setReactionVersion((current) => current + 1);
-                      setIsReactionPickerOpen(false);
-                    }}
-                    style={{
-                      display: "grid",
-                      placeItems: "center",
-                      aspectRatio: "1 / 1",
-                      borderRadius: 12,
-                      border: selectedReaction === emoji ? "1px solid #c084fc" : "1px solid #2e303a",
-                      background: selectedReaction === emoji ? "rgba(192, 132, 252, 0.16)" : "#1a2028",
-                      color: "#f8fafc",
-                      fontSize: 24,
-                      cursor: "pointer"
-                    }}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          <span key={voteVersion} className="feed-post-vote-score">
+            {score}
+          </span>
+          <button
+            type="button"
+            aria-label="Thumbs down"
+            className={`feed-post-action-button${selectedVote === -1 ? " active downvote" : ""}`}
+            onClick={(event) => {
+              event.preventDefault();
+              toggleVoteForPost(post.id, -1);
+              setVoteVersion((current) => current + 1);
+            }}
+          >
+            <span aria-hidden="true">👎</span>
+          </button>
         </div>
 
         <Link
           to={`/post/${post.id}`}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "10px 12px",
-            borderRadius: 999,
-            border: "1px solid #374151",
-            background: "#20262f",
-            color: "#f8fafc",
-            textDecoration: "none",
-            fontSize: 15,
-            fontWeight: 700
-          }}
+          className="feed-post-action-pill"
         >
           <span>💬</span>
           <span>{commentCount}</span>
         </Link>
+
+        <button
+          type="button"
+          className="feed-post-action-pill"
+          onClick={handleShare}
+        >
+          <span>↗</span>
+          <span>{shareLabel}</span>
+        </button>
       </div>
     </div>
   );
