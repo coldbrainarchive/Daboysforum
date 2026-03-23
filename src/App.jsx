@@ -191,11 +191,13 @@ function RealtimeStyles() {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 10px 16px;
+        min-height: 34px;
+        padding: 0 13px;
         border-radius: 999px;
         background: #1f2937;
         color: #f8fafc;
         text-decoration: none;
+        font-size: 13px;
         font-weight: 700;
         border: 1px solid #374151;
       }
@@ -513,8 +515,9 @@ function RealtimeStyles() {
         }
 
         .app-chip {
-          padding: 9px 12px;
-          font-size: 14px;
+          min-height: 30px;
+          padding: 0 10px;
+          font-size: 12px;
         }
 
         .home-shell {
