@@ -226,6 +226,17 @@ function RealtimeStyles() {
         background: #16171d;
       }
 
+      .boards-tabs-shell::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: -16px;
+        height: 16px;
+        background: #16171d;
+        pointer-events: none;
+      }
+
       .boards-tabs {
         display: flex;
         align-items: flex-end;
@@ -528,6 +539,11 @@ function RealtimeStyles() {
           top: 62px;
           margin-bottom: 12px;
           padding-top: 0;
+        }
+
+        .boards-tabs-shell::before {
+          top: -12px;
+          height: 12px;
         }
 
         .boards-tabs {
