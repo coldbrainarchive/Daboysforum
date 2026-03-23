@@ -288,16 +288,6 @@ function RealtimeStyles() {
           0 6px 18px rgba(0, 0, 0, 0.1);
       }
 
-      .boards-tab.active::after {
-        content: "";
-        position: absolute;
-        left: -2px;
-        right: -2px;
-        bottom: -4px;
-        height: 7px;
-        background: #16171d;
-      }
-
       .home-feed {
         min-width: 0;
       }
