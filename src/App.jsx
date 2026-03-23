@@ -221,7 +221,7 @@ function RealtimeStyles() {
         top: 73px;
         z-index: 15;
         margin: 0 0 16px;
-        padding-top: 8px;
+        padding-top: 0;
         border-bottom: 1px solid rgba(48, 55, 68, 0.9);
         background: #16171d;
       }
@@ -527,7 +527,7 @@ function RealtimeStyles() {
         .boards-tabs-shell {
           top: 62px;
           margin-bottom: 12px;
-          padding-top: 6px;
+          padding-top: 0;
         }
 
         .boards-tabs {
