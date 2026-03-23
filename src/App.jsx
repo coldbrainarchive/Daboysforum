@@ -1,6 +1,6 @@
-import { Component, useCallback, useEffect, useState } from "react";
+import { Component, useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -293,10 +293,7 @@ function RealtimeStyles() {
       }
 
       .boards-tab.active::after {
-        left: 0;
-        right: 0;
-        height: 8px;
-        background: linear-gradient(180deg, rgba(22, 23, 29, 0.98) 0%, rgba(22, 23, 29, 1) 60%, rgba(22, 23, 29, 0) 100%);
+        display: none;
       }
 
       .home-feed {
@@ -1112,9 +1109,26 @@ function PostCard({ post, commentCount = 0 }) {
 }
 
 function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappening = false }) {
+  const navRef = useRef(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const activeTab = nav.querySelector(".boards-tab.active");
+    if (!activeTab) return;
+
+    activeTab.scrollIntoView({
+      behavior: "auto",
+      block: "nearest",
+      inline: "center"
+    });
+  }, [location.pathname, activeBoard, highlightHappening]);
+
   return (
     <div className="boards-tabs-shell">
-      <nav className="boards-tabs" aria-label="Boards">
+      <nav ref={navRef} className="boards-tabs" aria-label="Boards">
         {showHappening && (
           <Link
             to="/"
