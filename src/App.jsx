@@ -234,8 +234,8 @@ function RealtimeStyles() {
         align-items: flex-end;
         gap: 6px;
         overflow-x: auto;
-        overflow-y: hidden;
-        padding: 0 2px 1px;
+        overflow-y: visible;
+        padding: 2px 2px 1px;
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
         touch-action: pan-x;
@@ -280,6 +280,17 @@ function RealtimeStyles() {
         box-shadow:
           0 -1px 0 rgba(255, 255, 255, 0.04),
           0 12px 24px rgba(0, 0, 0, 0.16);
+      }
+
+      .boards-tab.active::before {
+        content: "";
+        position: absolute;
+        left: -1px;
+        right: -1px;
+        bottom: -2px;
+        height: 4px;
+        background: #16171d;
+        border-radius: 0 0 2px 2px;
       }
 
       .boards-tab::after {
@@ -546,7 +557,7 @@ function RealtimeStyles() {
 
         .boards-tabs {
           gap: 4px;
-          padding: 0 1px 1px;
+          padding: 3px 1px 1px;
           scroll-snap-type: x proximity;
         }
 
