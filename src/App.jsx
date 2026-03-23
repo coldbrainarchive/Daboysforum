@@ -333,7 +333,7 @@ function RealtimeStyles() {
         color: #8fa0b6;
         font-size: 13px;
         font-weight: 600;
-        line-height: 1;
+        line-height: 1.1;
         white-space: nowrap;
       }
 
@@ -533,8 +533,9 @@ function RealtimeStyles() {
 
         .feed-post-time {
           margin-left: auto;
-          align-self: flex-start;
+          align-self: center;
           font-size: 11px;
+          line-height: 1.1;
         }
 
         .feed-post-card {
@@ -883,14 +884,14 @@ function BoardBadge({ boardName }) {
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 8,
-        padding: "6px 10px",
+        gap: 6,
+        padding: "5px 8px",
         borderRadius: 999,
         background: "#20262f",
         color: "#dbe4ee",
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: 800,
-        letterSpacing: "0.04em",
+        letterSpacing: "0.03em",
         textTransform: "uppercase"
       }}
     >
