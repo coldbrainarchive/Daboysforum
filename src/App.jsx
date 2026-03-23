@@ -220,8 +220,8 @@ function RealtimeStyles() {
         position: sticky;
         top: 73px;
         z-index: 15;
-        margin: 0;
-        padding: 8px 0 16px;
+        margin: 0 0 16px;
+        padding-top: 8px;
         border-bottom: 1px solid rgba(48, 55, 68, 0.9);
         background: #16171d;
       }
@@ -526,7 +526,8 @@ function RealtimeStyles() {
 
         .boards-tabs-shell {
           top: 62px;
-          padding: 6px 0 12px;
+          margin-bottom: 12px;
+          padding-top: 6px;
         }
 
         .boards-tabs {
