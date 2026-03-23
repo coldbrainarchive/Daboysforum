@@ -368,6 +368,13 @@ function RealtimeStyles() {
         max-width: 100%;
       }
 
+      .feed-post-body-shell {
+        padding: 12px 14px 14px;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(15, 23, 42, 0.18) 100%);
+      }
+
       .feed-post-content {
         margin: 0 0 14px;
         color: #cbd5e1;
@@ -531,7 +538,7 @@ function RealtimeStyles() {
         }
 
         .feed-post-header {
-          margin-bottom: 10px;
+          margin-bottom: 8px;
         }
 
         .feed-post-board-row {
@@ -541,6 +548,11 @@ function RealtimeStyles() {
 
         .feed-post-author {
           font-size: 13px;
+        }
+
+        .feed-post-body-shell {
+          padding: 10px 12px 12px;
+          border-radius: 14px;
         }
 
         .feed-post-title {
@@ -956,6 +968,9 @@ function PostCard({ post, commentCount = 0 }) {
               </span>
             </div>
           )}
+        </div>
+
+        <div className="feed-post-body-shell">
           <div className="feed-post-author-row">
             <span
               className="feed-post-author"
@@ -965,13 +980,13 @@ function PostCard({ post, commentCount = 0 }) {
               {post.username || `Anon #${shortId(post.browser_id)}`}
             </span>
           </div>
+
+          <h3 className="feed-post-title">
+            {post.title}
+          </h3>
+
+          <p className="feed-post-content">{post.content}</p>
         </div>
-
-        <h3 className="feed-post-title">
-          {post.title}
-        </h3>
-
-        <p className="feed-post-content">{post.content}</p>
       </Link>
 
       <div className="feed-post-actions">
