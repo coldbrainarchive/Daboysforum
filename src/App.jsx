@@ -236,7 +236,7 @@ function RealtimeStyles() {
         gap: 6px;
         overflow-x: auto;
         overflow-y: visible;
-        padding: 4px 2px 0;
+        padding: 6px 2px 0;
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
         touch-action: pan-x;
@@ -276,28 +276,22 @@ function RealtimeStyles() {
 
       .boards-tab.active {
         z-index: 2;
-        background: linear-gradient(180deg, #242b37 0%, #16171d 70%, #16171d 100%);
+        background: #16171d;
         color: #f8fafc;
         transform: translateY(0);
-        margin-bottom: -1px;
-        border-bottom: 1px solid #16171d;
         box-shadow:
           0 -1px 0 rgba(255, 255, 255, 0.04),
-          0 12px 24px rgba(0, 0, 0, 0.16);
-      }
-
-      .boards-tab::after {
-        content: "";
-        position: absolute;
-        left: 10px;
-        right: 10px;
-        bottom: -1px;
-        height: 2px;
-        background: rgba(23, 27, 33, 0.95);
+          0 8px 20px rgba(0, 0, 0, 0.12);
       }
 
       .boards-tab.active::after {
-        display: none;
+        content: "";
+        position: absolute;
+        left: -1px;
+        right: -1px;
+        bottom: -2px;
+        height: 4px;
+        background: #16171d;
       }
 
       .home-feed {
@@ -550,7 +544,7 @@ function RealtimeStyles() {
 
         .boards-tabs {
           gap: 4px;
-          padding: 5px 1px 0;
+          padding: 7px 1px 0;
           scroll-snap-type: x proximity;
         }
 
