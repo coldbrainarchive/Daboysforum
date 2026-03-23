@@ -368,6 +368,12 @@ function RealtimeStyles() {
         max-width: 100%;
       }
 
+      .feed-post-main {
+        padding: 10px 0 12px;
+        border-top: 1px solid rgba(148, 163, 184, 0.18);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+      }
+
       .feed-post-content {
         margin: 0 0 14px;
         color: #cbd5e1;
@@ -541,6 +547,10 @@ function RealtimeStyles() {
 
         .feed-post-author {
           font-size: 13px;
+        }
+
+        .feed-post-main {
+          padding: 9px 0 10px;
         }
 
         .feed-post-title {
@@ -952,10 +962,13 @@ function PostCard({ post, commentCount = 0 }) {
                 )}
               </span>
               <span className="feed-post-time">
-                {timeAgo(post.last_activity || post.created_at)}
+              {timeAgo(post.last_activity || post.created_at)}
               </span>
             </div>
           )}
+        </div>
+
+        <div className="feed-post-main">
           <div className="feed-post-author-row">
             <span
               className="feed-post-author"
@@ -965,13 +978,13 @@ function PostCard({ post, commentCount = 0 }) {
               {post.username || `Anon #${shortId(post.browser_id)}`}
             </span>
           </div>
+
+          <h3 className="feed-post-title">
+            {post.title}
+          </h3>
+
+          <p className="feed-post-content">{post.content}</p>
         </div>
-
-        <h3 className="feed-post-title">
-          {post.title}
-        </h3>
-
-        <p className="feed-post-content">{post.content}</p>
       </Link>
 
       <div className="feed-post-actions">
