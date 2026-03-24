@@ -544,6 +544,267 @@ function RealtimeStyles() {
         gap: 14px;
       }
 
+      .chat-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px 10px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      }
+
+      .chat-window {
+        height: 460px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 14px 12px;
+        scroll-behavior: smooth;
+      }
+
+      .chat-msg {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        max-width: 100%;
+      }
+
+      .chat-msg.mine {
+        flex-direction: row-reverse;
+      }
+
+      .chat-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 800;
+        color: #0f1117;
+        flex-shrink: 0;
+      }
+
+      .chat-msg-body {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        max-width: 72%;
+      }
+
+      .chat-msg.mine .chat-msg-body {
+        align-items: flex-end;
+      }
+
+      .chat-msg-meta {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 0 4px;
+      }
+
+      .chat-msg-time {
+        font-size: 11px;
+        color: #8fa0b6;
+        font-weight: 400;
+      }
+
+      .chat-bubble {
+        background: #1e2530;
+        color: #dbe4ee;
+        border-radius: 18px 18px 18px 4px;
+        padding: 9px 13px;
+        font-size: 14px;
+        line-height: 1.45;
+        cursor: pointer;
+        word-break: break-word;
+        transition: opacity 0.15s;
+      }
+
+      .chat-bubble:hover {
+        opacity: 0.85;
+      }
+
+      .chat-bubble.mine {
+        background: #7c3aed;
+        color: #fff;
+        border-radius: 18px 18px 4px 18px;
+      }
+
+      .chat-bubble.pending {
+        opacity: 0.55;
+      }
+
+      .chat-quote-bar {
+        border-left: 3px solid rgba(255,255,255,0.3);
+        padding: 4px 8px;
+        margin-bottom: 6px;
+        border-radius: 0 6px 6px 0;
+        background: rgba(255,255,255,0.07);
+      }
+
+      .chat-bubble:not(.mine) .chat-quote-bar {
+        border-left-color: rgba(148,163,184,0.4);
+      }
+
+      .chat-quote-name {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        color: rgba(255,255,255,0.6);
+        margin-bottom: 2px;
+      }
+
+      .chat-bubble:not(.mine) .chat-quote-name {
+        color: #60a5fa;
+      }
+
+      .chat-quote-text {
+        margin: 0;
+        font-size: 12px;
+        color: rgba(255,255,255,0.5);
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+
+      .chat-bubble:not(.mine) .chat-quote-text {
+        color: #8fa0b6;
+      }
+
+      .chat-bubble-text {
+        display: block;
+        white-space: pre-wrap;
+      }
+
+      .chat-msg-footer {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 4px;
+      }
+
+      .chat-delete-btn {
+        background: none;
+        border: none;
+        color: #8fa0b6;
+        font-size: 11px;
+        cursor: pointer;
+        padding: 0;
+        opacity: 0.6;
+      }
+
+      .chat-delete-btn:hover {
+        opacity: 1;
+      }
+
+      .chat-compose {
+        border-top: 1px solid rgba(148, 163, 184, 0.1);
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .chat-reply-preview {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        background: rgba(148, 163, 184, 0.07);
+        border-radius: 10px;
+        border-left: 3px solid #60a5fa;
+      }
+
+      .chat-reply-preview-inner {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .chat-reply-preview-name {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        color: #60a5fa;
+        margin-bottom: 2px;
+      }
+
+      .chat-reply-preview-text {
+        margin: 0;
+        font-size: 12px;
+        color: #8fa0b6;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .chat-reply-dismiss {
+        background: none;
+        border: none;
+        color: #8fa0b6;
+        font-size: 14px;
+        cursor: pointer;
+        flex-shrink: 0;
+        padding: 0 2px;
+      }
+
+      .chat-input-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+      }
+
+      .chat-input {
+        flex: 1;
+        background: #0f1117;
+        border: 1px solid #2e303a;
+        border-radius: 20px;
+        color: #f8fafc;
+        font-size: 14px;
+        font-family: inherit;
+        padding: 9px 14px;
+        resize: none;
+        max-height: 120px;
+        overflow-y: auto;
+        line-height: 1.4;
+      }
+
+      .chat-input::placeholder {
+        color: #8fa0b6;
+      }
+
+      .chat-input:focus {
+        outline: none;
+        border-color: #4b5563;
+      }
+
+      .chat-send-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        border: none;
+        background: #7c3aed;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s;
+      }
+
+      .chat-send-btn:disabled {
+        background: #2e303a;
+        color: #8fa0b6;
+        cursor: default;
+      }
+
       .comment-flat {
         display: flex;
         align-items: flex-start;
@@ -1624,6 +1885,68 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
   );
 }
 
+function ChatMessage({ comment, postBrowserId, isMe, canDelete, onDelete, onReply, allComments = [] }) {
+  const isModUser = isModPost(comment);
+  const isPending = comment.isPending === true;
+  const displayName = isPending && !isModUser && !comment.username
+    ? "Anonymous"
+    : (comment.username || `Anon #${shortId(comment.browser_id)}`);
+  const avatarColor = isModUser ? "#c084fc" : getUserColor(comment.browser_id);
+  const avatarLetter = isModUser ? "👤" : (displayName[0]?.toUpperCase() || "?");
+  const isOP = comment.browser_id === postBrowserId;
+
+  const parentComment = comment.parent_comment_id
+    ? allComments.find((c) => c.id === comment.parent_comment_id)
+    : null;
+  const parentName = parentComment
+    ? (parentComment.username || `Anon #${shortId(parentComment.browser_id)}`)
+    : null;
+
+  return (
+    <div className={`chat-msg${isMe ? " mine" : ""}`}>
+      {!isMe && (
+        <div className="chat-avatar" style={{ background: avatarColor }}>
+          {avatarLetter}
+        </div>
+      )}
+      <div className="chat-msg-body">
+        {!isMe && (
+          <div className="chat-msg-meta">
+            <span style={{ color: avatarColor }}>{displayName}</span>
+            {isOP && <span className="comment-card-op">OP</span>}
+            <span className="chat-msg-time">· {timeAgo(comment.created_at)}</span>
+          </div>
+        )}
+        <div
+          className={`chat-bubble${isMe ? " mine" : ""}${isPending ? " pending" : ""}`}
+          onClick={() => onReply && onReply(comment)}
+          title="Tap to reply"
+        >
+          {parentComment && (
+            <div className="chat-quote-bar">
+              <span className="chat-quote-name">{parentName}</span>
+              <p className="chat-quote-text">{parentComment.content}</p>
+            </div>
+          )}
+          <span className="chat-bubble-text">{comment.content}</span>
+        </div>
+        <div className="chat-msg-footer">
+          {isMe && <span className="chat-msg-time">{timeAgo(comment.created_at)}</span>}
+          {canDelete && (
+            <button
+              type="button"
+              className="chat-delete-btn"
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            >
+              🗑
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ==============================
 // MOD ACTION
 // ==============================
@@ -2163,7 +2486,10 @@ function PostPage({ user }) {
   const [text, setText] = useState("");
   const [isSendingComment, setIsSendingComment] = useState(false);
   const [pendingComments, setPendingComments] = useState([]);
-  const [commentSort, setCommentSort] = useState("newest");
+  const [commentSort, setCommentSort] = useState("oldest");
+  const [replyTarget, setReplyTarget] = useState(null);
+  const chatWindowRef = useRef(null);
+  const isAtBottomRef = useRef(true);
   const [voteData, setVoteData] = useState({ score: 0, myVote: 0 });
   const [shareLabel, setShareLabel] = useState("Share");
 
@@ -2219,6 +2545,14 @@ function PostPage({ user }) {
       window.clearInterval(i);
     };
   }, [load]);
+
+  useEffect(() => {
+    const el = chatWindowRef.current;
+    if (!el) return;
+    if (isAtBottomRef.current) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [comments.length, pendingComments.length]);
 
   const submitComment = async (content, parentCommentId = null) => {
     if (!content.trim() || post?.locked) return;
@@ -2484,73 +2818,93 @@ function PostPage({ user }) {
         </div>
 
         <section className="comments-shell">
-          <div className="content-card comments-panel">
-            <div className="comments-panel-header">
-              <div className="comments-panel-title">
-                {comments.length} Comments
-              </div>
+          <div className="content-card comments-panel" style={{ padding: 0, overflow: "hidden" }}>
+            <div className="chat-panel-header">
+              <span className="comments-panel-title">{comments.length} Messages</span>
+            </div>
 
-              <div className="comments-panel-controls">
-                <span>Sort</span>
-                <select
-                  className="comments-sort"
-                  value={commentSort}
-                  onChange={(e) => setCommentSort(e.target.value)}
-                >
-                  <option value="newest">Newest</option>
-                  <option value="oldest">Oldest</option>
-                </select>
-              </div>
+            <div
+              className="chat-window"
+              ref={chatWindowRef}
+              onScroll={() => {
+                const el = chatWindowRef.current;
+                if (!el) return;
+                isAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+              }}
+            >
+              {flatComments.map((c) => (
+                <ChatMessage
+                  key={c.id}
+                  comment={c}
+                  postBrowserId={post.browser_id}
+                  isMe={c.browser_id === getBrowserId()}
+                  canDelete={isMod}
+                  onDelete={async () => { await modAction({ type: "delete_comment", comment_id: c.id }); await load(); }}
+                  onReply={(msg) => setReplyTarget(msg)}
+                  allComments={allComments}
+                />
+              ))}
             </div>
 
             {!post.locked && (
-              <div className="comment-composer">
-                <textarea
-                  className="comment-composer-textarea"
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="Join the conversation..."
-                  disabled={isSendingComment}
-                  rows={3}
-                />
-                <div className="comment-composer-actions">
-                  <button
-                    type="button"
-                    className="comment-composer-cancel"
-                    onClick={() => setText("")}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="comment-composer-submit"
+              <div className="chat-compose">
+                {replyTarget && (
+                  <div className="chat-reply-preview">
+                    <div className="chat-reply-preview-inner">
+                      <span className="chat-reply-preview-name">
+                        {replyTarget.username || `Anon #${shortId(replyTarget.browser_id)}`}
+                      </span>
+                      <p className="chat-reply-preview-text">{replyTarget.content}</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="chat-reply-dismiss"
+                      onClick={() => setReplyTarget(null)}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+                <div className="chat-input-row">
+                  <textarea
+                    className="chat-input"
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="Message..."
                     disabled={isSendingComment}
-                    onClick={async () => {
+                    rows={1}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        if (!text.trim()) return;
+                        const content = text;
+                        const parentId = replyTarget?.id || null;
+                        setText("");
+                        setReplyTarget(null);
+                        isAtBottomRef.current = true;
+                        submitComment(content, parentId);
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="chat-send-btn"
+                    disabled={isSendingComment || !text.trim()}
+                    onClick={() => {
+                      if (!text.trim()) return;
                       const content = text;
+                      const parentId = replyTarget?.id || null;
                       setText("");
-                      await submitComment(content);
+                      setReplyTarget(null);
+                      isAtBottomRef.current = true;
+                      submitComment(content, parentId);
                     }}
                   >
-                    Comment
+                    ↑
                   </button>
                 </div>
               </div>
             )}
-
-            <div className="comments-list">
-              {topLevelComments.map((c) => (
-                <CommentCard
-                  key={c.id}
-                  comment={c}
-                  postBrowserId={post.browser_id}
-                  canDelete={isMod}
-                  onDelete={async () => { await modAction({ type: "delete_comment", comment_id: c.id }); await load(); }}
-                  onReply={(content, parentId) => submitComment(content, parentId)}
-                  allComments={allComments}
-                  threadReplies={getThreadReplies(c.id)}
-                />
-              ))}
-            </div>
           </div>
         </section>
       </main>
