@@ -565,7 +565,7 @@ function RealtimeStyles() {
 
       .chat-msg {
         display: flex;
-        align-items: flex-end;
+        align-items: flex-start;
         gap: 8px;
         max-width: 100%;
       }
@@ -743,7 +743,7 @@ function RealtimeStyles() {
         border: 1px solid #2e303a;
         border-radius: 20px;
         color: #f8fafc;
-        font-size: 14px;
+        font-size: 16px;
         font-family: inherit;
         padding: 9px 14px;
         resize: none;
@@ -1890,7 +1890,6 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, all
         <div className="chat-msg-meta">
           <span style={{ color: avatarColor }}>{displayName}</span>
           {isOP && <span className="comment-card-op">OP</span>}
-          <span className="chat-msg-time">· {timeAgo(comment.created_at)}</span>
         </div>
         <div
           className={`chat-bubble${isPending ? " pending" : ""}`}
@@ -1905,9 +1904,8 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, all
           )}
           <span className="chat-bubble-text">{comment.content}</span>
         </div>
-        <div className="chat-msg-footer">
-          <span className="chat-msg-time">{timeAgo(comment.created_at)}</span>
-          {canDelete && (
+        {canDelete && (
+          <div className="chat-msg-footer">
             <button
               type="button"
               className="chat-delete-btn"
@@ -1915,8 +1913,8 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, all
             >
               🗑
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2793,7 +2791,7 @@ function PostPage({ user }) {
         </div>
 
         <section className="comments-shell">
-          <div className="content-card comments-panel" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", height: "min(600px, 80dvh)" }}>
+          <div className="content-card comments-panel" style={{ padding: 0, overflow: "clip", display: "flex", flexDirection: "column", height: "min(600px, 80dvh)" }}>
             <div className="chat-panel-header">
               <span className="comments-panel-title">{comments.length} Messages</span>
             </div>
