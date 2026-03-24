@@ -1584,6 +1584,7 @@ function Auth({ setUser }) {
 function Home() {
   const [posts, setPosts] = useState([]);
   const [commentCounts, setCommentCounts] = useState({});
+  const [voteData, setVoteData] = useState({});
 
   const fetchPosts = useCallback(async () => {
     const [{ data: postsData }, { data: commentsData }] = await Promise.all([
@@ -1605,7 +1606,11 @@ function Home() {
     });
 
     setCommentCounts(counts);
-    setPosts(hydratePostsWithBoardTags(postsData || []));
+    const hydratedPosts = hydratePostsWithBoardTags(postsData || []);
+    setPosts(hydratedPosts);
+
+    const votes = await fetchVotesForPosts(hydratedPosts.map((p) => p.id));
+    setVoteData(votes);
   }, []);
 
   useEffect(() => {
@@ -1632,6 +1637,14 @@ function Home() {
               key={p.id}
               post={p}
               commentCount={commentCounts[p.id] || 0}
+              score={voteData[p.id]?.score ?? 0}
+              myVote={voteData[p.id]?.myVote ?? 0}
+              onVote={async (postId, value) => {
+                const result = await voteOnPost(postId, value);
+                if (result.success) {
+                  setVoteData((prev) => ({ ...prev, [postId]: { score: result.score, myVote: result.myVote } }));
+                }
+              }}
             />
           );
         })}
@@ -1644,6 +1657,7 @@ function BoardPage() {
   const { slug } = useParams();
   const [posts, setPosts] = useState([]);
   const [commentCounts, setCommentCounts] = useState({});
+  const [voteData, setVoteData] = useState({});
   const board = getBoardBySlug(slug);
 
   const fetchPosts = useCallback(async () => {
@@ -1666,7 +1680,11 @@ function BoardPage() {
     });
 
     setCommentCounts(counts);
-    setPosts(hydratePostsWithBoardTags(postsData || []));
+    const hydratedPosts = hydratePostsWithBoardTags(postsData || []);
+    setPosts(hydratedPosts);
+
+    const votes = await fetchVotesForPosts(hydratedPosts.map((p) => p.id));
+    setVoteData(votes);
   }, []);
 
   useEffect(() => {
@@ -1718,6 +1736,14 @@ function BoardPage() {
               key={p.id}
               post={p}
               commentCount={commentCounts[p.id] || 0}
+              score={voteData[p.id]?.score ?? 0}
+              myVote={voteData[p.id]?.myVote ?? 0}
+              onVote={async (postId, value) => {
+                const result = await voteOnPost(postId, value);
+                if (result.success) {
+                  setVoteData((prev) => ({ ...prev, [postId]: { score: result.score, myVote: result.myVote } }));
+                }
+              }}
             />
           );
         })}
@@ -1961,6 +1987,7 @@ function PostPage({ user }) {
   const [pendingComments, setPendingComments] = useState([]);
   const [commentSort, setCommentSort] = useState("newest");
   const [replyTarget, setReplyTarget] = useState(null);
+  const [voteData, setVoteData] = useState({ score: 0, myVote: 0 });
 
   const isMod = !!user;
 
@@ -1980,6 +2007,10 @@ function PostPage({ user }) {
 
     setPost(hydratePostWithBoardTag(p));
     setComments(c || []);
+    if (p?.id) {
+      const votes = await fetchVotesForPosts([p.id]);
+      setVoteData(votes[p.id] || { score: 0, myVote: 0 });
+    }
     setPendingComments((current) => {
       const nextPending = current.filter((pending) => {
         const matchedComment = (c || []).find(
@@ -2141,23 +2172,25 @@ function PostPage({ user }) {
             <div className="feed-post-vote-group">
               <button
                 type="button"
-                className="feed-post-action-button"
-                onClick={(event) => {
+                className={`feed-post-action-button${voteData.myVote === 1 ? " active" : ""}`}
+                onClick={async (event) => {
                   event.preventDefault();
-                  toggleVoteForPost(post.id, 1);
+                  const result = await voteOnPost(post.id, voteData.myVote === 1 ? 0 : 1);
+                  if (result.success) setVoteData({ score: result.score, myVote: result.myVote });
                 }}
               >
                 👍
               </button>
               <span className="feed-post-vote-score">
-                {getVoteStateForPost(post.id).score}
+                {voteData.score}
               </span>
               <button
                 type="button"
-                className="feed-post-action-button downvote"
-                onClick={(event) => {
+                className={`feed-post-action-button${voteData.myVote === -1 ? " active downvote" : ""}`}
+                onClick={async (event) => {
                   event.preventDefault();
-                  toggleVoteForPost(post.id, -1);
+                  const result = await voteOnPost(post.id, voteData.myVote === -1 ? 0 : -1);
+                  if (result.success) setVoteData({ score: result.score, myVote: result.myVote });
                 }}
               >
                 👎
