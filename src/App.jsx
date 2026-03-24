@@ -2220,7 +2220,9 @@ function Home() {
   const scrollKey = "scroll:/";
 
   useEffect(() => {
-    const onScroll = () => sessionStorage.setItem(scrollKey, String(window.scrollY));
+    const onScroll = () => {
+      if (scrollRestoredRef.current) sessionStorage.setItem(scrollKey, String(window.scrollY));
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -2308,7 +2310,9 @@ function BoardPage() {
   }, [slug]);
 
   useEffect(() => {
-    const onScroll = () => sessionStorage.setItem(scrollKey, String(window.scrollY));
+    const onScroll = () => {
+      if (scrollRestoredRef.current) sessionStorage.setItem(scrollKey, String(window.scrollY));
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, [scrollKey]);
