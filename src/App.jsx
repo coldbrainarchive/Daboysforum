@@ -3175,11 +3175,13 @@ function ModPanel({ setModName }) {
   const [users, setUsers] = useState([]);
   const [bans, setBans] = useState([]);
   const [jailed, setJailed] = useState([]);
+  const [members, setMembers] = useState([]);
   const [email, setEmail] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("joined_desc");
+  const OWNER_EMAIL = "coldbrainarchive@gmail.com";
 
   // LOAD DATA
   const load = useCallback(async () => {
@@ -3187,10 +3189,12 @@ function ModPanel({ setModName }) {
     const { data: comments } = await supabase.from("comments").select("*");
     const { data: bans } = await supabase.from("bans").select("*");
     const { data: jailedData } = await supabase.from("jailed").select("*");
+    const { data: profilesData } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
     const { data: userData } = await supabase.auth.getUser();
 
     setBans(bans || []);
     setJailed(jailedData || []);
+    setMembers(profilesData || []);
     setEmail(userData?.user?.email || "");
 
     const all = [...(posts || []), ...(comments || [])];
@@ -3493,6 +3497,49 @@ function ModPanel({ setModName }) {
           {sortedUsers.length === 0 && (
             <div style={{ padding: "32px 20px", color: "#64748b", fontSize: 14, textAlign: "center" }}>No named users yet</div>
           )}
+        </div>
+      </div>
+
+      {/* Members */}
+      <div className="content-card" style={{ padding: 0, overflow: "hidden", marginTop: 16 }}>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <h3 style={{ margin: 0, color: "#f8fafc", fontSize: 16, fontWeight: 700 }}>
+            Members <span style={{ color: "#64748b", fontWeight: 500, fontSize: 13 }}>{members.length}</span>
+          </h3>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {members.length === 0 && (
+            <div style={{ padding: "32px 20px", color: "#64748b", fontSize: 14, textAlign: "center" }}>No registered members yet</div>
+          )}
+          {members.map((m, i) => (
+            <div
+              key={m.id}
+              style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderBottom: i < members.length - 1 ? "1px solid #2e303a" : "none" }}
+            >
+              <div style={{ width: 34, height: 34, borderRadius: "50%", background: m.role === "mod" ? "#c084fc" : getUserColor(m.id, m.email), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#0f1117", flexShrink: 0 }}>
+                {m.email?.[0]?.toUpperCase() || "?"}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.email || m.id}</div>
+                <div style={{ color: "#64748b", fontSize: 12 }}>Joined {timeAgo(m.created_at)}</div>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, color: m.role === "mod" ? "#c084fc" : "#4ade80", background: m.role === "mod" ? "rgba(192,132,252,0.12)" : "rgba(74,222,128,0.1)", padding: "2px 8px", borderRadius: 999, flexShrink: 0 }}>
+                {m.role === "mod" ? "MOD" : "MEMBER"}
+              </span>
+              {email === OWNER_EMAIL && m.email !== OWNER_EMAIL && (
+                <button
+                  onClick={async () => {
+                    const newRole = m.role === "mod" ? "user" : "mod";
+                    await supabase.from("profiles").update({ role: newRole }).eq("id", m.id);
+                    load();
+                  }}
+                  style={{ padding: "6px 12px", borderRadius: 10, border: "none", background: m.role === "mod" ? "#1f2937" : "#c084fc", color: m.role === "mod" ? "#f8fafc" : "#14081d", fontWeight: 700, fontSize: 12, cursor: "pointer", flexShrink: 0 }}
+                >
+                  {m.role === "mod" ? "Remove Mod" : "Make Mod"}
+                </button>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </div>
