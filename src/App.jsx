@@ -554,6 +554,7 @@ function RealtimeStyles() {
         color: #0f1117;
         flex-shrink: 0;
         user-select: none;
+        margin-top: 2px;
       }
 
       .comment-card {
@@ -941,9 +942,7 @@ function RealtimeStyles() {
         }
 
         .comment-card-header {
-          align-items: flex-start;
-          flex-direction: column;
-          gap: 6px;
+          align-items: center;
         }
 
         .comment-card-actions {
@@ -1482,6 +1481,8 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
   const parentName = parentComment
     ? (parentComment.username || `Anon #${shortId(parentComment.browser_id)}`)
     : null;
+  // Only show quote when replying to a reply (not for direct replies to a top-level comment)
+  const showQuote = parentComment && !!parentComment.parent_comment_id;
 
   return (
     <div className={`comment-flat${isPending ? " pending" : ""}`}>
@@ -1500,7 +1501,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
           <span className="comment-card-time">· {timeAgo(comment.created_at)}</span>
         </div>
 
-        {parentComment && (
+        {showQuote && (
           <div className="comment-quote">
             <span className="comment-quote-author">{parentName}:</span>
             <p className="comment-quote-body">{parentComment.content}</p>
