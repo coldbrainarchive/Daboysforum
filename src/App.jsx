@@ -62,7 +62,10 @@ class ErrorBoundary extends Component {
 // HELPERS
 // ==============================
 function getUserColor(id, username) {
-  const seed = username || id;
+  // Prefer username so color is consistent across devices.
+  // For old records with no username, use first 8 chars of browser_id
+  // so at least the same device is always the same color.
+  const seed = username || (id ? id.slice(0, 8) : null);
   if (!seed) return "#dbe4ee";
 
   let hash = 0;
