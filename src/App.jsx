@@ -2299,7 +2299,8 @@ function PostPage({ user }) {
       }
 
       setIsSendingComment(false);
-      load();
+      await load();
+      setPendingComments((current) => current.filter((c) => c.id !== pendingId));
     } catch (err) {
       setPendingComments((current) => current.filter((comment) => comment.id !== pendingId));
       setIsSendingComment(false);
