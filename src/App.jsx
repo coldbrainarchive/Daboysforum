@@ -1,4 +1,4 @@
-import { Component, useCallback, useEffect, useRef, useState } from "react";
+import { Component, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
