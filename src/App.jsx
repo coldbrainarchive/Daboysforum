@@ -1281,7 +1281,7 @@ const BOARDS = [
   { name: "Random", slug: "random", icon: "🎲" },
   { name: "Announcements", slug: "announcements", icon: "📢" },
   { name: "Feedback", slug: "feedback", icon: "💬" },
-  { name: "Jail", slug: "jail", icon: "🚔" }
+  { name: "Cage", slug: "cage", icon: "🪹" }
 ];
 
 function getBoardBySlug(slug) {
@@ -2239,7 +2239,7 @@ function Home() {
 
     setCommentCounts(countValidComments(commentsData));
     const hydratedPosts = hydratePostsWithBoardTags(
-      (postsData || []).filter((p) => p.community_id !== "jail")
+      (postsData || []).filter((p) => p.community_id !== "cage" && p.community_id !== "jail")
     );
     setPosts(hydratedPosts);
 
@@ -2426,7 +2426,7 @@ function NewPost({ user }) {
       ]);
       if (jailRow) {
         setIsUserJailed(true);
-        setSelectedBoardSlug("jail");
+        setSelectedBoardSlug("cage");
       }
       if (postRow?.username) { setPreviewName(postRow.username); return; }
       const { data: commentRow } = await supabase
@@ -2536,7 +2536,7 @@ function NewPost({ user }) {
               ))}
             </select>
             {isUserJailed && (
-              <span style={{ color: "#fbbf24", fontSize: 12, fontWeight: 700, marginLeft: 8 }}>🚔 Jailed — posts go to Jail only</span>
+              <span style={{ color: "#fbbf24", fontSize: 12, fontWeight: 700, marginLeft: 8 }}>🪹 Caged — posts go to Cage only</span>
             )}
           </div>
 
@@ -3440,7 +3440,7 @@ function ModPanel({ setModName }) {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     <span style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14 }}>{u.username}</span>
                     {banned && <span style={{ fontSize: 11, fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.12)", padding: "1px 7px", borderRadius: 999 }}>BANNED</span>}
-                    {jailedUser && !banned && <span style={{ fontSize: 11, fontWeight: 700, color: "#fbbf24", background: "rgba(251,191,36,0.12)", padding: "1px 7px", borderRadius: 999 }}>JAILED</span>}
+                    {jailedUser && !banned && <span style={{ fontSize: 11, fontWeight: 700, color: "#fbbf24", background: "rgba(251,191,36,0.12)", padding: "1px 7px", borderRadius: 999 }}>CAGED</span>}
                     {u.joined_at && (
                       <span style={{ color: "#64748b", fontSize: 12 }}>· joined {timeAgo(u.joined_at)}</span>
                     )}
@@ -3459,7 +3459,7 @@ function ModPanel({ setModName }) {
                     onClick={() => toggleJail(u)}
                     style={{ padding: "7px 12px", borderRadius: 10, border: "none", background: jailedUser ? "#78350f" : "#451a03", color: jailedUser ? "#fde68a" : "#fbbf24", fontWeight: 700, cursor: "pointer", fontSize: 13 }}
                   >
-                    {jailedUser ? "Unjail" : "🚔 Jail"}
+                    {jailedUser ? "Uncage" : "🪹 Cage"}
                   </button>
                   <button
                     onClick={() => toggleBan(u)}
