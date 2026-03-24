@@ -2229,7 +2229,7 @@ function Home() {
     if (scrollRestoredRef.current || posts.length === 0) return;
     scrollRestoredRef.current = true;
     const saved = sessionStorage.getItem(scrollKey);
-    if (saved) window.scrollTo(0, parseInt(saved, 10));
+    if (saved) requestAnimationFrame(() => window.scrollTo(0, parseInt(saved, 10)));
   }, [posts]);
 
   const fetchPosts = useCallback(async () => {
@@ -2317,7 +2317,7 @@ function BoardPage() {
     if (scrollRestoredRef.current || posts.length === 0) return;
     scrollRestoredRef.current = true;
     const saved = sessionStorage.getItem(scrollKey);
-    if (saved) window.scrollTo(0, parseInt(saved, 10));
+    if (saved) requestAnimationFrame(() => window.scrollTo(0, parseInt(saved, 10)));
   }, [posts, scrollKey]);
 
   const fetchPosts = useCallback(async () => {
@@ -3476,6 +3476,8 @@ function ModPanel({ setModName }) {
 // ==============================
 // MAIN
 // ==============================
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [modName, setModName] = useState(localStorage.getItem("mod_name") || "Mod");
