@@ -535,47 +535,46 @@ function RealtimeStyles() {
       .comment-thread {
         display: flex;
         align-items: flex-start;
-        gap: 12px;
+        gap: 10px;
       }
 
-      .comment-children {
-        margin-top: 12px;
-        margin-left: 2px;
-        padding-left: 16px;
-        border-left: 2px solid rgba(148, 163, 184, 0.18);
-      }
-
-      .comment-rail {
-        flex: 0 0 22px;
+      .comment-left-col {
+        flex: 0 0 32px;
         display: flex;
         flex-direction: column;
         align-items: center;
         align-self: stretch;
       }
 
-      .comment-collapse-toggle {
-        width: 22px;
-        height: 22px;
-        display: inline-flex;
+      .comment-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 999px;
-        border: 1px solid #4b5563;
-        background: #16171d;
-        color: #f8fafc;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 800;
-        line-height: 1;
-        cursor: pointer;
+        color: #0f1117;
+        flex-shrink: 0;
+        user-select: none;
       }
 
       .comment-rail-line {
         width: 2px;
         flex: 1;
-        min-height: 16px;
-        margin-top: 6px;
+        min-height: 12px;
+        margin-top: 5px;
         border-radius: 999px;
-        background: rgba(148, 163, 184, 0.28);
+        background: rgba(148, 163, 184, 0.2);
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      .comment-rail-line:hover {
+        background: rgba(148, 163, 184, 0.5);
       }
 
       .comment-thread.collapsed .comment-rail-line {
@@ -596,7 +595,7 @@ function RealtimeStyles() {
 
       .comment-card {
         flex: 1 1 auto;
-        padding: 2px 0 0;
+        padding: 4px 0 0;
         background: transparent;
         min-width: 0;
       }
@@ -608,42 +607,60 @@ function RealtimeStyles() {
       .comment-card-header {
         display: flex;
         align-items: center;
-        justify-content: flex-start;
-        gap: 12px;
+        gap: 6px;
         margin-bottom: 6px;
-      }
-
-      .comment-card-meta {
-        min-width: 0;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
         flex-wrap: wrap;
-        color: #8fa0b6;
-        font-size: 13px;
       }
 
       .comment-card-author {
+        font-size: 13px;
         font-weight: 800;
+      }
+
+      .comment-card-time {
+        font-size: 12px;
+        color: #8fa0b6;
+      }
+
+      .comment-card-op {
+        font-size: 11px;
+        font-weight: 700;
+        color: #60a5fa;
+        background: rgba(96, 165, 250, 0.1);
+        border-radius: 4px;
+        padding: 1px 5px;
       }
 
       .comment-card-actions {
         display: inline-flex;
         align-items: center;
-        gap: 10px;
+        gap: 2px;
         margin-top: 10px;
       }
 
       .comment-action {
-        min-height: 20px;
-        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        height: 28px;
+        padding: 0 8px;
         border: none;
-        border-radius: 0;
+        border-radius: 999px;
         background: transparent;
         color: #8fa0b6;
         font-size: 12px;
         font-weight: 700;
         cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+      }
+
+      .comment-action:hover {
+        background: rgba(148, 163, 184, 0.1);
+        color: #f8fafc;
+      }
+
+      .comment-children {
+        margin-top: 12px;
       }
 
       .comment-body {
@@ -1416,32 +1433,41 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
       : (comment.username || `Anon #${shortId(comment.browser_id)}`);
   const childComments = comment.children || [];
 
+  const avatarColor = isModUser ? "#c084fc" : getUserColor(comment.browser_id);
+  const avatarLetter = isModUser ? "👤" : (displayName[0]?.toUpperCase() || "?");
+
   return (
     <div className={`comment-thread${isPending ? " pending" : ""}${isCollapsed ? " collapsed" : ""}`}>
-      <div className="comment-rail">
+      <div className="comment-left-col">
+        <div
+          className="comment-avatar"
+          style={{ background: avatarColor }}
+          onClick={() => setIsCollapsed((c) => !c)}
+          role="button"
+          title={isCollapsed ? "Expand" : "Collapse"}
+        >
+          {avatarLetter}
+        </div>
         <button
           type="button"
-          className="comment-collapse-toggle"
-          onClick={() => setIsCollapsed((current) => !current)}
-        >
-          {isCollapsed ? "+" : "-"}
-        </button>
-        <span className="comment-rail-line" />
+          aria-label="Collapse thread"
+          className="comment-rail-line"
+          onClick={() => setIsCollapsed((c) => !c)}
+        />
       </div>
 
       <div className="comment-card">
         <div className="comment-card-header">
-          <div className="comment-card-meta">
-            <span
-              className="comment-card-author"
-              style={{ color: isModUser ? "#c084fc" : getUserColor(comment.browser_id) }}
-            >
-              {isModUser && "👤 "}
-              {displayName}
-              {comment.browser_id === postBrowserId && " (OP)"}
-            </span>
-            <span>{timeAgo(comment.created_at)}</span>
-          </div>
+          <span
+            className="comment-card-author"
+            style={{ color: avatarColor }}
+          >
+            {displayName}
+          </span>
+          {comment.browser_id === postBrowserId && (
+            <span className="comment-card-op">OP</span>
+          )}
+          <span className="comment-card-time">· {timeAgo(comment.created_at)}</span>
         </div>
 
         {!isCollapsed && (
@@ -1455,13 +1481,15 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
                   className="comment-action"
                   onClick={() => onReply({ id: comment.id, name: displayName })}
                 >
-                  Reply
+                  <span>💬</span>
+                  <span>Reply</span>
                 </button>
               )}
 
               {canDelete && (
                 <button type="button" className="comment-action" onClick={onDelete}>
-                  Delete
+                  <span>🗑</span>
+                  <span>Delete</span>
                 </button>
               )}
             </div>
