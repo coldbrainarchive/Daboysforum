@@ -2055,6 +2055,10 @@ function NewPost() {
 function PostPage({ user }) {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
@@ -2208,20 +2212,18 @@ function PostPage({ user }) {
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: 6,
-                    padding: "5px 8px",
+                    justifyContent: "center",
+                    padding: "5px 10px",
                     borderRadius: 999,
                     border: "none",
                     background: "#20262f",
                     color: "#dbe4ee",
-                    fontSize: 11,
-                    fontWeight: 800,
-                    letterSpacing: "0.03em",
-                    textTransform: "uppercase",
-                    cursor: "pointer"
+                    fontSize: 14,
+                    cursor: "pointer",
+                    lineHeight: 1
                   }}
                 >
-                  ← Back
+                  ←
                 </button>
                 {activeBoard && (() => {
                   const boardSlug = BOARDS.find((b) => b.name === activeBoard)?.slug;
