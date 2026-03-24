@@ -1245,40 +1245,52 @@ function PostCard({ post, commentCount = 0, score = 0, myVote = 0, onVote }) {
     }, 1800);
   }
 
+  const boardSlug = BOARDS.find((b) => b.name === boardName)?.slug;
+
   return (
     <div className="content-card feed-post-card" style={{ marginBottom: 16 }}>
+      <div className="feed-post-header">
+        {boardName && (
+          <div className="feed-post-board-row">
+            <span className="feed-post-board-group">
+              {boardSlug ? (
+                <Link
+                  to={`/board/${boardSlug}`}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ textDecoration: "none" }}
+                >
+                  <BoardBadge boardName={boardName} />
+                </Link>
+              ) : (
+                <BoardBadge boardName={boardName} />
+              )}
+              {(post.pinned || post.locked) && (
+                <span className="feed-post-statuses">
+                  {post.pinned && (
+                    <span className="feed-post-status" style={{ color: "#f8fafc" }}>
+                      📌
+                    </span>
+                  )}
+                  {post.locked && (
+                    <span className="feed-post-status" style={{ color: "#f87171" }}>
+                      🔒
+                    </span>
+                  )}
+                </span>
+              )}
+            </span>
+            <span className="feed-post-time">
+              {timeAgo(post.last_activity || post.created_at)}
+            </span>
+          </div>
+        )}
+      </div>
+
       <Link
         to={`/post/${post.id}`}
         className="feed-post-link"
         style={{ textDecoration: "none", display: "block" }}
       >
-        <div className="feed-post-header">
-          {boardName && (
-            <div className="feed-post-board-row">
-              <span className="feed-post-board-group">
-                <BoardBadge boardName={boardName} />
-                {(post.pinned || post.locked) && (
-                  <span className="feed-post-statuses">
-                    {post.pinned && (
-                      <span className="feed-post-status" style={{ color: "#f8fafc" }}>
-                        📌
-                      </span>
-                    )}
-                    {post.locked && (
-                      <span className="feed-post-status" style={{ color: "#f87171" }}>
-                        🔒
-                      </span>
-                    )}
-                  </span>
-                )}
-              </span>
-              <span className="feed-post-time">
-                {timeAgo(post.last_activity || post.created_at)}
-              </span>
-            </div>
-          )}
-        </div>
-
         <div className="feed-post-main">
           <div className="feed-post-author-row">
             <span
