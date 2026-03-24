@@ -663,6 +663,15 @@ function RealtimeStyles() {
         margin-top: 12px;
       }
 
+      .comment-children-flat {
+        margin-top: 12px;
+        padding-left: 10px;
+        border-left: 2px solid rgba(148, 163, 184, 0.15);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
       .comment-body {
         color: #d4dde7;
         font-size: 15px;
@@ -1471,7 +1480,9 @@ function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappenin
   );
 }
 
-function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply }) {
+const MAX_COMMENT_DEPTH = 3;
+
+function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply, depth = 0 }) {
   const isModUser = isModPost(comment);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isReplying, setIsReplying] = useState(false);
@@ -1584,7 +1595,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
             )}
 
             {childComments.length > 0 && (
-              <div className="comment-children">
+              <div className={depth >= MAX_COMMENT_DEPTH ? "comment-children-flat" : "comment-children"}>
                 {childComments.map((childComment) => (
                   <CommentCard
                     key={childComment.id}
@@ -1593,6 +1604,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
                     canDelete={canDelete}
                     onDelete={onDelete}
                     onReply={onReply}
+                    depth={depth >= MAX_COMMENT_DEPTH ? depth : depth + 1}
                   />
                 ))}
               </div>
