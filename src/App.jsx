@@ -532,83 +532,40 @@ function RealtimeStyles() {
         gap: 14px;
       }
 
-      .comment-thread {
+      .comment-flat {
         display: flex;
         align-items: flex-start;
         gap: 10px;
       }
 
-      .comment-left-col {
-        flex: 0 0 32px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        align-self: stretch;
+      .comment-flat.pending .comment-card {
+        animation: commentLift 0.22s ease-out forwards, composerPulse 1s ease-in-out infinite;
       }
 
       .comment-avatar {
-        width: 32px;
-        height: 32px;
+        width: 36px;
+        height: 36px;
         border-radius: 999px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 800;
         color: #0f1117;
         flex-shrink: 0;
         user-select: none;
       }
 
-      .comment-rail-line {
-        width: 2px;
-        flex: 1;
-        min-height: 12px;
-        margin-top: 5px;
-        border-radius: 999px;
-        background: rgba(148, 163, 184, 0.2);
-        border: none;
-        padding: 0;
-        cursor: pointer;
-        transition: background 0.15s;
-      }
-
-      .comment-rail-line:hover {
-        background: rgba(148, 163, 184, 0.5);
-      }
-
-      .comment-thread.collapsed .comment-rail-line {
-        display: none;
-      }
-
-      .comment-thread.collapsed {
-        align-items: center;
-      }
-
-      .comment-thread.collapsed .comment-card {
-        padding-top: 0;
-      }
-
-      .comment-thread.collapsed .comment-card-header {
-        margin-bottom: 0;
-      }
-
       .comment-card {
         flex: 1 1 auto;
-        padding: 4px 0 0;
-        background: transparent;
         min-width: 0;
-      }
-
-      .comment-thread.pending .comment-card {
-        animation: commentLift 0.22s ease-out forwards, composerPulse 1s ease-in-out infinite;
       }
 
       .comment-card-header {
         display: flex;
         align-items: center;
         gap: 6px;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
         flex-wrap: wrap;
       }
 
@@ -629,6 +586,34 @@ function RealtimeStyles() {
         background: rgba(96, 165, 250, 0.1);
         border-radius: 4px;
         padding: 1px 5px;
+      }
+
+      .comment-quote {
+        border-left: 3px solid rgba(148, 163, 184, 0.35);
+        border-radius: 0 8px 8px 0;
+        background: rgba(148, 163, 184, 0.07);
+        padding: 8px 12px;
+        margin-bottom: 10px;
+        overflow: hidden;
+      }
+
+      .comment-quote-author {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        color: #94a3b8;
+        margin-bottom: 3px;
+      }
+
+      .comment-quote-body {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.45;
+        color: #8fa0b6;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
       }
 
       .comment-card-actions {
@@ -657,20 +642,6 @@ function RealtimeStyles() {
       .comment-action:hover {
         background: rgba(148, 163, 184, 0.1);
         color: #f8fafc;
-      }
-
-      .comment-children {
-        margin-top: 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      .comment-children-flat {
-        margin-top: 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
       }
 
       .comment-body {
@@ -1154,37 +1125,6 @@ function hydratePostWithBoardTag(post) {
   return hydratedPost;
 }
 
-function buildCommentTree(comments, sortOrder = "newest") {
-  const commentsById = new Map(comments.map((comment) => [comment.id, comment]));
-  const childrenByParentId = new Map();
-
-  comments.forEach((comment) => {
-    const parentId = comment.parent_comment_id && commentsById.has(comment.parent_comment_id)
-      ? comment.parent_comment_id
-      : null;
-
-    const currentChildren = childrenByParentId.get(parentId) || [];
-    currentChildren.push(comment);
-    childrenByParentId.set(parentId, currentChildren);
-  });
-
-  const sortItems = (items) => [...items].sort((a, b) => {
-    const timeA = new Date(a.created_at).getTime();
-    const timeB = new Date(b.created_at).getTime();
-    return sortOrder === "oldest" ? timeA - timeB : timeB - timeA;
-  });
-
-  const buildBranch = (parentId = null) => {
-    const branchItems = sortItems(childrenByParentId.get(parentId) || []);
-
-    return branchItems.map((comment) => ({
-      ...comment,
-      children: buildBranch(comment.id)
-    }));
-  };
-
-  return buildBranch(null);
-}
 
 function getStoredPostReactions() {
   return readStorageJson(POST_REACTIONS_STORAGE_KEY, {});
@@ -1481,11 +1421,8 @@ function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappenin
   );
 }
 
-const MAX_COMMENT_DEPTH = 2;
-
-function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply, depth = 0 }) {
+function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply, allComments = [] }) {
   const isModUser = isModPost(comment);
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [isSendingReply, setIsSendingReply] = useState(false);
@@ -1494,43 +1431,26 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
     isPending && !isModUser && !comment.username
       ? "Anonymous"
       : (comment.username || `Anon #${shortId(comment.browser_id)}`);
-  const childComments = comment.children || [];
 
   const avatarColor = isModUser ? "#c084fc" : getUserColor(comment.browser_id);
   const avatarLetter = isModUser ? "👤" : (displayName[0]?.toUpperCase() || "?");
-  const showAvatarCol = depth < MAX_COMMENT_DEPTH;
+
+  const parentComment = comment.parent_comment_id
+    ? allComments.find((c) => c.id === comment.parent_comment_id)
+    : null;
+  const parentName = parentComment
+    ? (parentComment.username || `Anon #${shortId(parentComment.browser_id)}`)
+    : null;
 
   return (
-    <div
-      className={`comment-thread${isPending ? " pending" : ""}${isCollapsed ? " collapsed" : ""}`}
-      style={!showAvatarCol ? { borderLeft: `2px solid ${avatarColor}40`, paddingLeft: 10, gap: 0 } : {}}
-    >
-      {showAvatarCol && (
-        <div className="comment-left-col">
-          <div
-            className="comment-avatar"
-            style={{ background: avatarColor }}
-            onClick={() => setIsCollapsed((c) => !c)}
-            role="button"
-            title={isCollapsed ? "Expand" : "Collapse"}
-          >
-            {avatarLetter}
-          </div>
-          <button
-            type="button"
-            aria-label="Collapse thread"
-            className="comment-rail-line"
-            onClick={() => setIsCollapsed((c) => !c)}
-          />
-        </div>
-      )}
+    <div className={`comment-flat${isPending ? " pending" : ""}`}>
+      <div className="comment-avatar" style={{ background: avatarColor }}>
+        {avatarLetter}
+      </div>
 
       <div className="comment-card">
         <div className="comment-card-header">
-          <span
-            className="comment-card-author"
-            style={{ color: avatarColor }}
-          >
+          <span className="comment-card-author" style={{ color: avatarColor }}>
             {displayName}
           </span>
           {comment.browser_id === postBrowserId && (
@@ -1539,84 +1459,70 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
           <span className="comment-card-time">· {timeAgo(comment.created_at)}</span>
         </div>
 
-        {!isCollapsed && (
-          <>
-            <div className="comment-body">{comment.content}</div>
+        {parentComment && (
+          <div className="comment-quote">
+            <span className="comment-quote-author">{parentName}:</span>
+            <p className="comment-quote-body">{parentComment.content}</p>
+          </div>
+        )}
 
-            <div className="comment-card-actions">
-              {onReply && (
-                <button
-                  type="button"
-                  className="comment-action"
-                  onClick={() => setIsReplying((v) => !v)}
-                >
-                  <span>💬</span>
-                  <span>Reply</span>
-                </button>
-              )}
+        <div className="comment-body">{comment.content}</div>
 
-              {canDelete && (
-                <button type="button" className="comment-action" onClick={onDelete}>
-                  <span>🗑</span>
-                  <span>Delete</span>
-                </button>
-              )}
+        <div className="comment-card-actions">
+          {onReply && (
+            <button
+              type="button"
+              className="comment-action"
+              onClick={() => setIsReplying((v) => !v)}
+            >
+              <span>💬</span>
+              <span>Reply</span>
+            </button>
+          )}
+          {canDelete && (
+            <button type="button" className="comment-action" onClick={onDelete}>
+              <span>🗑</span>
+              <span>Delete</span>
+            </button>
+          )}
+        </div>
+
+        {isReplying && (
+          <div className="inline-reply-box">
+            <textarea
+              className="comment-composer-textarea"
+              placeholder={`Reply to ${displayName}...`}
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              disabled={isSendingReply}
+              rows={3}
+              autoFocus
+            />
+            <div className="comment-composer-actions">
+              <button
+                type="button"
+                className="comment-composer-cancel"
+                onClick={() => { setIsReplying(false); setReplyText(""); }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="comment-composer-submit"
+                disabled={isSendingReply}
+                onClick={async () => {
+                  if (!replyText.trim()) return;
+                  setIsSendingReply(true);
+                  await onReply(replyText, comment.id);
+                  setIsSendingReply(false);
+                  setIsReplying(false);
+                  setReplyText("");
+                }}
+              >
+                Comment
+              </button>
             </div>
-
-            {isReplying && (
-              <div className="inline-reply-box">
-                <textarea
-                  className="comment-composer-textarea"
-                  placeholder={`Reply to ${displayName}...`}
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  disabled={isSendingReply}
-                  rows={3}
-                  autoFocus
-                />
-                <div className="comment-composer-actions">
-                  <button
-                    type="button"
-                    className="comment-composer-cancel"
-                    onClick={() => { setIsReplying(false); setReplyText(""); }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="comment-composer-submit"
-                    disabled={isSendingReply}
-                    onClick={async () => {
-                      if (!replyText.trim()) return;
-                      setIsSendingReply(true);
-                      await onReply(replyText, comment.id);
-                      setIsSendingReply(false);
-                      setIsReplying(false);
-                      setReplyText("");
-                    }}
-                  >
-                    Comment
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {childComments.length > 0 && (
-              <div className={depth >= MAX_COMMENT_DEPTH ? "comment-children-flat" : "comment-children"}>
-                {childComments.map((childComment) => (
-                  <CommentCard
-                    key={childComment.id}
-                    comment={childComment}
-                    postBrowserId={postBrowserId}
-                    canDelete={canDelete}
-                    onDelete={onDelete}
-                    onReply={onReply}
-                    depth={depth >= MAX_COMMENT_DEPTH ? depth : depth + 1}
-                  />
-                ))}
-              </div>
-            )}
-          </>
+          </div>
         )}
       </div>
     </div>
@@ -2298,7 +2204,12 @@ function PostPage({ user }) {
   const activeBoard = getBoardNameFromPost(post);
   const postIsMod = isModPost(post);
   const postAuthorLabel = post.username || `Anon #${shortId(post.browser_id)}`;
-  const commentTree = buildCommentTree([...comments, ...pendingComments], commentSort);
+  const allComments = [...comments, ...pendingComments];
+  const flatComments = [...allComments].sort((a, b) => {
+    const tA = new Date(a.created_at).getTime();
+    const tB = new Date(b.created_at).getTime();
+    return commentSort === "oldest" ? tA - tB : tB - tA;
+  });
 
   return (
     <div className="home-shell">
@@ -2527,7 +2438,7 @@ function PostPage({ user }) {
             )}
 
             <div className="comments-list">
-              {commentTree.map((c) => (
+              {flatComments.map((c) => (
                 <CommentCard
                   key={c.id}
                   comment={c}
@@ -2535,6 +2446,7 @@ function PostPage({ user }) {
                   canDelete={isMod}
                   onDelete={() => modAction({ type: "delete_comment", comment_id: c.id })}
                   onReply={(content, parentId) => submitComment(content, parentId)}
+                  allComments={allComments}
                 />
               ))}
             </div>
