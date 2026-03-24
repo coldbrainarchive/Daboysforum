@@ -2168,7 +2168,7 @@ function PostPage({ user }) {
     items.forEach((el) => {
       const id = el.dataset.commentId;
       if (!id) return;
-      const top = el.getBoundingClientRect().top;
+      const top = el.offsetTop; // layout position — unaffected by CSS transitions
       if (id in prev && Math.abs(prev[id] - top) > 0.5) {
         toAnimate.push({ el, delta: prev[id] - top });
       }
@@ -2564,7 +2564,7 @@ function PostPage({ user }) {
                   comment={c}
                   postBrowserId={post.browser_id}
                   canDelete={isMod}
-                  onDelete={() => modAction({ type: "delete_comment", comment_id: c.id })}
+                  onDelete={async () => { await modAction({ type: "delete_comment", comment_id: c.id }); load(); }}
                   onReply={(content, parentId) => submitComment(content, parentId)}
                   allComments={allComments}
                   threadReplies={getThreadReplies(c.id)}
