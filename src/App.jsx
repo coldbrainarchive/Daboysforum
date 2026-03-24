@@ -2020,6 +2020,7 @@ function NewPost() {
 // ==============================
 function PostPage({ user }) {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
@@ -2165,30 +2166,57 @@ function PostPage({ user }) {
       <main className="home-feed" style={{ textAlign: "left" }}>
         <div className="content-card feed-post-card" style={{ marginBottom: 16 }}>
           <div className="feed-post-header">
-            {activeBoard && (
-              <div className="feed-post-board-row">
-                <span className="feed-post-board-group">
-                  <BoardBadge boardName={activeBoard} />
-                  {(post.pinned || post.locked) && (
-                    <span className="feed-post-statuses">
-                      {post.pinned && (
-                        <span className="feed-post-status" style={{ color: "#f8fafc" }}>
-                          📌
-                        </span>
-                      )}
-                      {post.locked && (
-                        <span className="feed-post-status" style={{ color: "#f87171" }}>
-                          🔒
-                        </span>
-                      )}
-                    </span>
-                  )}
-                </span>
-                <span className="feed-post-time">
-                  {timeAgo(post.last_activity || post.created_at)}
-                </span>
-              </div>
-            )}
+            <div className="feed-post-board-row">
+              <span className="feed-post-board-group">
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    height: 28,
+                    padding: "0 10px",
+                    borderRadius: 999,
+                    border: "1px solid #2e303a",
+                    background: "#20262f",
+                    color: "#dbe4ee",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer"
+                  }}
+                >
+                  ← Back
+                </button>
+                {activeBoard && (() => {
+                  const boardSlug = BOARDS.find((b) => b.name === activeBoard)?.slug;
+                  return boardSlug ? (
+                    <Link to={`/board/${boardSlug}`} style={{ textDecoration: "none" }}>
+                      <BoardBadge boardName={activeBoard} />
+                    </Link>
+                  ) : (
+                    <BoardBadge boardName={activeBoard} />
+                  );
+                })()}
+                {(post.pinned || post.locked) && (
+                  <span className="feed-post-statuses">
+                    {post.pinned && (
+                      <span className="feed-post-status" style={{ color: "#f8fafc" }}>
+                        📌
+                      </span>
+                    )}
+                    {post.locked && (
+                      <span className="feed-post-status" style={{ color: "#f87171" }}>
+                        🔒
+                      </span>
+                    )}
+                  </span>
+                )}
+              </span>
+              <span className="feed-post-time">
+                {timeAgo(post.last_activity || post.created_at)}
+              </span>
+            </div>
           </div>
 
           <div className="feed-post-main">
