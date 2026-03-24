@@ -3367,7 +3367,7 @@ export default function App() {
       <Router>
         <RealtimeStyles />
         <nav className="app-topbar">
-          <Link to="/" className="app-brand">💬 postchats</Link>
+          <Link to="/" className="app-brand">postchats 💬</Link>
 
           <div className="app-actions">
             <Link to="/new" className="app-chip">New Post</Link>
