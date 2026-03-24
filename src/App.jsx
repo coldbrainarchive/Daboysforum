@@ -2514,7 +2514,6 @@ function NewPost() {
                 boxSizing: "border-box",
                 padding: "0",
                 border: "none",
-                borderBottom: "1px solid #2e303a",
                 fontSize: 20,
                 fontWeight: 700,
                 background: "transparent",
