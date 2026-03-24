@@ -3516,12 +3516,13 @@ function ModPanel({ setModName }) {
               key={m.id}
               style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderBottom: i < members.length - 1 ? "1px solid #2e303a" : "none" }}
             >
-              <div style={{ width: 34, height: 34, borderRadius: "50%", background: m.role === "mod" ? "#c084fc" : getUserColor(m.id, m.email), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#0f1117", flexShrink: 0 }}>
-                {m.email?.[0]?.toUpperCase() || "?"}
+              <div style={{ width: 34, height: 34, borderRadius: "50%", background: m.role === "mod" ? "#c084fc" : getUserColor(m.id, m.username || m.email), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#0f1117", flexShrink: 0 }}>
+                {(m.username || m.email)?.[0]?.toUpperCase() || "?"}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.email || m.id}</div>
-                <div style={{ color: "#64748b", fontSize: 12 }}>Joined {timeAgo(m.created_at)}</div>
+                {m.username && <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.username}</div>}
+                <div style={{ color: m.username ? "#64748b" : "#f8fafc", fontWeight: m.username ? 400 : 700, fontSize: m.username ? 12 : 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.email || m.id}</div>
+                <div style={{ color: "#475569", fontSize: 11 }}>Joined {timeAgo(m.created_at)}</div>
               </div>
               <span style={{ fontSize: 11, fontWeight: 700, color: m.role === "mod" ? "#c084fc" : "#4ade80", background: m.role === "mod" ? "rgba(192,132,252,0.12)" : "rgba(74,222,128,0.1)", padding: "2px 8px", borderRadius: 999, flexShrink: 0 }}>
                 {m.role === "mod" ? "MOD" : "MEMBER"}
@@ -3675,7 +3676,9 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
         setConfirmed(true);
       } else {
         // confirmation disabled — log straight in
-        await supabase.from("profiles").insert({ id: data.user.id, email, role: "user" });
+        const bid = getBrowserId();
+        const { data: postRow } = await supabase.from("posts").select("username").eq("browser_id", bid).eq("is_mod", false).not("username", "is", null).limit(1).maybeSingle();
+        await supabase.from("profiles").insert({ id: data.user.id, email, role: "user", username: postRow?.username || null, browser_id: bid });
         onLogin(data.user, "user");
         onClose();
       }
@@ -3866,7 +3869,9 @@ export default function App() {
       if (u) {
         const { data: profile } = await supabase.from("profiles").select("role").eq("id", u.id).maybeSingle();
         if (!profile) {
-          await supabase.from("profiles").insert({ id: u.id, email: u.email, role: "user" });
+          const bid = getBrowserId();
+          const { data: postRow } = await supabase.from("posts").select("username").eq("browser_id", bid).eq("is_mod", false).not("username", "is", null).limit(1).maybeSingle();
+          await supabase.from("profiles").insert({ id: u.id, email: u.email, role: "user", username: postRow?.username || null, browser_id: bid });
           applyRole("user");
         } else {
           applyRole(profile.role);
