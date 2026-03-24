@@ -886,7 +886,7 @@ function RealtimeStyles() {
       .chat-action-sheet {
         display: flex;
         gap: 6px;
-        margin-top: 5px;
+        margin-bottom: 5px;
       }
 
       .chat-action-btn {
@@ -2022,35 +2022,6 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, onR
           {isOP && <span className="comment-card-op">OP</span>}
           <span className="chat-msg-time">· {timeAgo(comment.created_at)}</span>
         </div>
-        <div
-          className={`chat-bubble${isPending ? " pending" : ""}`}
-          onClick={() => !isPending && setShowActions((v) => !v)}
-        >
-          {parentComment && (
-            <div className="chat-quote-bar">
-              <span className="chat-quote-name">{parentName}</span>
-              <p className="chat-quote-text">{parentComment.content}</p>
-            </div>
-          )}
-          <span className="chat-bubble-text">{comment.content}</span>
-        </div>
-
-        {reactionEntries.length > 0 && (
-          <div className="chat-reactions">
-            {reactionEntries.map(([emoji, voters]) => (
-              <button
-                key={emoji}
-                type="button"
-                className={`chat-reaction-pill${voters.includes(myId) ? " mine" : ""}`}
-                onClick={() => onReact && onReact(comment.id, emoji)}
-              >
-                {emoji}
-                <span className="chat-reaction-count">{voters.length}</span>
-              </button>
-            ))}
-          </div>
-        )}
-
         {showActions && (
           <div className="chat-action-sheet">
             <button
@@ -2085,6 +2056,35 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, onR
                 🗑 Delete
               </button>
             )}
+          </div>
+        )}
+
+        <div
+          className={`chat-bubble${isPending ? " pending" : ""}`}
+          onClick={() => !isPending && setShowActions((v) => !v)}
+        >
+          {parentComment && (
+            <div className="chat-quote-bar">
+              <span className="chat-quote-name">{parentName}</span>
+              <p className="chat-quote-text">{parentComment.content}</p>
+            </div>
+          )}
+          <span className="chat-bubble-text">{comment.content}</span>
+        </div>
+
+        {reactionEntries.length > 0 && (
+          <div className="chat-reactions">
+            {reactionEntries.map(([emoji, voters]) => (
+              <button
+                key={emoji}
+                type="button"
+                className={`chat-reaction-pill${voters.includes(myId) ? " mine" : ""}`}
+                onClick={() => onReact && onReact(comment.id, emoji)}
+              >
+                {emoji}
+                <span className="chat-reaction-count">{voters.length}</span>
+              </button>
+            ))}
           </div>
         )}
 
