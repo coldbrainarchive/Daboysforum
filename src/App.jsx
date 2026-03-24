@@ -2901,33 +2901,19 @@ function PostPage({ user }) {
           </div>
 
           <div className="feed-post-actions" style={{ marginTop: 14 }}>
-            <div className="feed-post-vote-group">
-              <button
-                type="button"
-                className={`feed-post-action-button${voteData.myVote === 1 ? " active" : ""}`}
-                onClick={async (event) => {
-                  event.preventDefault();
-                  const result = await voteOnPost(post.id, voteData.myVote === 1 ? 0 : 1);
-                  if (result.success) setVoteData({ score: result.score, myVote: result.myVote });
-                }}
-              >
-                👍
-              </button>
-              <span className="feed-post-vote-score">
-                {voteData.score}
-              </span>
-              <button
-                type="button"
-                className={`feed-post-action-button${voteData.myVote === -1 ? " active downvote" : ""}`}
-                onClick={async (event) => {
-                  event.preventDefault();
-                  const result = await voteOnPost(post.id, voteData.myVote === -1 ? 0 : -1);
-                  if (result.success) setVoteData({ score: result.score, myVote: result.myVote });
-                }}
-              >
-                👎
-              </button>
-            </div>
+            <button
+              type="button"
+              className="feed-post-action-pill"
+              style={voteData.myVote === 1 ? { borderColor: "#c084fc", background: "rgba(192,132,252,0.15)" } : {}}
+              onClick={async (event) => {
+                event.preventDefault();
+                const result = await voteOnPost(post.id, voteData.myVote === 1 ? 0 : 1);
+                if (result.success) setVoteData({ score: result.score, myVote: result.myVote });
+              }}
+            >
+              <span>👍</span>
+              <span>{voteData.score}</span>
+            </button>
 
             <button
               type="button"
@@ -2941,7 +2927,7 @@ function PostPage({ user }) {
                 }, 350);
               }}
             >
-              💬 {comments.length}
+              <span>💬</span><span>{comments.length}</span>
             </button>
 
             <button
