@@ -538,8 +538,17 @@ function RealtimeStyles() {
         gap: 10px;
       }
 
-      .comment-flat.pending .comment-card {
-        animation: commentLift 0.22s ease-out forwards, composerPulse 1s ease-in-out infinite;
+      .comment-flat.pending-toplevel {
+        animation: conveyorIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+
+      .comment-flat.pending-toplevel .comment-card {
+        border-radius: 14px;
+        animation: purpleGlow 1s ease-in-out infinite;
+      }
+
+      .comment-flat.pending-reply {
+        animation: popIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
       }
 
       .comment-avatar {
@@ -790,17 +799,31 @@ function RealtimeStyles() {
         100% { opacity: 1; transform: translateY(0); }
       }
 
-      @keyframes commentLift {
+      @keyframes conveyorIn {
         0% {
           opacity: 0;
-          transform: translateY(18px);
-          box-shadow: 0 0 0 0 rgba(192, 132, 252, 0);
+          transform: translateY(-28px);
+        }
+        60% {
+          opacity: 1;
+          transform: translateY(4px);
         }
         100% {
           opacity: 1;
           transform: translateY(0);
-          box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.45), 0 0 24px rgba(192, 132, 252, 0.22);
         }
+      }
+
+      @keyframes purpleGlow {
+        0%   { box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.3), 0 0 16px rgba(192, 132, 252, 0.15); }
+        50%  { box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.6), 0 0 28px rgba(192, 132, 252, 0.3); }
+        100% { box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.3), 0 0 16px rgba(192, 132, 252, 0.15); }
+      }
+
+      @keyframes popIn {
+        0%   { opacity: 0; transform: scale(0.82); }
+        70%  { opacity: 1; transform: scale(1.04); }
+        100% { opacity: 1; transform: scale(1); }
       }
 
       @media (max-width: 900px) {
@@ -1494,7 +1517,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
   const showQuote = parentComment && !!parentComment.parent_comment_id;
 
   return (
-    <div className={`comment-flat${isPending ? " pending" : ""}`}>
+    <div className={`comment-flat${isPending ? (comment.parent_comment_id ? " pending-reply" : " pending-toplevel") : ""}`}>
       <div className="comment-avatar" style={{ background: avatarColor }}>
         {avatarLetter}
       </div>
