@@ -2479,7 +2479,7 @@ function NewPost() {
       <main className="home-feed" style={{ textAlign: "left" }}>
         <div className="content-card feed-post-card" style={{ marginBottom: 16 }}>
 
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 16, paddingBottom: 14, borderBottom: "1px solid #2e303a" }}>
             <select
               value={selectedBoardSlug}
               onChange={(e) => setSelectedBoardSlug(e.target.value)}
@@ -2547,22 +2547,24 @@ function NewPost() {
             />
           </div>
 
-          <div className="feed-post-actions" style={{ marginTop: 14 }}>
-            <button
-              onClick={createPost}
-              disabled={isSending}
-              className="feed-post-action-pill"
-              style={{
-                background: isSending ? "#3b1f52" : "#c084fc",
-                color: "#14081d",
-                borderColor: "#c084fc",
-                fontWeight: 700,
-                opacity: isSending ? 0.7 : 1,
-                cursor: isSending ? "default" : "pointer"
-              }}
-            >
-              {isSending ? "Sending..." : "Post Thread"}
-            </button>
+          <div style={{ borderTop: "1px solid #2e303a", marginTop: 14 }}>
+            <div className="feed-post-actions" style={{ marginTop: 14 }}>
+              <button
+                onClick={createPost}
+                disabled={isSending}
+                className="feed-post-action-pill"
+                style={{
+                  background: isSending ? "#3b1f52" : "#c084fc",
+                  color: "#14081d",
+                  borderColor: "#c084fc",
+                  fontWeight: 700,
+                  opacity: isSending ? 0.7 : 1,
+                  cursor: isSending ? "default" : "pointer"
+                }}
+              >
+                {isSending ? "Sending..." : "Post"}
+              </button>
+            </div>
           </div>
         </div>
       </main>
