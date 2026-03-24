@@ -2399,7 +2399,7 @@ function BoardPage() {
 // ==============================
 // CREATE POST (FIXED)
 // ==============================
-function NewPost() {
+function NewPost({ user }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [title, setTitle] = useState("");
@@ -2501,6 +2501,20 @@ function NewPost() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="feed-post-author-row" style={{ marginBottom: 8 }}>
+            {(() => {
+              const browserId = getBrowserId();
+              const isMod = !!user;
+              const name = isMod ? getModName() : `Anon #${shortId(browserId)}`;
+              const color = isMod ? "#c084fc" : getUserColor(browserId);
+              return (
+                <span className="feed-post-author" style={{ color }}>
+                  {isMod && "👤 "}{name}
+                </span>
+              );
+            })()}
           </div>
 
           <div style={{ display: "grid", gap: 12 }}>
@@ -3440,7 +3454,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/board/:slug" element={<BoardPage />} />
-          <Route path="/new" element={<NewPost />} />
+          <Route path="/new" element={<NewPost user={user} />} />
           <Route path="/post/:id" element={<PostPage user={user} />} />
          <Route
     path="/mod"
