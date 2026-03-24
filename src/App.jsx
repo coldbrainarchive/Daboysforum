@@ -2448,6 +2448,9 @@ function NewPost({ user }) {
     try {
       if (!title.trim() || !content.trim()) return alert("Fill all fields");
       if (isSending) return;
+      if (isUserJailed && selectedBoardSlug !== "cage") {
+        return alert("🪹 You are caged — you can only post in the Cage board");
+      }
 
       setIsSending(true);
 
@@ -2675,6 +2678,14 @@ function PostPage({ user }) {
   const [shareLabel, setShareLabel] = useState("Share");
 
   const isMod = !!user;
+  const [isCaged, setIsCaged] = useState(false);
+
+  useEffect(() => {
+    if (isMod) return;
+    const browserId = getBrowserId();
+    supabase.from("jailed").select("browser_id").eq("browser_id", browserId).maybeSingle()
+      .then(({ data }) => { if (data) setIsCaged(true); });
+  }, [isMod]);
 
   const load = useCallback(async () => {
     const { data: p } = await supabase
@@ -2741,6 +2752,10 @@ function PostPage({ user }) {
   const submitComment = async (content, parentCommentId = null) => {
     if (!content.trim() || post?.locked) return;
     if (isSendingComment) return;
+    if (isCaged && getBoardNameFromPost(post) !== "Cage") {
+      alert("🪹 You are caged — you can only post in the Cage board");
+      return;
+    }
 
     const pendingId = crypto.randomUUID();
 
