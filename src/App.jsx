@@ -554,12 +554,12 @@ function RealtimeStyles() {
         color: #0f1117;
         flex-shrink: 0;
         user-select: none;
-        margin-top: 2px;
       }
 
       .comment-card {
         flex: 1 1 auto;
         min-width: 0;
+        padding-top: 8px;
       }
 
       .comment-card-header {
@@ -935,10 +935,6 @@ function RealtimeStyles() {
           align-items: flex-start;
           flex-direction: column;
           margin-bottom: 12px;
-        }
-
-        .comment-card {
-          padding: 2px 0 0;
         }
 
         .comment-card-header {
