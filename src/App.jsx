@@ -3151,6 +3151,8 @@ function ModPanel({ setModName }) {
   const [email, setEmail] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("joined_desc");
 
   // LOAD DATA
   const load = useCallback(async () => {
@@ -3168,10 +3170,17 @@ function ModPanel({ setModName }) {
     all.forEach((u) => {
       if (!u.browser_id || !u.username) return;
 
+      const existing = map[u.browser_id];
+      const entryDate = u.created_at ? new Date(u.created_at) : null;
+      const earliestDate = existing?.joined_at
+        ? (entryDate && entryDate < existing.joined_at ? entryDate : existing.joined_at)
+        : entryDate;
+
       map[u.browser_id] = {
         browser_id: u.browser_id,
         username: u.username,
-        ip_hash: u.ip_hash
+        ip_hash: u.ip_hash,
+        joined_at: earliestDate
       };
     });
 
@@ -3246,11 +3255,20 @@ function ModPanel({ setModName }) {
     load();
   };
 
-  const sortedUsers = [...users].sort((a, b) => {
-    const aBanned = isBanned(a) ? 1 : 0;
-    const bBanned = isBanned(b) ? 1 : 0;
-    if (aBanned !== bBanned) return aBanned - bBanned;
-    return a.username.localeCompare(b.username);
+  const filteredUsers = search.trim()
+    ? users.filter((u) => u.username.toLowerCase().includes(search.toLowerCase()))
+    : users;
+
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    if (sortBy === "joined_desc") return (b.joined_at || 0) - (a.joined_at || 0);
+    if (sortBy === "joined_asc") return (a.joined_at || 0) - (b.joined_at || 0);
+    if (sortBy === "name") return a.username.localeCompare(b.username);
+    if (sortBy === "banned") {
+      const aBanned = isBanned(a) ? 1 : 0;
+      const bBanned = isBanned(b) ? 1 : 0;
+      return bBanned - aBanned;
+    }
+    return 0;
   });
 
   return (
@@ -3323,9 +3341,26 @@ function ModPanel({ setModName }) {
 
       {/* Users */}
       <div className="content-card" style={{ padding: 0, overflow: "hidden" }}>
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <h3 style={{ margin: 0, color: "#f8fafc", fontSize: 16, fontWeight: 700 }}>Users</h3>
-          <span style={{ color: "#94a3b8", fontSize: 13 }}>{sortedUsers.length} total</span>
+        <div style={{ padding: "14px 20px", borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <h3 style={{ margin: 0, color: "#f8fafc", fontSize: 16, fontWeight: 700, marginRight: "auto" }}>
+            Users <span style={{ color: "#64748b", fontWeight: 500, fontSize: 13 }}>{sortedUsers.length}</span>
+          </h3>
+          <input
+            placeholder="Search users…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ padding: "7px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#0f1117", color: "#f8fafc", fontSize: 13, width: 180 }}
+          />
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            style={{ padding: "7px 12px", borderRadius: 10, border: "1px solid #374151", background: "#1f2937", color: "#dbe4ee", fontSize: 13, cursor: "pointer" }}
+          >
+            <option value="joined_desc">Newest first</option>
+            <option value="joined_asc">Oldest first</option>
+            <option value="name">Name A–Z</option>
+            <option value="banned">Banned first</option>
+          </select>
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {sortedUsers.map((u, i) => {
@@ -3360,7 +3395,14 @@ function ModPanel({ setModName }) {
                   {u.username[0].toUpperCase()}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14 }}>{u.username}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14 }}>{u.username}</span>
+                    {u.joined_at && (
+                      <span style={{ color: "#64748b", fontSize: 12 }}>
+                        · joined {timeAgo(u.joined_at)}
+                      </span>
+                    )}
+                  </div>
                   <div style={{ color: "#64748b", fontSize: 12, fontFamily: "var(--mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.browser_id}</div>
                 </div>
                 <span style={{ fontSize: 12, fontWeight: 700, color: banned ? "#f87171" : "#4ade80", flexShrink: 0 }}>
