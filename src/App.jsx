@@ -1959,7 +1959,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
   );
 }
 
-function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, onReact, reactions = {}, allComments = [] }) {
+function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, onReact, reactions = {}, allComments = [], onFindParent }) {
   const isModUser = isModPost(comment);
   const isPending = comment.isPending === true;
   const displayName = isPending && !isModUser && !comment.username
@@ -2006,7 +2006,7 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, onR
   }
 
   return (
-    <div className="chat-msg">
+    <div className="chat-msg" data-comment-id={comment.id}>
       <div className="chat-avatar" style={{ background: avatarColor }}>
         {avatarLetter}
       </div>
@@ -2061,6 +2061,15 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, onR
             >
               😊 React
             </button>
+            {comment.parent_comment_id && (
+              <button
+                type="button"
+                className="chat-action-btn"
+                onClick={() => { setShowActions(false); onFindParent && onFindParent(comment.parent_comment_id); }}
+              >
+                🔍 Find
+              </button>
+            )}
             {canDelete && (
               <button
                 type="button"
@@ -3043,6 +3052,10 @@ function PostPage({ user }) {
                   onReact={handleReact}
                   reactions={reactions}
                   allComments={allComments}
+                  onFindParent={(parentId) => {
+                    const el = chatWindowRef.current?.querySelector(`[data-comment-id="${parentId}"]`);
+                    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }}
                 />
               ))}
             </div>
