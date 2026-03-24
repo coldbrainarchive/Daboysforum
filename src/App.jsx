@@ -3505,20 +3505,29 @@ if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 export default function App() {
   const [user, setUser] = useState(null);
   const [modName, setModName] = useState(localStorage.getItem("mod_name") || "Mod");
+  const [browseUsername, setBrowseUsername] = useState(null);
 
   useEffect(() => {
-  supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => { setUser(session?.user || null); }
+    );
+    return () => { subscription.unsubscribe(); };
+  }, []);
 
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(
-    (_event, session) => {
-      setUser(session?.user || null);
-    }
-  );
-
-  return () => {
-    subscription.unsubscribe();
-  };
-}, []);
+  useEffect(() => {
+    const browserId = getBrowserId();
+    (async () => {
+      const { data: postRow } = await supabase
+        .from("posts").select("username").eq("browser_id", browserId)
+        .eq("is_mod", false).not("username", "is", null).limit(1).maybeSingle();
+      if (postRow?.username) { setBrowseUsername(postRow.username); return; }
+      const { data: commentRow } = await supabase
+        .from("comments").select("username").eq("browser_id", browserId)
+        .eq("is_mod", false).not("username", "is", null).limit(1).maybeSingle();
+      if (commentRow?.username) setBrowseUsername(commentRow.username);
+    })();
+  }, []);
   return (
     <ErrorBoundary>
       <Router>
@@ -3528,8 +3537,34 @@ export default function App() {
 
           <div className="app-actions">
             <Link to="/new" className="app-chip">New Post</Link>
-            <Link to="/mod" className="app-chip primary">
-              {user ? `👤 ${modName}` : "Log In"}
+            <Link
+              to="/mod"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                background: user
+                  ? "#c084fc"
+                  : browseUsername
+                  ? getUserColor(getBrowserId(), browseUsername)
+                  : "#c084fc",
+                color: "#14081d",
+                fontWeight: 800,
+                fontSize: 15,
+                textDecoration: "none",
+                flexShrink: 0,
+                border: user ? "2px solid #d8b4fe" : "2px solid transparent",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.3)"
+              }}
+            >
+              {user
+                ? (modName[0]?.toUpperCase() || "M")
+                : browseUsername
+                ? browseUsername[0].toUpperCase()
+                : "P"}
             </Link>
           </div>
         </nav>
