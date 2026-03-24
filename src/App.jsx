@@ -559,7 +559,7 @@ function RealtimeStyles() {
       .comment-card {
         flex: 1 1 auto;
         min-width: 0;
-        padding-top: 3px;
+        padding-top: 1px;
       }
 
       .comment-card-header {
@@ -577,6 +577,13 @@ function RealtimeStyles() {
         align-items: center;
         gap: 6px;
         flex-shrink: 0;
+      }
+
+      .comment-footer-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
       }
 
       .comment-header-btn {
@@ -1500,31 +1507,6 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
             <span className="comment-card-op">OP</span>
           )}
           <span className="comment-card-time">· {timeAgo(comment.created_at)}</span>
-          <div className="comment-header-actions">
-            {threadReplies.length > 0 && (
-              <button
-                type="button"
-                className="comment-header-btn"
-                onClick={() => setRepliesExpanded((v) => !v)}
-              >
-                {repliesExpanded ? "▲" : "▼"} {threadReplies.length} {threadReplies.length === 1 ? "Reply" : "Replies"}
-              </button>
-            )}
-            {onReply && (
-              <button
-                type="button"
-                className="comment-header-btn"
-                onClick={() => setIsReplying((v) => !v)}
-              >
-                Reply
-              </button>
-            )}
-            {canDelete && (
-              <button type="button" className="comment-header-btn" onClick={onDelete}>
-                🗑
-              </button>
-            )}
-          </div>
         </div>
 
         {showQuote && (
@@ -1535,6 +1517,32 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
         )}
 
         <div className="comment-body">{comment.content}</div>
+
+        <div className="comment-footer-actions">
+          {onReply && (
+            <button
+              type="button"
+              className="comment-header-btn"
+              onClick={() => setIsReplying((v) => !v)}
+            >
+              Reply
+            </button>
+          )}
+          {threadReplies.length > 0 && (
+            <button
+              type="button"
+              className="comment-header-btn"
+              onClick={() => setRepliesExpanded((v) => !v)}
+            >
+              {repliesExpanded ? "▲" : "▼"} {threadReplies.length} {threadReplies.length === 1 ? "Reply" : "Replies"}
+            </button>
+          )}
+          {canDelete && (
+            <button type="button" className="comment-header-btn" onClick={onDelete}>
+              🗑
+            </button>
+          )}
+        </div>
 
         {isReplying && (
           <div className="inline-reply-box">
