@@ -3011,14 +3011,14 @@ function PostPage({ user }) {
                   className="feed-post-action-pill"
                   onClick={() => setCommentSort(s => s === "oldest" ? "newest" : "oldest")}
                 >
-                  {commentSort === "oldest" ? "Oldest" : "Newest"}
+                  {commentSort === "oldest" ? "Newest" : "Oldest"}
                 </button>
                 <button
                   type="button"
                   className="feed-post-action-pill"
                   onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                 >
-                  💬
+                  🗒️
                 </button>
               </div>
             </div>
