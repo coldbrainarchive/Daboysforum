@@ -3512,11 +3512,16 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
 
   useEffect(() => {
     const browserId = getBrowserId();
+    const isMod = userRole === "mod";
 
     (async () => {
       const [{ data: myPosts }, { data: myComments }] = await Promise.all([
-        supabase.from("posts").select("id, title").eq("browser_id", browserId).eq("is_mod", false).eq("deleted", false),
-        supabase.from("comments").select("id, content, post_id").eq("browser_id", browserId).eq("is_mod", false).eq("deleted", false)
+        isMod
+          ? supabase.from("posts").select("id, title").eq("is_mod", true).eq("mod_user_id", user.id).eq("deleted", false)
+          : supabase.from("posts").select("id, title").eq("browser_id", browserId).eq("is_mod", false).eq("deleted", false),
+        isMod
+          ? supabase.from("comments").select("id, content, post_id").eq("is_mod", true).eq("mod_user_id", user.id).eq("deleted", false)
+          : supabase.from("comments").select("id, content, post_id").eq("browser_id", browserId).eq("is_mod", false).eq("deleted", false)
       ]);
 
       const postIds = (myPosts || []).map((p) => p.id);
@@ -3528,16 +3533,16 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
 
       const [postCommentsRes, repliesRes, reactionsRes, votesRes] = await Promise.all([
         postIds.length
-          ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("post_id", postIds).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(60)
+          ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("post_id", postIds).eq("is_mod", false).eq("deleted", false).order("created_at", { ascending: false }).limit(60)
           : Promise.resolve({ data: [] }),
         commentIds.length
-          ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("parent_comment_id", commentIds).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(60)
+          ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("parent_comment_id", commentIds).eq("is_mod", false).eq("deleted", false).order("created_at", { ascending: false }).limit(60)
           : Promise.resolve({ data: [] }),
         commentIds.length
           ? supabase.from("comment_reactions").select("comment_id, emoji, browser_id").in("comment_id", commentIds)
           : Promise.resolve({ data: [] }),
         postIds.length
-          ? supabase.from("post_votes").select("post_id, value, browser_id").in("post_id", postIds).neq("browser_id", browserId)
+          ? supabase.from("post_votes").select("post_id, value, browser_id").in("post_id", postIds)
           : Promise.resolve({ data: [] })
       ]);
 
