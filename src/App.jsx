@@ -426,7 +426,7 @@ function RealtimeStyles() {
         background: none;
         border: none;
         padding: 0;
-        color: #60a5fa;
+        color: #c084fc;
         font-size: 13px;
         font-weight: 700;
         cursor: pointer;
@@ -632,7 +632,7 @@ function RealtimeStyles() {
       }
 
       .chat-quote-bar {
-        border-left: 3px solid rgba(148,163,184,0.4);
+        border-left: 3px solid rgba(192,132,252,0.5);
         padding: 4px 8px;
         margin-bottom: 6px;
         border-radius: 0 6px 6px 0;
@@ -643,7 +643,7 @@ function RealtimeStyles() {
         display: block;
         font-size: 11px;
         font-weight: 700;
-        color: #60a5fa;
+        color: #c084fc;
         margin-bottom: 2px;
       }
 
@@ -702,7 +702,7 @@ function RealtimeStyles() {
         padding: 6px 10px;
         background: rgba(148, 163, 184, 0.07);
         border-radius: 10px;
-        border-left: 3px solid #60a5fa;
+        border-left: 3px solid #c084fc;
       }
 
       .chat-reply-preview-inner {
@@ -714,7 +714,7 @@ function RealtimeStyles() {
         display: block;
         font-size: 11px;
         font-weight: 700;
-        color: #60a5fa;
+        color: #c084fc;
         margin-bottom: 2px;
       }
 
@@ -849,7 +849,7 @@ function RealtimeStyles() {
         border-radius: 999px;
         border: 1px solid rgba(148, 163, 184, 0.2);
         background: transparent;
-        color: #60a5fa;
+        color: #c084fc;
         font-size: 11px;
         font-weight: 700;
         cursor: pointer;
@@ -880,7 +880,7 @@ function RealtimeStyles() {
       .comment-card-op {
         font-size: 11px;
         font-weight: 700;
-        color: #60a5fa;
+        color: #c084fc;
       }
 
       .chat-action-sheet {
@@ -1870,7 +1870,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
             <span className="comment-quote-author">{parentName}:</span>
             <p className="comment-quote-body" style={quoteExpanded ? { display: "block", WebkitLineClamp: "unset" } : {}}>{parentComment.content}</p>
             {!quoteExpanded && parentComment.content.length > 120 && (
-              <span style={{ fontSize: 11, color: "#60a5fa", fontWeight: 700 }}>Show more</span>
+              <span style={{ fontSize: 11, color: "#c084fc", fontWeight: 700 }}>Show more</span>
             )}
           </div>
         )}
