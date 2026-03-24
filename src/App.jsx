@@ -559,6 +559,7 @@ function RealtimeStyles() {
         display: flex;
         flex-direction: column;
         gap: 6px;
+        position: relative;
         padding: 14px 12px;
         scroll-behavior: smooth;
       }
@@ -3061,13 +3062,7 @@ function PostPage({ user }) {
                     const win = chatWindowRef.current;
                     const el = win?.querySelector(`[data-comment-id="${parentId}"]`);
                     if (win && el) {
-                      let offsetTop = 0;
-                      let cur = el;
-                      while (cur && cur !== win) {
-                        offsetTop += cur.offsetTop;
-                        cur = cur.offsetParent;
-                      }
-                      const target = offsetTop - (win.clientHeight / 2) + (el.offsetHeight / 2);
+                      const target = el.offsetTop - (win.clientHeight / 2) + (el.offsetHeight / 2);
                       win.scrollTo({ top: target, behavior: "smooth" });
                       const bubble = el.querySelector(".chat-bubble");
                       if (bubble) {
