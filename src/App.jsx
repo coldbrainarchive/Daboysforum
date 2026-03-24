@@ -1728,33 +1728,17 @@ function PostCard({ post, commentCount = 0, score = 0, myVote = 0, onVote }) {
       </Link>
 
       <div className="feed-post-actions">
-        <div className="feed-post-vote-group">
-          <button
-            type="button"
-            aria-label="Thumbs up"
-            className={`feed-post-action-button${myVote === 1 ? " active" : ""}`}
-            onClick={(event) => {
-              event.preventDefault();
-              onVote?.(post.id, myVote === 1 ? 0 : 1);
-            }}
-          >
-            <span aria-hidden="true">👍</span>
-          </button>
-          <span className="feed-post-vote-score">
-            {score}
-          </span>
-          <button
-            type="button"
-            aria-label="Thumbs down"
-            className={`feed-post-action-button${myVote === -1 ? " active downvote" : ""}`}
-            onClick={(event) => {
-              event.preventDefault();
-              onVote?.(post.id, myVote === -1 ? 0 : -1);
-            }}
-          >
-            <span aria-hidden="true">👎</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          className="chat-reaction-pill"
+          style={myVote === 1 ? { borderColor: "#c084fc", background: "rgba(192,132,252,0.15)" } : {}}
+          onClick={(event) => {
+            event.preventDefault();
+            onVote?.(post.id, myVote === 1 ? 0 : 1);
+          }}
+        >
+          👍 <span className="chat-reaction-count">{score}</span>
+        </button>
 
         <Link
           to={`/post/${post.id}`}
