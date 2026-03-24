@@ -1988,6 +1988,7 @@ function PostPage({ user }) {
   const [commentSort, setCommentSort] = useState("newest");
   const [replyTarget, setReplyTarget] = useState(null);
   const [voteData, setVoteData] = useState({ score: 0, myVote: 0 });
+  const [shareLabel, setShareLabel] = useState("Share");
 
   const isMod = !!user;
 
@@ -2208,14 +2209,24 @@ function PostPage({ user }) {
                 event.preventDefault();
                 const shareUrl = `${window.location.origin}/post/${post.id}`;
                 try {
-                  await navigator.clipboard.writeText(shareUrl);
-                  alert("Link copied!");
-                } catch {
-                  alert("Failed to copy link");
+                  if (navigator.share) {
+                    await navigator.share({ title: post.title, text: post.title, url: shareUrl });
+                    setShareLabel("Shared");
+                  } else if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(shareUrl);
+                    setShareLabel("Copied");
+                  } else {
+                    setShareLabel("Link ready");
+                  }
+                } catch (error) {
+                  if (error?.name !== "AbortError") setShareLabel("Share failed");
+                  return;
                 }
+                window.setTimeout(() => setShareLabel("Share"), 1800);
               }}
             >
-              ↗ Share
+              <span>↗</span>
+              <span>{shareLabel}</span>
             </button>
           </div>
 
