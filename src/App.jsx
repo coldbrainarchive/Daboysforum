@@ -3498,6 +3498,259 @@ function ModPanel({ setModName }) {
   );
 }
 // ==============================
+// ACTIVITY PANEL
+// ==============================
+function ActivityPanel({ user, modName, onClose, setUser, browseUsername }) {
+  const [tab, setTab] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [notifs, setNotifs] = useState([]);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+
+  useEffect(() => {
+    const browserId = getBrowserId();
+
+    (async () => {
+      const [{ data: myPosts }, { data: myComments }] = await Promise.all([
+        supabase.from("posts").select("id, title").eq("browser_id", browserId).eq("is_mod", false).eq("deleted", false),
+        supabase.from("comments").select("id, content, post_id").eq("browser_id", browserId).eq("is_mod", false).eq("deleted", false)
+      ]);
+
+      const postIds = (myPosts || []).map((p) => p.id);
+      const postTitleMap = Object.fromEntries((myPosts || []).map((p) => [p.id, p.title]));
+      const commentIds = (myComments || []).map((c) => c.id);
+      const commentPostMap = Object.fromEntries((myComments || []).map((c) => [c.id, c.post_id]));
+
+      const results = [];
+
+      const [postCommentsRes, repliesRes, reactionsRes, votesRes] = await Promise.all([
+        postIds.length
+          ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("post_id", postIds).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(60)
+          : Promise.resolve({ data: [] }),
+        commentIds.length
+          ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("parent_comment_id", commentIds).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(60)
+          : Promise.resolve({ data: [] }),
+        commentIds.length
+          ? supabase.from("comment_reactions").select("comment_id, emoji, browser_id").in("comment_id", commentIds)
+          : Promise.resolve({ data: [] }),
+        postIds.length
+          ? supabase.from("post_votes").select("post_id, value, browser_id").in("post_id", postIds).neq("browser_id", browserId)
+          : Promise.resolve({ data: [] })
+      ]);
+
+      // Comments on my posts
+      (postCommentsRes.data || []).forEach((c) => {
+        results.push({
+          id: `c-${c.id}`, type: "comment", icon: "💬",
+          text: `${c.username || "Someone"} commented on your post`,
+          subtext: `"${(postTitleMap[c.post_id] || "").slice(0, 50)}"`,
+          preview: c.content?.slice(0, 80),
+          time: c.created_at, postId: c.post_id
+        });
+      });
+
+      // Replies to my comments
+      (repliesRes.data || []).forEach((r) => {
+        results.push({
+          id: `r-${r.id}`, type: "reply", icon: "↩️",
+          text: `${r.username || "Someone"} replied to your comment`,
+          preview: r.content?.slice(0, 80),
+          time: r.created_at, postId: r.post_id
+        });
+      });
+
+      // Reactions grouped by comment
+      const reactionGroups = {};
+      (reactionsRes.data || []).filter((r) => r.browser_id !== browserId).forEach((r) => {
+        if (!reactionGroups[r.comment_id]) reactionGroups[r.comment_id] = {};
+        if (!reactionGroups[r.comment_id][r.emoji]) reactionGroups[r.comment_id][r.emoji] = 0;
+        reactionGroups[r.comment_id][r.emoji]++;
+      });
+      Object.entries(reactionGroups).forEach(([commentId, emojiCounts]) => {
+        const emojiStr = Object.entries(emojiCounts).map(([e, n]) => `${e}${n > 1 ? ` ×${n}` : ""}`).join("  ");
+        results.push({
+          id: `rx-${commentId}`, type: "reaction", icon: Object.keys(emojiCounts)[0],
+          text: `${emojiStr} on your comment`,
+          time: null, postId: commentPostMap[commentId]
+        });
+      });
+
+      // Votes grouped by post
+      const voteGroups = {};
+      (votesRes.data || []).forEach((v) => {
+        if (!voteGroups[v.post_id]) voteGroups[v.post_id] = { up: 0, down: 0 };
+        if (v.value > 0) voteGroups[v.post_id].up++;
+        else if (v.value < 0) voteGroups[v.post_id].down++;
+      });
+      Object.entries(voteGroups).forEach(([postId, counts]) => {
+        const parts = [];
+        if (counts.up) parts.push(`👍 ${counts.up}`);
+        if (counts.down) parts.push(`👎 ${counts.down}`);
+        results.push({
+          id: `v-${postId}`, type: "vote", icon: counts.up >= counts.down ? "👍" : "👎",
+          text: `${parts.join("  ")} on your post`,
+          subtext: `"${(postTitleMap[postId] || "").slice(0, 50)}"`,
+          time: null, postId
+        });
+      });
+
+      results.sort((a, b) => {
+        if (a.time && b.time) return new Date(b.time) - new Date(a.time);
+        if (a.time) return -1;
+        if (b.time) return 1;
+        return 0;
+      });
+
+      setNotifs(results);
+      setLoading(false);
+    })();
+  }, []);
+
+  const handleAuth = async () => {
+    if (!email || !password) return;
+    setAuthLoading(true);
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({ email, password });
+      setAuthLoading(false);
+      if (error) alert(error.message);
+      else alert("Check your email to confirm your account 📧");
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      setAuthLoading(false);
+      if (error) alert(error.message);
+      else { setUser(data.user); onClose(); }
+    }
+  };
+
+  const TABS = [
+    { id: "all",      label: "All" },
+    { id: "comment",  label: "💬 Comments" },
+    { id: "reply",    label: "↩️ Replies" },
+    { id: "reaction", label: "😍 Reactions" },
+    { id: "vote",     label: "👍 Votes" }
+  ];
+
+  const filtered = tab === "all" ? notifs : notifs.filter((n) => n.type === tab);
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 50, backdropFilter: "blur(3px)" }} />
+      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(420px, 100vw)", background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)", borderLeft: "1px solid #2e303a", zIndex: 51, display: "flex", flexDirection: "column", boxShadow: "-20px 0 60px rgba(0,0,0,0.5)" }}>
+
+        {/* Header */}
+        <div style={{ padding: "14px 18px", borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: user ? "#c084fc" : browseUsername ? getUserColor(getBrowserId(), browseUsername) : "#c084fc", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#14081d", flexShrink: 0 }}>
+            {user ? (modName[0]?.toUpperCase() || "M") : browseUsername ? browseUsername[0].toUpperCase() : "P"}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {user ? modName : browseUsername || "New User"}
+            </div>
+            <div style={{ color: "#64748b", fontSize: 12 }}>
+              {user ? "Moderator" : browseUsername ? "Anonymous member" : "No posts yet"}
+            </div>
+          </div>
+          {user && (
+            <Link to="/mod" onClick={onClose} style={{ padding: "6px 12px", borderRadius: 10, background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 12, textDecoration: "none", flexShrink: 0 }}>
+              Mod Panel
+            </Link>
+          )}
+          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", background: "#1f2937", color: "#94a3b8", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>✕</button>
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display: "flex", borderBottom: "1px solid #2e303a", overflowX: "auto", scrollbarWidth: "none", flexShrink: 0 }}>
+          {TABS.map((t) => {
+            const count = t.id === "all" ? notifs.length : notifs.filter((n) => n.type === t.id).length;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                style={{ padding: "10px 13px", border: "none", borderBottom: tab === t.id ? "2px solid #c084fc" : "2px solid transparent", marginBottom: -1, background: "transparent", color: tab === t.id ? "#f8fafc" : "#64748b", fontWeight: tab === t.id ? 700 : 500, fontSize: 12, cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", gap: 5 }}
+              >
+                {t.label}
+                {count > 0 && (
+                  <span style={{ background: tab === t.id ? "#c084fc" : "#1f2937", color: tab === t.id ? "#14081d" : "#94a3b8", borderRadius: 999, fontSize: 10, fontWeight: 800, padding: "1px 5px" }}>{count}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Notification list */}
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          {loading ? (
+            <div style={{ padding: 32, color: "#64748b", textAlign: "center", fontSize: 14 }}>Loading…</div>
+          ) : filtered.length === 0 ? (
+            <div style={{ padding: "48px 20px", color: "#64748b", textAlign: "center" }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>🐦</div>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>Nothing here yet</div>
+              <div style={{ fontSize: 12, marginTop: 4 }}>Activity shows up once you start posting</div>
+            </div>
+          ) : (
+            filtered.map((n) => (
+              <Link
+                key={n.id}
+                to={n.postId ? `/post/${n.postId}` : "#"}
+                onClick={onClose}
+                style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 18px", textDecoration: "none", borderBottom: "1px solid #1a1c23", transition: "background 0.12s" }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#1f2028"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+              >
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#1f2937", border: "1px solid #2e303a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>
+                  {n.icon}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: "#e2e8f0", fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}>{n.text}</div>
+                  {n.subtext && <div style={{ color: "#94a3b8", fontSize: 12, marginTop: 1 }}>{n.subtext}</div>}
+                  {n.preview && <div style={{ color: "#64748b", fontSize: 12, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.preview}</div>}
+                  {n.time && <div style={{ color: "#475569", fontSize: 11, marginTop: 5 }}>{timeAgo(n.time)}</div>}
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
+
+        {/* Auth section */}
+        {!user && (
+          <div style={{ padding: "14px 18px", borderTop: "1px solid #2e303a", background: "#0d0f14", flexShrink: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              {isSignUp ? "Create account" : "Mod login"}
+            </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              <input
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#16171d", color: "#f8fafc", fontSize: 13, width: "100%", boxSizing: "border-box" }}
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAuth()}
+                style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#16171d", color: "#f8fafc", fontSize: 13, width: "100%", boxSizing: "border-box" }}
+              />
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={handleAuth} disabled={authLoading} style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                  {authLoading ? "…" : isSignUp ? "Sign Up" : "Log In"}
+                </button>
+                <button onClick={() => setIsSignUp((s) => !s)} style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#94a3b8", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
+                  {isSignUp ? "Log In instead" : "Sign Up"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+// ==============================
 // MAIN
 // ==============================
 if ("scrollRestoration" in history) history.scrollRestoration = "manual";
@@ -3506,6 +3759,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [modName, setModName] = useState(localStorage.getItem("mod_name") || "Mod");
   const [browseUsername, setBrowseUsername] = useState(null);
+  const [showActivity, setShowActivity] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
@@ -3537,8 +3791,8 @@ export default function App() {
 
           <div className="app-actions">
             <Link to="/new" className="app-chip">New Post</Link>
-            <Link
-              to="/mod"
+            <button
+              onClick={() => setShowActivity(true)}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -3554,10 +3808,10 @@ export default function App() {
                 color: "#14081d",
                 fontWeight: 800,
                 fontSize: 15,
-                textDecoration: "none",
                 flexShrink: 0,
                 border: user ? "2px solid #d8b4fe" : "2px solid transparent",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.3)"
+                boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                cursor: "pointer"
               }}
             >
               {user
@@ -3565,7 +3819,7 @@ export default function App() {
                 : browseUsername
                 ? browseUsername[0].toUpperCase()
                 : "P"}
-            </Link>
+            </button>
           </div>
         </nav>
 
@@ -3574,11 +3828,18 @@ export default function App() {
           <Route path="/board/:slug" element={<BoardPage />} />
           <Route path="/new" element={<NewPost user={user} />} />
           <Route path="/post/:id" element={<PostPage user={user} />} />
-         <Route
-    path="/mod"
-    element={user ? <ModPanel setModName={setModName} /> : <Auth setUser={setUser} />}
-  />
+          <Route path="/mod" element={user ? <ModPanel setModName={setModName} /> : <Auth setUser={setUser} />} />
         </Routes>
+
+        {showActivity && (
+          <ActivityPanel
+            user={user}
+            modName={modName}
+            onClose={() => setShowActivity(false)}
+            setUser={setUser}
+            browseUsername={browseUsername}
+          />
+        )}
       </Router>
     </ErrorBoundary>
   );
