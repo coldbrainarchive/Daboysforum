@@ -3650,12 +3650,12 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
 
         {/* Header */}
         <div style={{ padding: "14px 18px", borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: user ? "#c084fc" : browseUsername ? getUserColor(getBrowserId(), browseUsername) : "#c084fc", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#14081d", flexShrink: 0 }}>
-            {user ? (modName[0]?.toUpperCase() || "M") : browseUsername ? browseUsername[0].toUpperCase() : "P"}
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: userRole === "mod" ? "#c084fc" : user ? getUserColor(user.id, user.email) : browseUsername ? getUserColor(getBrowserId(), browseUsername) : "#c084fc", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#14081d", flexShrink: 0 }}>
+            {userRole === "mod" ? (modName[0]?.toUpperCase() || "M") : user ? (user.email?.[0]?.toUpperCase() || "U") : browseUsername ? browseUsername[0].toUpperCase() : "P"}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {user ? modName : browseUsername || "New User"}
+              {userRole === "mod" ? modName : user ? user.email : browseUsername || "New User"}
             </div>
             <div style={{ color: "#64748b", fontSize: 12 }}>
               {user && userRole === "mod" ? "Moderator" : user ? "Member" : browseUsername ? "Anonymous member" : "No posts yet"}
@@ -3835,8 +3835,10 @@ export default function App() {
                 width: 36,
                 height: 36,
                 borderRadius: "50%",
-                background: user
+                background: userRole === "mod"
                   ? "#c084fc"
+                  : user
+                  ? getUserColor(user.id, user.email)
                   : browseUsername
                   ? getUserColor(getBrowserId(), browseUsername)
                   : "#c084fc",
@@ -3844,13 +3846,15 @@ export default function App() {
                 fontWeight: 800,
                 fontSize: 15,
                 flexShrink: 0,
-                border: user ? "2px solid #d8b4fe" : "2px solid transparent",
+                border: userRole === "mod" ? "2px solid #d8b4fe" : "2px solid transparent",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
                 cursor: "pointer"
               }}
             >
-              {user
+              {userRole === "mod"
                 ? (modName[0]?.toUpperCase() || "M")
+                : user
+                ? (user.email?.[0]?.toUpperCase() || "U")
                 : browseUsername
                 ? browseUsername[0].toUpperCase()
                 : "P"}
