@@ -3528,16 +3528,28 @@ function ModPanel({ setModName }) {
                 {m.role === "mod" ? "MOD" : "MEMBER"}
               </span>
               {email === OWNER_EMAIL && m.email !== OWNER_EMAIL && (
-                <button
-                  onClick={async () => {
-                    const newRole = m.role === "mod" ? "user" : "mod";
-                    await supabase.from("profiles").update({ role: newRole }).eq("id", m.id);
-                    load();
-                  }}
-                  style={{ padding: "6px 12px", borderRadius: 10, border: "none", background: m.role === "mod" ? "#1f2937" : "#c084fc", color: m.role === "mod" ? "#f8fafc" : "#14081d", fontWeight: 700, fontSize: 12, cursor: "pointer", flexShrink: 0 }}
-                >
-                  {m.role === "mod" ? "Remove Mod" : "Make Mod"}
-                </button>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button
+                    onClick={async () => {
+                      const newRole = m.role === "mod" ? "user" : "mod";
+                      await supabase.from("profiles").update({ role: newRole }).eq("id", m.id);
+                      load();
+                    }}
+                    style={{ padding: "6px 12px", borderRadius: 10, border: "none", background: m.role === "mod" ? "#1f2937" : "#c084fc", color: m.role === "mod" ? "#f8fafc" : "#14081d", fontWeight: 700, fontSize: 12, cursor: "pointer", flexShrink: 0 }}
+                  >
+                    {m.role === "mod" ? "Remove Mod" : "Make Mod"}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`Remove ${m.email} from members?`)) return;
+                      await supabase.from("profiles").delete().eq("id", m.id);
+                      load();
+                    }}
+                    style={{ padding: "6px 10px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#f87171", fontWeight: 700, fontSize: 12, cursor: "pointer", flexShrink: 0 }}
+                  >
+                    Remove
+                  </button>
+                </div>
               )}
             </div>
           ))}
