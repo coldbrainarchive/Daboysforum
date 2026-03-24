@@ -3061,15 +3061,16 @@ function PostPage({ user }) {
                     const win = chatWindowRef.current;
                     const el = win?.querySelector(`[data-comment-id="${parentId}"]`);
                     if (win && el) {
-                      const elTop = el.offsetTop;
-                      const target = elTop - (win.clientHeight / 2) + (el.offsetHeight / 2);
-                      win.scrollTo({ top: target, behavior: "smooth" });
+                      const winRect = win.getBoundingClientRect();
+                      const elRect = el.getBoundingClientRect();
+                      const offset = elRect.top - winRect.top + win.scrollTop - (win.clientHeight / 2) + (elRect.height / 2);
+                      win.scrollTo({ top: offset, behavior: "smooth" });
                       const bubble = el.querySelector(".chat-bubble");
                       if (bubble) {
                         setTimeout(() => {
                           bubble.classList.add("highlight");
                           setTimeout(() => bubble.classList.remove("highlight"), 1000);
-                        }, 400);
+                        }, 500);
                       }
                     }
                   }}
