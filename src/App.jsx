@@ -3020,7 +3020,30 @@ function PostPage({ user }) {
         <section className="comments-shell">
           <div className="content-card comments-panel" style={{ padding: 0, overflow: "clip", display: "flex", flexDirection: "column", height: "min(600px, 80dvh)" }}>
             <div className="chat-panel-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span className="comments-panel-title">{comments.length} Chats</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 26,
+                    height: 26,
+                    borderRadius: 999,
+                    border: "none",
+                    background: "#20262f",
+                    color: "#dbe4ee",
+                    fontSize: 12,
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    flexShrink: 0
+                  }}
+                >
+                  ←
+                </button>
+                <span className="comments-panel-title">{comments.length} Chats</span>
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <button
                   type="button"
