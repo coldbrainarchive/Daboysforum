@@ -3031,7 +3031,7 @@ function PostPage({ user }) {
                     if (el) el.scrollTo({ top: next === "oldest" ? 0 : el.scrollHeight, behavior: "smooth" });
                   }}
                 >
-                  {commentSort === "oldest" ? "Oldest" : "Newest"}
+                  {commentSort === "oldest" ? "Newest" : "Oldest"}
                 </button>
                 <button
                   type="button"
