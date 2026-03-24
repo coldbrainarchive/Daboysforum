@@ -2645,7 +2645,8 @@ function PostPage({ user }) {
   const [text, setText] = useState("");
   const [isSendingComment, setIsSendingComment] = useState(false);
   const [pendingComments, setPendingComments] = useState([]);
-  const [commentSort, setCommentSort] = useState("oldest");
+  const [commentSort] = useState("oldest");
+  const [scrollToBottom, setScrollToBottom] = useState(true);
   const [replyTarget, setReplyTarget] = useState(null);
   const [reactions, setReactions] = useState({});
   const chatWindowRef = useRef(null);
@@ -3025,13 +3026,12 @@ function PostPage({ user }) {
                   type="button"
                   className="feed-post-action-pill"
                   onClick={() => {
-                    const next = commentSort === "oldest" ? "newest" : "oldest";
-                    setCommentSort(next);
                     const el = chatWindowRef.current;
-                    if (el) el.scrollTo({ top: next === "oldest" ? 0 : el.scrollHeight, behavior: "smooth" });
+                    if (el) el.scrollTo({ top: scrollToBottom ? el.scrollHeight : 0, behavior: "smooth" });
+                    setScrollToBottom(v => !v);
                   }}
                 >
-                  {commentSort === "oldest" ? "Newest" : "Oldest"}
+                  {scrollToBottom ? "Newest" : "Oldest"}
                 </button>
                 <button
                   type="button"
