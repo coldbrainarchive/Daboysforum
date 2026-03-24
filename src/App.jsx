@@ -1625,6 +1625,21 @@ function Home() {
   const [posts, setPosts] = useState([]);
   const [commentCounts, setCommentCounts] = useState({});
   const [voteData, setVoteData] = useState({});
+  const scrollRestoredRef = useRef(false);
+  const scrollKey = "scroll:/";
+
+  useEffect(() => {
+    const onScroll = () => sessionStorage.setItem(scrollKey, String(window.scrollY));
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (scrollRestoredRef.current || posts.length === 0) return;
+    scrollRestoredRef.current = true;
+    const saved = sessionStorage.getItem(scrollKey);
+    if (saved) window.scrollTo(0, parseInt(saved, 10));
+  }, [posts]);
 
   const fetchPosts = useCallback(async () => {
     const [{ data: postsData }, { data: commentsData }] = await Promise.all([
@@ -1699,6 +1714,25 @@ function BoardPage() {
   const [commentCounts, setCommentCounts] = useState({});
   const [voteData, setVoteData] = useState({});
   const board = getBoardBySlug(slug);
+  const scrollRestoredRef = useRef(false);
+  const scrollKey = `scroll:/board/${slug}`;
+
+  useEffect(() => {
+    scrollRestoredRef.current = false;
+  }, [slug]);
+
+  useEffect(() => {
+    const onScroll = () => sessionStorage.setItem(scrollKey, String(window.scrollY));
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [scrollKey]);
+
+  useEffect(() => {
+    if (scrollRestoredRef.current || posts.length === 0) return;
+    scrollRestoredRef.current = true;
+    const saved = sessionStorage.getItem(scrollKey);
+    if (saved) window.scrollTo(0, parseInt(saved, 10));
+  }, [posts, scrollKey]);
 
   const fetchPosts = useCallback(async () => {
     const [{ data: postsData }, { data: commentsData }] = await Promise.all([
@@ -2174,15 +2208,16 @@ function PostPage({ user }) {
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: 4,
-                    height: 28,
-                    padding: "0 10px",
+                    gap: 6,
+                    padding: "5px 8px",
                     borderRadius: 999,
-                    border: "1px solid #2e303a",
+                    border: "none",
                     background: "#20262f",
                     color: "#dbe4ee",
-                    fontSize: 12,
-                    fontWeight: 700,
+                    fontSize: 11,
+                    fontWeight: 800,
+                    letterSpacing: "0.03em",
+                    textTransform: "uppercase",
                     cursor: "pointer"
                   }}
                 >
