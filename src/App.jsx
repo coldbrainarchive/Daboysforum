@@ -2239,7 +2239,10 @@ function Home() {
 
     setCommentCounts(countValidComments(commentsData));
     const hydratedPosts = hydratePostsWithBoardTags(
-      (postsData || []).filter((p) => p.community_id !== "cage" && p.community_id !== "jail")
+      (postsData || []).filter((p) => {
+        const b = getBoardNameFromPost(p);
+        return b !== "Cage" && b !== "Jail";
+      })
     );
     setPosts(hydratedPosts);
 
