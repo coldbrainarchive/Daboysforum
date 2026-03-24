@@ -2474,147 +2474,98 @@ function NewPost() {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: 720,
-        margin: "24px auto",
-        padding: 20,
-        border: "1px solid #2e303a",
-        borderRadius: 18,
-        background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)",
-        boxShadow: "0 18px 50px rgba(0, 0, 0, 0.35)",
-        textAlign: "left"
-      }}
-    >
-      <div style={{ marginBottom: 18 }}>
-        <h2 style={{ marginBottom: 0 }}>New Post</h2>
-      </div>
+    <div className="home-shell">
+      <BoardsTabs activeBoard={getBoardBySlug(selectedBoardSlug)?.name || ""} />
+      <main className="home-feed" style={{ textAlign: "left" }}>
+        <div className="content-card feed-post-card" style={{ marginBottom: 16 }}>
 
-      <div style={{ display: "grid", gap: 14 }}>
-        <label style={{ display: "grid", gap: 6 }}>
-          <span
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: 0.4,
-              textTransform: "uppercase",
-              color: "#cbd5e1"
-            }}
-          >
-            Board
-          </span>
-          <select
-            value={selectedBoardSlug}
-            onChange={(e) => setSelectedBoardSlug(e.target.value)}
-            disabled={isSending}
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              padding: "14px 16px",
-              borderRadius: 12,
-              border: "1px solid #3f4756",
-              fontSize: 16,
-              background: "#0f1117",
-              color: "#f8fafc"
-            }}
-          >
-            {BOARDS.map((board) => (
-              <option key={board.slug} value={board.slug}>
-                {board.icon} {board.name}
-              </option>
-            ))}
-          </select>
-        </label>
+          <div style={{ marginBottom: 16 }}>
+            <select
+              value={selectedBoardSlug}
+              onChange={(e) => setSelectedBoardSlug(e.target.value)}
+              disabled={isSending}
+              style={{
+                padding: "4px 10px",
+                borderRadius: 999,
+                border: "1px solid #3f4756",
+                fontSize: 13,
+                fontWeight: 700,
+                background: "#0f1117",
+                color: "#f8fafc",
+                cursor: "pointer"
+              }}
+            >
+              {BOARDS.map((board) => (
+                <option key={board.slug} value={board.slug}>
+                  {board.icon} {board.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <label style={{ display: "grid", gap: 6 }}>
-          <span
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: 0.4,
-              textTransform: "uppercase",
-              color: "#cbd5e1"
-            }}
-          >
-            Title
-          </span>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Give the thread a title"
-            disabled={isSending}
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              padding: "14px 16px",
-              borderRadius: 12,
-              border: "1px solid #3f4756",
-              fontSize: 16,
-              background: "#0f1117",
-              color: "#f8fafc"
-            }}
-          />
-        </label>
+          <div style={{ display: "grid", gap: 12 }}>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Give the thread a title"
+              disabled={isSending}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "0",
+                border: "none",
+                borderBottom: "1px solid #2e303a",
+                fontSize: 20,
+                fontWeight: 700,
+                background: "transparent",
+                color: "#f8fafc",
+                outline: "none",
+                paddingBottom: 10
+              }}
+            />
 
-        <label style={{ display: "grid", gap: 6 }}>
-          <span
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: 0.4,
-              textTransform: "uppercase",
-              color: "#cbd5e1"
-            }}
-          >
-            Body
-          </span>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="What’s going on?"
-            disabled={isSending}
-            rows={8}
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              padding: "16px",
-              borderRadius: 14,
-              border: "1px solid #3f4756",
-              fontSize: 16,
-              resize: "vertical",
-              background: "#0f1117",
-              color: "#f8fafc",
-              minHeight: 220
-            }}
-          />
-        </label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="What’s going on?"
+              disabled={isSending}
+              rows={6}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "0",
+                border: "none",
+                fontSize: 15,
+                resize: "vertical",
+                background: "transparent",
+                color: "#dbe4ee",
+                outline: "none",
+                minHeight: 120,
+                fontFamily: "inherit",
+                lineHeight: 1.6
+              }}
+            />
+          </div>
 
-        <button
-          onClick={createPost}
-          disabled={isSending}
-          style={{
-            width: "100%",
-            padding: "14px 18px",
-            borderRadius: 14,
-            border: "none",
-            background: isSending ? "#3b1f52" : "#c084fc",
-            color: "#14081d",
-            fontWeight: 700,
-            fontSize: 15,
-            cursor: isSending ? "default" : "pointer",
-            boxShadow: isSending ? "none" : "0 14px 30px rgba(192, 132, 252, 0.28)"
-          }}
-        >
-          <span
-            style={{
-              display: "inline-block",
-              opacity: isSending ? 0.6 : 1
-            }}
-          >
-            {isSending ? "Sending..." : "Post Thread"}
-          </span>
-        </button>
-      </div>
+          <div className="feed-post-actions" style={{ marginTop: 14 }}>
+            <button
+              onClick={createPost}
+              disabled={isSending}
+              className="feed-post-action-pill"
+              style={{
+                background: isSending ? "#3b1f52" : "#c084fc",
+                color: "#14081d",
+                borderColor: "#c084fc",
+                fontWeight: 700,
+                opacity: isSending ? 0.7 : 1,
+                cursor: isSending ? "default" : "pointer"
+              }}
+            >
+              {isSending ? "Sending..." : "Post Thread"}
+            </button>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
