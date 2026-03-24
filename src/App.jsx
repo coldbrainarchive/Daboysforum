@@ -1182,6 +1182,27 @@ function toggleReactionForPost(postId, emoji) {
   });
 }
 
+function countValidComments(commentsData) {
+  const all = commentsData || [];
+  const validIds = new Set();
+  all.filter((c) => !c.parent_comment_id).forEach((c) => validIds.add(c.id));
+  let changed = true;
+  while (changed) {
+    changed = false;
+    all.forEach((c) => {
+      if (!validIds.has(c.id) && c.parent_comment_id && validIds.has(c.parent_comment_id)) {
+        validIds.add(c.id);
+        changed = true;
+      }
+    });
+  }
+  const counts = {};
+  all.filter((c) => validIds.has(c.id)).forEach((c) => {
+    counts[c.post_id] = (counts[c.post_id] || 0) + 1;
+  });
+  return counts;
+}
+
 async function voteOnPost(postId, value) {
   const res = await fetch(`${WORKER_URL}/vote-post`, {
     method: "POST",
@@ -1713,16 +1734,11 @@ function Home() {
         .order("last_activity", { ascending: false }),
       supabase
         .from("comments")
-        .select("post_id")
+        .select("id, post_id, parent_comment_id")
         .eq("deleted", false)
     ]);
 
-    const counts = {};
-    (commentsData || []).forEach((comment) => {
-      counts[comment.post_id] = (counts[comment.post_id] || 0) + 1;
-    });
-
-    setCommentCounts(counts);
+    setCommentCounts(countValidComments(commentsData));
     const hydratedPosts = hydratePostsWithBoardTags(postsData || []);
     setPosts(hydratedPosts);
 
@@ -1806,16 +1822,11 @@ function BoardPage() {
         .order("last_activity", { ascending: false }),
       supabase
         .from("comments")
-        .select("post_id")
+        .select("id, post_id, parent_comment_id")
         .eq("deleted", false)
     ]);
 
-    const counts = {};
-    (commentsData || []).forEach((comment) => {
-      counts[comment.post_id] = (counts[comment.post_id] || 0) + 1;
-    });
-
-    setCommentCounts(counts);
+    setCommentCounts(countValidComments(commentsData));
     const hydratedPosts = hydratePostsWithBoardTags(postsData || []);
     setPosts(hydratedPosts);
 
