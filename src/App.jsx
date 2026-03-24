@@ -3671,12 +3671,12 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
             </div>
           </div>
           {user && userRole === "mod" && (
-            <Link to="/mod" onClick={onClose} style={{ padding: "6px 12px", borderRadius: 10, background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 12, textDecoration: "none", flexShrink: 0 }}>
+            <Link to="/mod" onClick={onClose} style={{ padding: "0 12px", height: 30, borderRadius: 10, background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 12, textDecoration: "none", flexShrink: 0, display: "inline-flex", alignItems: "center" }}>
               Mod Panel
             </Link>
           )}
           {user && (
-            <button onClick={() => { onLogout(); onClose(); }} style={{ padding: "6px 10px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#94a3b8", fontSize: 12, cursor: "pointer", flexShrink: 0 }}>
+            <button onClick={() => { onLogout(); onClose(); }} style={{ padding: "0 12px", height: 30, borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#94a3b8", fontSize: 12, cursor: "pointer", flexShrink: 0 }}>
               Log out
             </button>
           )}
@@ -3684,18 +3684,18 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
         </div>
 
         {/* Tabs */}
-        <div style={{ display: "flex", borderBottom: "1px solid #2e303a", overflowX: "auto", scrollbarWidth: "none", flexShrink: 0 }}>
+        <div style={{ display: "flex", borderBottom: "1px solid #2e303a", overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none", WebkitOverflowScrolling: "touch", flexShrink: 0 }}>
           {TABS.map((t) => {
             const count = t.id === "all" ? notifs.length : notifs.filter((n) => n.type === t.id).length;
             return (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                style={{ padding: "10px 13px", border: "none", borderBottom: tab === t.id ? "2px solid #c084fc" : "2px solid transparent", marginBottom: -1, background: "transparent", color: tab === t.id ? "#f8fafc" : "#64748b", fontWeight: tab === t.id ? 700 : 500, fontSize: 12, cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", gap: 5 }}
+                style={{ padding: "7px 10px", border: "none", borderBottom: tab === t.id ? "2px solid #c084fc" : "2px solid transparent", marginBottom: -1, background: "transparent", color: tab === t.id ? "#f8fafc" : "#64748b", fontWeight: tab === t.id ? 700 : 500, fontSize: 11, cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}
               >
                 {t.label}
                 {count > 0 && (
-                  <span style={{ background: tab === t.id ? "#c084fc" : "#1f2937", color: tab === t.id ? "#14081d" : "#94a3b8", borderRadius: 999, fontSize: 10, fontWeight: 800, padding: "1px 5px" }}>{count}</span>
+                  <span style={{ background: tab === t.id ? "#c084fc" : "#1f2937", color: tab === t.id ? "#14081d" : "#94a3b8", borderRadius: 999, fontSize: 9, fontWeight: 800, padding: "1px 4px" }}>{count}</span>
                 )}
               </button>
             );
