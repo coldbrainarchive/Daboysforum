@@ -939,12 +939,25 @@ function RealtimeStyles() {
         color: #94a3b8;
       }
 
-      .chat-emoji-input {
-        position: absolute;
-        opacity: 0;
-        pointer-events: none;
-        width: 1px;
-        height: 1px;
+      .chat-emoji-picker-row {
+        margin-top: 5px;
+      }
+
+      .chat-emoji-picker-input {
+        height: 30px;
+        padding: 0 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(148,163,184,0.25);
+        background: #0f1117;
+        color: #f8fafc;
+        font-size: 16px;
+        outline: none;
+        width: 140px;
+      }
+
+      .chat-emoji-picker-input::placeholder {
+        color: #8fa0b6;
+        font-size: 12px;
       }
 
       .comment-quote {
@@ -1941,6 +1954,7 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, onR
   const avatarLetter = isModUser ? "👤" : (displayName[0]?.toUpperCase() || "?");
   const isOP = comment.browser_id === postBrowserId;
   const [showActions, setShowActions] = useState(false);
+  const [isPickingEmoji, setIsPickingEmoji] = useState(false);
   const emojiInputRef = useRef(null);
   const myId = getBrowserId();
 
@@ -1956,11 +1970,13 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, onR
 
   function handleReactClick() {
     setShowActions(false);
-    if (emojiInputRef.current) {
-      emojiInputRef.current.value = "";
-      emojiInputRef.current.style.pointerEvents = "auto";
-      emojiInputRef.current.focus();
-    }
+    setIsPickingEmoji(true);
+    setTimeout(() => {
+      if (emojiInputRef.current) {
+        emojiInputRef.current.value = "";
+        emojiInputRef.current.focus();
+      }
+    }, 0);
   }
 
   function handleEmojiInput(e) {
@@ -1970,8 +1986,7 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, onR
     if (emoji) {
       onReact && onReact(comment.id, emoji);
       e.target.value = "";
-      e.target.style.pointerEvents = "none";
-      e.target.blur();
+      setIsPickingEmoji(false);
     }
   }
 
@@ -2043,14 +2058,19 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, onR
           </div>
         )}
 
-        <input
-          ref={emojiInputRef}
-          className="chat-emoji-input"
-          type="text"
-          inputMode="text"
-          onChange={handleEmojiInput}
-          onBlur={() => { if (emojiInputRef.current) emojiInputRef.current.style.pointerEvents = "none"; }}
-        />
+        {isPickingEmoji && (
+          <div className="chat-emoji-picker-row">
+            <input
+              ref={emojiInputRef}
+              className="chat-emoji-picker-input"
+              type="text"
+              inputMode="text"
+              placeholder="Pick an emoji..."
+              onChange={handleEmojiInput}
+              onBlur={() => setIsPickingEmoji(false)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
