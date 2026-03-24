@@ -420,6 +420,18 @@ function RealtimeStyles() {
         overflow-wrap: anywhere;
       }
 
+      .feed-post-seemore {
+        display: inline-block;
+        margin-top: 6px;
+        background: none;
+        border: none;
+        padding: 0;
+        color: #60a5fa;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
       .feed-post-actions {
         display: flex;
         flex-wrap: wrap;
@@ -1257,10 +1269,14 @@ function BoardBadge({ boardName }) {
   );
 }
 
+const POST_PREVIEW_LIMIT = 280;
+
 function PostCard({ post, commentCount = 0, score = 0, myVote = 0, onVote }) {
   const [shareLabel, setShareLabel] = useState("Share");
+  const [expanded, setExpanded] = useState(false);
   const isMod = isModPost(post);
   const boardName = getBoardNameFromPost(post);
+  const isLong = (post.content || "").length > POST_PREVIEW_LIMIT;
 
   async function handleShare(event) {
     event.preventDefault();
@@ -1355,7 +1371,18 @@ function PostCard({ post, commentCount = 0, score = 0, myVote = 0, onVote }) {
             {post.title}
           </h3>
 
-          <p className="feed-post-content">{post.content}</p>
+          <p className="feed-post-content">
+            {isLong && !expanded ? `${post.content.slice(0, POST_PREVIEW_LIMIT)}…` : post.content}
+          </p>
+          {isLong && (
+            <button
+              type="button"
+              className="feed-post-seemore"
+              onClick={(e) => { e.preventDefault(); setExpanded((v) => !v); }}
+            >
+              {expanded ? "See less" : "See more"}
+            </button>
+          )}
         </div>
       </Link>
 
