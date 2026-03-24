@@ -3166,13 +3166,13 @@ function ModPanel({ setModName }) {
     const map = {};
 
     all.forEach((u) => {
-      if (!u.browser_id) return;
+      if (!u.browser_id || !u.username) return;
 
       map[u.browser_id] = {
-  browser_id: u.browser_id,
-  username: u.username || `Anon #${shortId(u.browser_id)}`,
-  ip_hash: u.ip_hash // 🔥 ADD THIS
-};
+        browser_id: u.browser_id,
+        username: u.username,
+        ip_hash: u.ip_hash
+      };
     });
 
     setUsers(Object.values(map));
@@ -3246,200 +3246,149 @@ function ModPanel({ setModName }) {
     load();
   };
 
-  return (
-    <div
-      style={{
-        maxWidth: 900,
-        margin: "32px auto",
-        padding: 24,
-        border: "1px solid #2e303a",
-        borderRadius: 18,
-        background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)",
-        boxShadow: "0 18px 50px rgba(0, 0, 0, 0.35)",
-        textAlign: "left"
-      }}
-    >
-      <h2 style={{ marginBottom: 18 }}>Mod Panel</h2>
+  const sortedUsers = [...users].sort((a, b) => {
+    const aBanned = isBanned(a) ? 1 : 0;
+    const bBanned = isBanned(b) ? 1 : 0;
+    if (aBanned !== bBanned) return aBanned - bBanned;
+    return a.username.localeCompare(b.username);
+  });
 
-      <div style={{ display: "grid", gap: 16, marginBottom: 24 }}>
-        <div
-          style={{
-            padding: 18,
-            border: "1px solid #2e303a",
-            borderRadius: 16,
-            background: "#161a20"
-          }}
-        >
-          <h3 style={{ marginTop: 0, marginBottom: 12, color: "#f8fafc" }}>Account</h3>
-          <p style={{ marginBottom: 12 }}><b>Email:</b> {email}</p>
+  return (
+    <div style={{ width: "min(1280px, 100%)", margin: "0 auto", padding: "24px 20px 40px", boxSizing: "border-box", textAlign: "left" }}>
+      <div style={{ marginBottom: 24 }}>
+        <h2 style={{ margin: "0 0 4px", color: "#f8fafc", fontSize: 28, fontWeight: 800, letterSpacing: "-0.02em" }}>Mod Panel</h2>
+        <p style={{ color: "#94a3b8", fontSize: 14 }}>{email}</p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 24 }}>
+        {/* Account */}
+        <div className="content-card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <h3 style={{ margin: 0, color: "#f8fafc", fontSize: 16, fontWeight: 700 }}>Account</h3>
 
           <button
             onClick={logout}
-            style={{
-              padding: "12px 16px",
-              borderRadius: 14,
-              border: "none",
-              background: "#1f2937",
-              color: "#f8fafc",
-              fontWeight: 700,
-              cursor: "pointer"
-            }}
+            style={{ padding: "10px 16px", borderRadius: 12, border: "1px solid #374151", background: "#1f2937", color: "#f8fafc", fontWeight: 700, cursor: "pointer", fontSize: 14 }}
           >
             🚪 Logout
           </button>
 
-          <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+          <div style={{ display: "grid", gap: 8 }}>
             <input
               placeholder="New email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                padding: "14px 16px",
-                borderRadius: 12,
-                border: "1px solid #3f4756",
-                fontSize: 16,
-                background: "#0f1117",
-                color: "#f8fafc"
-              }}
+              style={{ width: "100%", boxSizing: "border-box", padding: "11px 14px", borderRadius: 10, border: "1px solid #3f4756", fontSize: 14, background: "#0f1117", color: "#f8fafc" }}
             />
             <button
               onClick={updateEmail}
-              style={{
-                width: "100%",
-                padding: "12px 16px",
-                borderRadius: 14,
-                border: "none",
-                background: "#c084fc",
-                color: "#14081d",
-                fontWeight: 700,
-                cursor: "pointer"
-              }}
+              style={{ width: "100%", padding: "10px 16px", borderRadius: 12, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, cursor: "pointer", fontSize: 14 }}
             >
               Update Email
             </button>
           </div>
 
-          <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+          <div style={{ display: "grid", gap: 8 }}>
             <input
               type="password"
               placeholder="New password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                padding: "14px 16px",
-                borderRadius: 12,
-                border: "1px solid #3f4756",
-                fontSize: 16,
-                background: "#0f1117",
-                color: "#f8fafc"
-              }}
+              style={{ width: "100%", boxSizing: "border-box", padding: "11px 14px", borderRadius: 10, border: "1px solid #3f4756", fontSize: 14, background: "#0f1117", color: "#f8fafc" }}
             />
             <button
               onClick={updatePassword}
-              style={{
-                width: "100%",
-                padding: "12px 16px",
-                borderRadius: 14,
-                border: "none",
-                background: "#c084fc",
-                color: "#14081d",
-                fontWeight: 700,
-                cursor: "pointer"
-              }}
+              style={{ width: "100%", padding: "10px 16px", borderRadius: 12, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, cursor: "pointer", fontSize: 14 }}
             >
               Update Password
             </button>
           </div>
         </div>
 
-        <div
-          style={{
-            padding: 18,
-            border: "1px solid #2e303a",
-            borderRadius: 16,
-            background: "#161a20"
-          }}
-        >
-          <h3 style={{ marginTop: 0, marginBottom: 12, color: "#f8fafc" }}>Display Name</h3>
-          <div style={{ display: "grid", gap: 10 }}>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                padding: "14px 16px",
-                borderRadius: 12,
-                border: "1px solid #3f4756",
-                fontSize: 16,
-                background: "#0f1117",
-                color: "#f8fafc"
-              }}
-            />
-            <button
-              onClick={saveName}
-              style={{
-                width: "100%",
-                padding: "12px 16px",
-                borderRadius: 14,
-                border: "none",
-                background: "#c084fc",
-                color: "#14081d",
-                fontWeight: 700,
-                cursor: "pointer"
-              }}
-            >
-              Save
-            </button>
-          </div>
+        {/* Display Name */}
+        <div className="content-card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <h3 style={{ margin: 0, color: "#f8fafc", fontSize: 16, fontWeight: 700 }}>Display Name</h3>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            style={{ width: "100%", boxSizing: "border-box", padding: "11px 14px", borderRadius: 10, border: "1px solid #3f4756", fontSize: 14, background: "#0f1117", color: "#f8fafc" }}
+          />
+          <button
+            onClick={saveName}
+            style={{ width: "100%", padding: "10px 16px", borderRadius: 12, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, cursor: "pointer", fontSize: 14 }}
+          >
+            Save
+          </button>
         </div>
       </div>
 
-      <h3 style={{ marginBottom: 14, color: "#f8fafc" }}>Users</h3>
-
-      <div style={{ display: "grid", gap: 12 }}>
-        {users.map((u) => (
-          <div
-            key={u.browser_id}
-            style={{
-              padding: 16,
-              border: "1px solid #2e303a",
-              borderRadius: 16,
-              background: "#161a20"
-            }}
-          >
-            <div style={{ marginBottom: 6 }}>
-              <b style={{ color: "#f8fafc" }}>{u.username}</b>
-            </div>
-
-            <small style={{ color: "#94a3b8" }}>{u.browser_id}</small>
-
-            <div style={{ marginTop: 10, marginBottom: 10 }}>
-              <span style={{ color: isBanned(u) ? "#f87171" : "#4ade80", fontWeight: 700 }}>
-                {isBanned(u) ? "BANNED" : "ACTIVE"}
-              </span>
-            </div>
-
-            <button
-              onClick={() => toggleBan(u)}
-              style={{
-                padding: "12px 16px",
-                borderRadius: 14,
-                border: "none",
-                background: isBanned(u) ? "#1f2937" : "#c084fc",
-                color: isBanned(u) ? "#f8fafc" : "#14081d",
-                fontWeight: 700,
-                cursor: "pointer"
-              }}
-            >
-              {isBanned(u) ? "Unban" : "Ban"}
-            </button>
-          </div>
-        ))}
+      {/* Users */}
+      <div className="content-card" style={{ padding: 0, overflow: "hidden" }}>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <h3 style={{ margin: 0, color: "#f8fafc", fontSize: 16, fontWeight: 700 }}>Users</h3>
+          <span style={{ color: "#94a3b8", fontSize: 13 }}>{sortedUsers.length} total</span>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {sortedUsers.map((u, i) => {
+            const banned = isBanned(u);
+            return (
+              <div
+                key={u.browser_id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 14,
+                  padding: "12px 20px",
+                  borderBottom: i < sortedUsers.length - 1 ? "1px solid #2e303a" : "none",
+                  background: banned ? "rgba(248, 113, 113, 0.04)" : "transparent"
+                }}
+              >
+                <div
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: "50%",
+                    background: getUserColor(u.browser_id, u.username),
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 13,
+                    fontWeight: 800,
+                    color: "#0f1117",
+                    flexShrink: 0
+                  }}
+                >
+                  {u.username[0].toUpperCase()}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14 }}>{u.username}</div>
+                  <div style={{ color: "#64748b", fontSize: 12, fontFamily: "var(--mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.browser_id}</div>
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 700, color: banned ? "#f87171" : "#4ade80", flexShrink: 0 }}>
+                  {banned ? "BANNED" : "ACTIVE"}
+                </span>
+                <button
+                  onClick={() => toggleBan(u)}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: 10,
+                    border: "none",
+                    background: banned ? "#1f2937" : "#c084fc",
+                    color: banned ? "#f8fafc" : "#14081d",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    fontSize: 13,
+                    flexShrink: 0
+                  }}
+                >
+                  {banned ? "Unban" : "Ban"}
+                </button>
+              </div>
+            );
+          })}
+          {sortedUsers.length === 0 && (
+            <div style={{ padding: "32px 20px", color: "#64748b", fontSize: 14, textAlign: "center" }}>No named users yet</div>
+          )}
+        </div>
       </div>
     </div>
   );
