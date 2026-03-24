@@ -672,23 +672,71 @@ function RealtimeStyles() {
       }
 
       .comment-composer {
-        margin-top: 16px;
-        padding-top: 16px;
-        border-top: 1px solid rgba(148, 163, 184, 0.12);
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.12);
       }
 
-      .reply-banner {
+      .comment-composer-textarea {
+        width: 100%;
+        box-sizing: border-box;
+        background: #0f1117;
+        border: 1px solid #2e303a;
+        border-radius: 14px;
+        color: #f8fafc;
+        font-size: 15px;
+        font-family: inherit;
+        padding: 14px;
+        resize: none;
+        min-height: 80px;
+      }
+
+      .comment-composer-textarea::placeholder {
+        color: #8fa0b6;
+      }
+
+      .comment-composer-textarea:focus {
+        outline: none;
+        border-color: #4b5563;
+      }
+
+      .comment-composer-actions {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 10px;
-        padding: 8px 10px;
-        border-radius: 12px;
-        background: rgba(192, 132, 252, 0.12);
-        color: #e9d5ff;
-        font-size: 12px;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .comment-composer-cancel {
+        height: 36px;
+        padding: 0 16px;
+        border-radius: 999px;
+        border: none;
+        background: #2e303a;
+        color: #dbe4ee;
+        font-size: 14px;
         font-weight: 700;
+        cursor: pointer;
+      }
+
+      .comment-composer-submit {
+        height: 36px;
+        padding: 0 18px;
+        border-radius: 999px;
+        border: none;
+        background: #c084fc;
+        color: #14081d;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .inline-reply-box {
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 14px;
+        background: #0f1117;
+        border: 1px solid #2e303a;
       }
 
       @keyframes composerPulse {
@@ -1426,6 +1474,9 @@ function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappenin
 function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply }) {
   const isModUser = isModPost(comment);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isReplying, setIsReplying] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [isSendingReply, setIsSendingReply] = useState(false);
   const isPending = comment.isPending === true;
   const displayName =
     isPending && !isModUser && !comment.username
@@ -1479,7 +1530,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
                 <button
                   type="button"
                   className="comment-action"
-                  onClick={() => onReply({ id: comment.id, name: displayName })}
+                  onClick={() => setIsReplying((v) => !v)}
                 >
                   <span>💬</span>
                   <span>Reply</span>
@@ -1493,6 +1544,44 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
                 </button>
               )}
             </div>
+
+            {isReplying && (
+              <div className="inline-reply-box">
+                <textarea
+                  className="comment-composer-textarea"
+                  placeholder={`Reply to ${displayName}...`}
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  disabled={isSendingReply}
+                  rows={3}
+                  autoFocus
+                />
+                <div className="comment-composer-actions">
+                  <button
+                    type="button"
+                    className="comment-composer-cancel"
+                    onClick={() => { setIsReplying(false); setReplyText(""); }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="comment-composer-submit"
+                    disabled={isSendingReply}
+                    onClick={async () => {
+                      if (!replyText.trim()) return;
+                      setIsSendingReply(true);
+                      await onReply(replyText, comment.id);
+                      setIsSendingReply(false);
+                      setIsReplying(false);
+                      setReplyText("");
+                    }}
+                  >
+                    Comment
+                  </button>
+                </div>
+              </div>
+            )}
 
             {childComments.length > 0 && (
               <div className="comment-children">
@@ -2065,7 +2154,6 @@ function PostPage({ user }) {
   const [isSendingComment, setIsSendingComment] = useState(false);
   const [pendingComments, setPendingComments] = useState([]);
   const [commentSort, setCommentSort] = useState("newest");
-  const [replyTarget, setReplyTarget] = useState(null);
   const [voteData, setVoteData] = useState({ score: 0, myVote: 0 });
   const [shareLabel, setShareLabel] = useState("Share");
 
@@ -2121,14 +2209,13 @@ function PostPage({ user }) {
     };
   }, [load]);
 
-  const addComment = async () => {
-    if (!text.trim() || post?.locked) return;
+  const submitComment = async (content, parentCommentId = null) => {
+    if (!content.trim() || post?.locked) return;
     if (isSendingComment) return;
 
     const pendingId = crypto.randomUUID();
 
     try {
-      const pendingContent = text;
       const browserId = getBrowserId();
       const { data } = await supabase.auth.getUser();
       const modMetadata = buildModMetadata(data.user);
@@ -2138,10 +2225,10 @@ function PostPage({ user }) {
         ...current,
         {
           id: pendingId,
-          content: pendingContent,
+          content,
           created_at: new Date().toISOString(),
           browser_id: browserId,
-          parent_comment_id: replyTarget?.id || null,
+          parent_comment_id: parentCommentId,
           username: modMetadata.username,
           is_mod: modMetadata.is_mod,
           isPending: true
@@ -2157,9 +2244,9 @@ function PostPage({ user }) {
             ...authHeaders
           },
           body: JSON.stringify({
-            content: pendingContent,
+            content,
             post_id: id,
-            parent_comment_id: replyTarget?.id || null,
+            parent_comment_id: parentCommentId,
             browser_id: browserId,
             ...modMetadata
           })
@@ -2175,18 +2262,15 @@ function PostPage({ user }) {
         } else {
           alert(result.error);
         }
-        return;
+        throw new Error(result.error);
       }
 
-      setText("");
-      setReplyTarget(null);
       setIsSendingComment(false);
       load();
     } catch (err) {
       setPendingComments((current) => current.filter((comment) => comment.id !== pendingId));
       setIsSendingComment(false);
       console.error(err);
-      alert("Failed to send comment");
     }
   };
 
@@ -2389,6 +2473,40 @@ function PostPage({ user }) {
               </div>
             </div>
 
+            {!post.locked && (
+              <div className="comment-composer">
+                <textarea
+                  className="comment-composer-textarea"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Join the conversation..."
+                  disabled={isSendingComment}
+                  rows={3}
+                />
+                <div className="comment-composer-actions">
+                  <button
+                    type="button"
+                    className="comment-composer-cancel"
+                    onClick={() => setText("")}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="comment-composer-submit"
+                    disabled={isSendingComment}
+                    onClick={async () => {
+                      const content = text;
+                      setText("");
+                      await submitComment(content);
+                    }}
+                  >
+                    Comment
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="comments-list">
               {commentTree.map((c) => (
                 <CommentCard
@@ -2397,70 +2515,10 @@ function PostPage({ user }) {
                   postBrowserId={post.browser_id}
                   canDelete={isMod}
                   onDelete={() => modAction({ type: "delete_comment", comment_id: c.id })}
-                  onReply={(target) => setReplyTarget(target)}
+                  onReply={(content, parentId) => submitComment(content, parentId)}
                 />
               ))}
             </div>
-
-            {!post.locked && (
-              <div className="comment-composer">
-                {replyTarget && (
-                  <div className="reply-banner">
-                    <span>Replying to {replyTarget.name}</span>
-                    <button
-                      type="button"
-                      className="comment-action"
-                      onClick={() => setReplyTarget(null)}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                )}
-
-                <textarea
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder={replyTarget ? `Reply to ${replyTarget.name}...` : "Write a comment..."}
-                  disabled={isSendingComment}
-                  rows={4}
-                  style={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                    padding: 12,
-                    borderRadius: 12,
-                    border: "1px solid #cbd5e1",
-                    resize: "vertical",
-                    fontSize: 16
-                  }}
-                />
-                <div style={{ marginTop: 10 }}>
-                  <button
-                    onClick={addComment}
-                    disabled={isSendingComment}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      borderRadius: 14,
-                      border: "none",
-                      background: isSendingComment ? "#3b1f52" : "#c084fc",
-                      color: "#14081d",
-                      fontWeight: 700,
-                      fontSize: 15,
-                      cursor: isSendingComment ? "default" : "pointer"
-                    }}
-                  >
-                    <span
-                      style={{
-                        display: "inline-block",
-                        animation: isSendingComment ? "sendFlight 0.8s ease-in-out infinite" : "none"
-                      }}
-                    >
-                      {isSendingComment ? "Sending..." : "Send"}
-                    </span>
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </section>
       </main>
