@@ -2405,8 +2405,32 @@ function NewPost({ user }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [previewName, setPreviewName] = useState(null);
   const requestedBoard = getBoardBySlug(searchParams.get("board"));
   const [selectedBoardSlug, setSelectedBoardSlug] = useState(requestedBoard?.slug || BOARDS[0].slug);
+
+  useEffect(() => {
+    if (user) return;
+    const browserId = getBrowserId();
+    (async () => {
+      const { data: postRow } = await supabase
+        .from("posts")
+        .select("username")
+        .eq("browser_id", browserId)
+        .not("username", "is", null)
+        .limit(1)
+        .maybeSingle();
+      if (postRow?.username) { setPreviewName(postRow.username); return; }
+      const { data: commentRow } = await supabase
+        .from("comments")
+        .select("username")
+        .eq("browser_id", browserId)
+        .not("username", "is", null)
+        .limit(1)
+        .maybeSingle();
+      if (commentRow?.username) setPreviewName(commentRow.username);
+    })();
+  }, [user]);
 
   const createPost = async () => {
     try {
@@ -2507,7 +2531,7 @@ function NewPost({ user }) {
             {(() => {
               const browserId = getBrowserId();
               const isMod = !!user;
-              const name = isMod ? getModName() : `Anon #${shortId(browserId)}`;
+              const name = isMod ? getModName() : (previewName || `Anon #${shortId(browserId)}`);
               const color = isMod ? "#c084fc" : getUserColor(browserId);
               return (
                 <span className="feed-post-author" style={{ color }}>
