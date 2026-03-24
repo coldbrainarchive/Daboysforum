@@ -712,13 +712,13 @@ function RealtimeStyles() {
         box-sizing: border-box;
         background: #0f1117;
         border: 1px solid #2e303a;
-        border-radius: 14px;
+        border-radius: 10px;
         color: #f8fafc;
-        font-size: 15px;
+        font-size: 13px;
         font-family: inherit;
-        padding: 14px;
+        padding: 10px 12px;
         resize: none;
-        min-height: 80px;
+        min-height: 60px;
       }
 
       .comment-composer-textarea::placeholder {
@@ -733,30 +733,30 @@ function RealtimeStyles() {
       .comment-composer-actions {
         display: flex;
         justify-content: flex-end;
-        gap: 8px;
-        margin-top: 10px;
+        gap: 6px;
+        margin-top: 8px;
       }
 
       .comment-composer-cancel {
-        height: 36px;
-        padding: 0 16px;
+        height: 28px;
+        padding: 0 12px;
         border-radius: 999px;
         border: none;
         background: #2e303a;
         color: #dbe4ee;
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 700;
         cursor: pointer;
       }
 
       .comment-composer-submit {
-        height: 36px;
-        padding: 0 18px;
+        height: 28px;
+        padding: 0 14px;
         border-radius: 999px;
         border: none;
         background: #c084fc;
         color: #14081d;
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 700;
         cursor: pointer;
       }
