@@ -543,13 +543,13 @@ function RealtimeStyles() {
       }
 
       .comment-avatar {
-        width: 36px;
-        height: 36px;
+        width: 30px;
+        height: 30px;
         border-radius: 999px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 800;
         color: #0f1117;
         flex-shrink: 0;
@@ -559,7 +559,7 @@ function RealtimeStyles() {
       .comment-card {
         flex: 1 1 auto;
         min-width: 0;
-        padding-top: 8px;
+        padding-top: 5px;
       }
 
       .comment-card-header {
