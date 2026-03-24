@@ -1730,14 +1730,15 @@ function PostCard({ post, commentCount = 0, score = 0, myVote = 0, onVote }) {
       <div className="feed-post-actions">
         <button
           type="button"
-          className="chat-reaction-pill"
+          className="feed-post-action-pill"
           style={myVote === 1 ? { borderColor: "#c084fc", background: "rgba(192,132,252,0.15)" } : {}}
           onClick={(event) => {
             event.preventDefault();
             onVote?.(post.id, myVote === 1 ? 0 : 1);
           }}
         >
-          👍 <span className="chat-reaction-count">{score}</span>
+          <span>👍</span>
+          <span>{score}</span>
         </button>
 
         <Link
