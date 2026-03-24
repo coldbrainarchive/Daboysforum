@@ -911,8 +911,6 @@ function RealtimeStyles() {
         }
 
         .comments-panel-header {
-          align-items: flex-start;
-          flex-direction: column;
           margin-bottom: 12px;
         }
 
