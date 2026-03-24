@@ -61,12 +61,13 @@ class ErrorBoundary extends Component {
 // ==============================
 // HELPERS
 // ==============================
-function getUserColor(id) {
-  if (!id) return "#dbe4ee";
+function getUserColor(id, username) {
+  const seed = username || id;
+  if (!seed) return "#dbe4ee";
 
   let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
   }
 
   let hue = Math.abs(hash) % 360;
@@ -1701,7 +1702,7 @@ function PostCard({ post, commentCount = 0, score = 0, myVote = 0, onVote }) {
           <div className="feed-post-author-row">
             <span
               className="feed-post-author"
-              style={{ color: isMod ? "#c084fc" : getUserColor(post.browser_id) }}
+              style={{ color: isMod ? "#c084fc" : getUserColor(post.browser_id, post.username) }}
             >
               {isMod && "👤 "}
               {post.username || `Anon #${shortId(post.browser_id)}`}
@@ -1821,7 +1822,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
       ? "Anonymous"
       : (comment.username || `Anon #${shortId(comment.browser_id)}`);
 
-  const avatarColor = isModUser ? "#c084fc" : getUserColor(comment.browser_id);
+  const avatarColor = isModUser ? "#c084fc" : getUserColor(comment.browser_id, comment.username);
   const avatarLetter = isModUser ? "👤" : (displayName[0]?.toUpperCase() || "?");
 
   const parentComment = comment.parent_comment_id
@@ -1956,7 +1957,7 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, onR
   const displayName = isPending && !isModUser && !comment.username
     ? "Anonymous"
     : (comment.username || `Anon #${shortId(comment.browser_id)}`);
-  const avatarColor = isModUser ? "#c084fc" : getUserColor(comment.browser_id);
+  const avatarColor = isModUser ? "#c084fc" : getUserColor(comment.browser_id, comment.username);
   const avatarLetter = isModUser ? "👤" : (displayName[0]?.toUpperCase() || "?");
   const isOP = comment.browser_id === postBrowserId;
   const [showActions, setShowActions] = useState(false);
@@ -2534,7 +2535,7 @@ function NewPost({ user }) {
               const browserId = getBrowserId();
               const isMod = !!user;
               const name = isMod ? getModName() : (previewName || `Anon #${shortId(browserId)}`);
-              const color = isMod ? "#c084fc" : getUserColor(browserId);
+              const color = isMod ? "#c084fc" : getUserColor(browserId, previewName);
               return (
                 <span className="feed-post-author" style={{ color }}>
                   {isMod && "👤 "}{name}
@@ -2878,7 +2879,7 @@ function PostPage({ user }) {
             <div className="feed-post-author-row">
               <span
                 className="feed-post-author"
-                style={{ color: postIsMod ? "#c084fc" : getUserColor(post.browser_id) }}
+                style={{ color: postIsMod ? "#c084fc" : getUserColor(post.browser_id, post.username) }}
               >
                 {postIsMod && "👤 "}
                 {postAuthorLabel}
