@@ -3003,8 +3003,15 @@ function PostPage({ user }) {
 
         <section className="comments-shell">
           <div className="content-card comments-panel" style={{ padding: 0, overflow: "clip", display: "flex", flexDirection: "column", height: "min(600px, 80dvh)" }}>
-            <div className="chat-panel-header">
+            <div className="chat-panel-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span className="comments-panel-title">{comments.length} Chats</span>
+              <button
+                type="button"
+                className="feed-post-action-pill"
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              >
+                💬
+              </button>
             </div>
 
             <div
@@ -3016,17 +3023,6 @@ function PostPage({ user }) {
                 isAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
               }}
             >
-              <div style={{ display: "flex", justifyContent: "center", padding: "6px 0 2px" }}>
-                <button
-                  type="button"
-                  className="feed-post-action-pill"
-                  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                  style={{ fontSize: 18, lineHeight: 1 }}
-                >
-                  💬
-                </button>
-              </div>
-
               {flatComments.map((c) => (
                 <ChatMessage
                   key={c.id}
