@@ -661,15 +661,16 @@ function RealtimeStyles() {
 
       .comment-children {
         margin-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
       }
 
       .comment-children-flat {
         margin-top: 12px;
-        padding-left: 10px;
-        border-left: 2px solid rgba(148, 163, 184, 0.15);
         display: flex;
         flex-direction: column;
-        gap: 14px;
+        gap: 12px;
       }
 
       .comment-body {
@@ -1480,7 +1481,7 @@ function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappenin
   );
 }
 
-const MAX_COMMENT_DEPTH = 3;
+const MAX_COMMENT_DEPTH = 2;
 
 function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply, depth = 0 }) {
   const isModUser = isModPost(comment);
@@ -1497,26 +1498,32 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
 
   const avatarColor = isModUser ? "#c084fc" : getUserColor(comment.browser_id);
   const avatarLetter = isModUser ? "👤" : (displayName[0]?.toUpperCase() || "?");
+  const showAvatarCol = depth < MAX_COMMENT_DEPTH;
 
   return (
-    <div className={`comment-thread${isPending ? " pending" : ""}${isCollapsed ? " collapsed" : ""}`}>
-      <div className="comment-left-col">
-        <div
-          className="comment-avatar"
-          style={{ background: avatarColor }}
-          onClick={() => setIsCollapsed((c) => !c)}
-          role="button"
-          title={isCollapsed ? "Expand" : "Collapse"}
-        >
-          {avatarLetter}
+    <div
+      className={`comment-thread${isPending ? " pending" : ""}${isCollapsed ? " collapsed" : ""}`}
+      style={!showAvatarCol ? { borderLeft: `2px solid ${avatarColor}40`, paddingLeft: 10, gap: 0 } : {}}
+    >
+      {showAvatarCol && (
+        <div className="comment-left-col">
+          <div
+            className="comment-avatar"
+            style={{ background: avatarColor }}
+            onClick={() => setIsCollapsed((c) => !c)}
+            role="button"
+            title={isCollapsed ? "Expand" : "Collapse"}
+          >
+            {avatarLetter}
+          </div>
+          <button
+            type="button"
+            aria-label="Collapse thread"
+            className="comment-rail-line"
+            onClick={() => setIsCollapsed((c) => !c)}
+          />
         </div>
-        <button
-          type="button"
-          aria-label="Collapse thread"
-          className="comment-rail-line"
-          onClick={() => setIsCollapsed((c) => !c)}
-        />
-      </div>
+      )}
 
       <div className="comment-card">
         <div className="comment-card-header">
