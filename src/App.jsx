@@ -875,9 +875,76 @@ function RealtimeStyles() {
         font-size: 11px;
         font-weight: 700;
         color: #60a5fa;
-        background: rgba(96, 165, 250, 0.1);
-        border-radius: 4px;
-        padding: 1px 5px;
+      }
+
+      .chat-action-sheet {
+        display: flex;
+        gap: 6px;
+        margin-top: 5px;
+      }
+
+      .chat-action-btn {
+        height: 26px;
+        padding: 0 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(148,163,184,0.2);
+        background: transparent;
+        color: #94a3b8;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .chat-action-btn:hover {
+        background: rgba(148,163,184,0.08);
+      }
+
+      .chat-reactions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 5px;
+      }
+
+      .chat-reaction-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(148,163,184,0.2);
+        background: rgba(148,163,184,0.07);
+        font-size: 13px;
+        cursor: pointer;
+        color: #dbe4ee;
+        transition: background 0.12s;
+      }
+
+      .chat-reaction-pill.mine {
+        border-color: #7c3aed;
+        background: rgba(124,58,237,0.15);
+      }
+
+      .chat-reaction-pill:hover {
+        background: rgba(148,163,184,0.14);
+      }
+
+      .chat-reaction-count {
+        font-size: 11px;
+        font-weight: 700;
+        color: #94a3b8;
+      }
+
+      .chat-emoji-input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+        width: 1px;
+        height: 1px;
       }
 
       .comment-quote {
@@ -1864,7 +1931,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
   );
 }
 
-function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, allComments = [] }) {
+function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, onReact, reactions = {}, allComments = [] }) {
   const isModUser = isModPost(comment);
   const isPending = comment.isPending === true;
   const displayName = isPending && !isModUser && !comment.username
@@ -1873,6 +1940,9 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, all
   const avatarColor = isModUser ? "#c084fc" : getUserColor(comment.browser_id);
   const avatarLetter = isModUser ? "👤" : (displayName[0]?.toUpperCase() || "?");
   const isOP = comment.browser_id === postBrowserId;
+  const [showActions, setShowActions] = useState(false);
+  const emojiInputRef = useRef(null);
+  const myId = getBrowserId();
 
   const parentComment = comment.parent_comment_id
     ? allComments.find((c) => c.id === comment.parent_comment_id)
@@ -1880,6 +1950,30 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, all
   const parentName = parentComment
     ? (parentComment.username || `Anon #${shortId(parentComment.browser_id)}`)
     : null;
+
+  const commentReactions = reactions[comment.id] || {};
+  const reactionEntries = Object.entries(commentReactions);
+
+  function handleReactClick() {
+    setShowActions(false);
+    if (emojiInputRef.current) {
+      emojiInputRef.current.value = "";
+      emojiInputRef.current.style.pointerEvents = "auto";
+      emojiInputRef.current.focus();
+    }
+  }
+
+  function handleEmojiInput(e) {
+    const val = e.target.value;
+    const chars = [...val];
+    const emoji = chars.find((c) => /\p{Emoji}/u.test(c) && c !== "\u200d");
+    if (emoji) {
+      onReact && onReact(comment.id, emoji);
+      e.target.value = "";
+      e.target.style.pointerEvents = "none";
+      e.target.blur();
+    }
+  }
 
   return (
     <div className="chat-msg">
@@ -1894,8 +1988,7 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, all
         </div>
         <div
           className={`chat-bubble${isPending ? " pending" : ""}`}
-          onClick={() => onReply && onReply(comment)}
-          title="Tap to reply"
+          onClick={() => !isPending && setShowActions((v) => !v)}
         >
           {parentComment && (
             <div className="chat-quote-bar">
@@ -1905,17 +1998,59 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, all
           )}
           <span className="chat-bubble-text">{comment.content}</span>
         </div>
-        {canDelete && (
-          <div className="chat-msg-footer">
-            <button
-              type="button"
-              className="chat-delete-btn"
-              onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            >
-              🗑
-            </button>
+
+        {reactionEntries.length > 0 && (
+          <div className="chat-reactions">
+            {reactionEntries.map(([emoji, voters]) => (
+              <button
+                key={emoji}
+                type="button"
+                className={`chat-reaction-pill${voters.includes(myId) ? " mine" : ""}`}
+                onClick={() => onReact && onReact(comment.id, emoji)}
+              >
+                {emoji}
+                <span className="chat-reaction-count">{voters.length}</span>
+              </button>
+            ))}
           </div>
         )}
+
+        {showActions && (
+          <div className="chat-action-sheet">
+            <button
+              type="button"
+              className="chat-action-btn"
+              onClick={() => { setShowActions(false); onReply && onReply(comment); }}
+            >
+              ↩ Reply
+            </button>
+            <button
+              type="button"
+              className="chat-action-btn"
+              onClick={handleReactClick}
+            >
+              😊 React
+            </button>
+            {canDelete && (
+              <button
+                type="button"
+                className="chat-action-btn"
+                onClick={(e) => { e.stopPropagation(); setShowActions(false); onDelete(); }}
+              >
+                🗑 Delete
+              </button>
+            )}
+          </div>
+        )}
+
+        <input
+          ref={emojiInputRef}
+          className="chat-emoji-input"
+          type="text"
+          inputMode="text"
+          onChange={handleEmojiInput}
+          onBlur={() => { if (emojiInputRef.current) emojiInputRef.current.style.pointerEvents = "none"; }}
+        />
       </div>
     </div>
   );
@@ -2462,8 +2597,26 @@ function PostPage({ user }) {
   const [pendingComments, setPendingComments] = useState([]);
   const [commentSort, setCommentSort] = useState("oldest");
   const [replyTarget, setReplyTarget] = useState(null);
+  const [reactions, setReactions] = useState({});
   const chatWindowRef = useRef(null);
   const isAtBottomRef = useRef(true);
+
+  function handleReact(commentId, emoji) {
+    const myId = getBrowserId();
+    setReactions((prev) => {
+      const commentReactions = { ...(prev[commentId] || {}) };
+      const voters = commentReactions[emoji] ? [...commentReactions[emoji]] : [];
+      const idx = voters.indexOf(myId);
+      if (idx === -1) {
+        commentReactions[emoji] = [...voters, myId];
+      } else {
+        const updated = voters.filter((v) => v !== myId);
+        if (updated.length === 0) delete commentReactions[emoji];
+        else commentReactions[emoji] = updated;
+      }
+      return { ...prev, [commentId]: commentReactions };
+    });
+  }
   const [voteData, setVoteData] = useState({ score: 0, myVote: 0 });
   const [shareLabel, setShareLabel] = useState("Share");
 
@@ -2814,6 +2967,8 @@ function PostPage({ user }) {
                   canDelete={isMod}
                   onDelete={async () => { await modAction({ type: "delete_comment", comment_id: c.id }); await load(); }}
                   onReply={(msg) => setReplyTarget(msg)}
+                  onReact={handleReact}
+                  reactions={reactions}
                   allComments={allComments}
                 />
               ))}
