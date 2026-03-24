@@ -2212,21 +2212,7 @@ function PostPage({ user }) {
       const votes = await fetchVotesForPosts([p.id]);
       setVoteData(votes[p.id] || { score: 0, myVote: 0 });
     }
-    setPendingComments((current) => {
-      const nextPending = current.filter((pending) => {
-        const matchedComment = (c || []).find(
-          (comment) =>
-            comment.content === pending.content &&
-            comment.browser_id === pending.browser_id &&
-            comment.parent_comment_id === pending.parent_comment_id &&
-            Math.abs(new Date(comment.created_at).getTime() - new Date(pending.created_at).getTime()) < 10000
-        );
-
-        return !matchedComment;
-      });
-
-      return nextPending;
-    });
+    setPendingComments([]);
   }, [id]);
 
   useEffect(() => {
@@ -2300,7 +2286,6 @@ function PostPage({ user }) {
 
       setIsSendingComment(false);
       await load();
-      setPendingComments((current) => current.filter((c) => c.id !== pendingId));
     } catch (err) {
       setPendingComments((current) => current.filter((comment) => comment.id !== pendingId));
       setIsSendingComment(false);
