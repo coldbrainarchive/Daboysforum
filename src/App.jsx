@@ -2100,7 +2100,7 @@ function NewPost() {
           <span
             style={{
               display: "inline-block",
-              animation: isSending ? "sendFlight 0.8s ease-in-out infinite" : "none"
+              opacity: isSending ? 0.6 : 1
             }}
           >
             {isSending ? "Sending..." : "Post Thread"}
@@ -2148,11 +2148,11 @@ function PostPage({ user }) {
 
     setPost(hydratePostWithBoardTag(p));
     setComments(c || []);
+    setPendingComments([]);
     if (p?.id) {
       const votes = await fetchVotesForPosts([p.id]);
       setVoteData(votes[p.id] || { score: 0, myVote: 0 });
     }
-    setPendingComments([]);
   }, [id]);
 
   useEffect(() => {
@@ -2490,7 +2490,7 @@ function PostPage({ user }) {
                   comment={c}
                   postBrowserId={post.browser_id}
                   canDelete={isMod}
-                  onDelete={async () => { await modAction({ type: "delete_comment", comment_id: c.id }); load(); }}
+                  onDelete={async () => { await modAction({ type: "delete_comment", comment_id: c.id }); await load(); }}
                   onReply={(content, parentId) => submitComment(content, parentId)}
                   allComments={allComments}
                   threadReplies={getThreadReplies(c.id)}
