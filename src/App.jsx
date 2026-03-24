@@ -1542,6 +1542,21 @@ async function voteOnPost(postId, value) {
   return res.json();
 }
 
+async function fetchReactions(commentIds) {
+  if (!commentIds.length) return {};
+  const { data } = await supabase
+    .from("comment_reactions")
+    .select("comment_id, browser_id, emoji")
+    .in("comment_id", commentIds);
+  const result = {};
+  (data || []).forEach(({ comment_id, browser_id, emoji }) => {
+    if (!result[comment_id]) result[comment_id] = {};
+    if (!result[comment_id][emoji]) result[comment_id][emoji] = [];
+    result[comment_id][emoji].push(browser_id);
+  });
+  return result;
+}
+
 async function fetchVotesForPosts(postIds) {
   if (!postIds.length) return {};
   const browserId = getBrowserId();
@@ -2621,21 +2636,29 @@ function PostPage({ user }) {
   const chatWindowRef = useRef(null);
   const isAtBottomRef = useRef(true);
 
-  function handleReact(commentId, emoji) {
+  async function handleReact(commentId, emoji) {
     const myId = getBrowserId();
+    const hasReacted = (reactions[commentId]?.[emoji] || []).includes(myId);
+    // Optimistic update
     setReactions((prev) => {
       const commentReactions = { ...(prev[commentId] || {}) };
       const voters = commentReactions[emoji] ? [...commentReactions[emoji]] : [];
-      const idx = voters.indexOf(myId);
-      if (idx === -1) {
-        commentReactions[emoji] = [...voters, myId];
-      } else {
+      if (hasReacted) {
         const updated = voters.filter((v) => v !== myId);
         if (updated.length === 0) delete commentReactions[emoji];
         else commentReactions[emoji] = updated;
+      } else {
+        commentReactions[emoji] = [...voters, myId];
       }
       return { ...prev, [commentId]: commentReactions };
     });
+    // Persist
+    if (hasReacted) {
+      await supabase.from("comment_reactions").delete()
+        .eq("comment_id", commentId).eq("browser_id", myId).eq("emoji", emoji);
+    } else {
+      await supabase.from("comment_reactions").insert({ comment_id: commentId, browser_id: myId, emoji });
+    }
   }
   const [voteData, setVoteData] = useState({ score: 0, myVote: 0 });
   const [shareLabel, setShareLabel] = useState("Share");
@@ -2674,10 +2697,13 @@ function PostPage({ user }) {
     const filtered = all.filter((comment) => validIds.has(comment.id));
     setComments(filtered);
     setPendingComments([]);
-    if (p?.id) {
-      const votes = await fetchVotesForPosts([p.id]);
-      setVoteData(votes[p.id] || { score: 0, myVote: 0 });
-    }
+    const commentIds = filtered.map((c) => c.id);
+    const [votes, reactionData] = await Promise.all([
+      p?.id ? fetchVotesForPosts([p.id]) : Promise.resolve({}),
+      fetchReactions(commentIds)
+    ]);
+    if (p?.id) setVoteData(votes[p.id] || { score: 0, myVote: 0 });
+    setReactions(reactionData);
   }, [id]);
 
   useEffect(() => {
