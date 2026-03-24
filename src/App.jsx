@@ -1474,6 +1474,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
   const [replyText, setReplyText] = useState("");
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [repliesExpanded, setRepliesExpanded] = useState(false);
+  const [quoteExpanded, setQuoteExpanded] = useState(false);
   const isPending = comment.isPending === true;
   const displayName =
     isPending && !isModUser && !comment.username
@@ -1510,9 +1511,12 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
         </div>
 
         {showQuote && (
-          <div className="comment-quote">
+          <div className="comment-quote" onClick={() => setQuoteExpanded((v) => !v)} style={{ cursor: "pointer" }}>
             <span className="comment-quote-author">{parentName}:</span>
-            <p className="comment-quote-body">{parentComment.content}</p>
+            <p className="comment-quote-body" style={quoteExpanded ? { display: "block", WebkitLineClamp: "unset" } : {}}>{parentComment.content}</p>
+            {!quoteExpanded && parentComment.content.length > 120 && (
+              <span style={{ fontSize: 11, color: "#60a5fa", fontWeight: 700 }}>Show more</span>
+            )}
           </div>
         )}
 
@@ -1523,7 +1527,10 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
             <button
               type="button"
               className="comment-header-btn"
-              onClick={() => setIsReplying((v) => !v)}
+              onClick={() => {
+                setIsReplying((v) => !v);
+                setRepliesExpanded(true);
+              }}
             >
               Reply
             </button>
