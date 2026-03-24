@@ -2229,7 +2229,6 @@ function Home() {
         .from("posts")
         .select("*")
         .eq("deleted", false)
-        .neq("community_id", "jail")
         .order("pinned", { ascending: false })
         .order("last_activity", { ascending: false }),
       supabase
@@ -2239,7 +2238,9 @@ function Home() {
     ]);
 
     setCommentCounts(countValidComments(commentsData));
-    const hydratedPosts = hydratePostsWithBoardTags(postsData || []);
+    const hydratedPosts = hydratePostsWithBoardTags(
+      (postsData || []).filter((p) => p.community_id !== "jail")
+    );
     setPosts(hydratedPosts);
 
     const votes = await fetchVotesForPosts(hydratedPosts.map((p) => p.id));
