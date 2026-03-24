@@ -113,7 +113,8 @@ function isModPost(record) {
 }
 
 function buildModMetadata(user) {
-  if (!user) {
+  const isMod = !!user && localStorage.getItem("user_role") === "mod";
+  if (!isMod) {
     return {
       username: null,
       is_mod: false,
@@ -2408,7 +2409,7 @@ function BoardPage() {
 // ==============================
 // CREATE POST (FIXED)
 // ==============================
-function NewPost({ user }) {
+function NewPost({ user, userRole }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [title, setTitle] = useState("");
@@ -2549,7 +2550,7 @@ function NewPost({ user }) {
           <div className="feed-post-author-row" style={{ marginBottom: 8 }}>
             {(() => {
               const browserId = getBrowserId();
-              const isMod = !!user;
+              const isMod = !!user && userRole === "mod";
               const name = isMod ? getModName() : (previewName || `Anon #${shortId(browserId)}`);
               const color = isMod ? "#c084fc" : getUserColor(browserId, previewName);
               return (
@@ -2631,7 +2632,7 @@ function NewPost({ user }) {
 // ==============================
 // POST PAGE (WITH MOD CONTROLS 🔥)
 // ==============================
-function PostPage({ user }) {
+function PostPage({ user, userRole }) {
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -2677,7 +2678,7 @@ function PostPage({ user }) {
   const [voteData, setVoteData] = useState({ score: 0, myVote: 0 });
   const [shareLabel, setShareLabel] = useState("Share");
 
-  const isMod = !!user;
+  const isMod = !!user && userRole === "mod";
   const [isCaged, setIsCaged] = useState(false);
 
   useEffect(() => {
@@ -3500,7 +3501,7 @@ function ModPanel({ setModName }) {
 // ==============================
 // ACTIVITY PANEL
 // ==============================
-function ActivityPanel({ user, modName, onClose, setUser, browseUsername }) {
+function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, browseUsername }) {
   const [tab, setTab] = useState("all");
   const [loading, setLoading] = useState(true);
   const [notifs, setNotifs] = useState([]);
@@ -3612,15 +3613,23 @@ function ActivityPanel({ user, modName, onClose, setUser, browseUsername }) {
     if (!email || !password) return;
     setAuthLoading(true);
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ email, password });
       setAuthLoading(false);
-      if (error) alert(error.message);
-      else alert("Check your email to confirm your account 📧");
+      if (error) { alert(error.message); return; }
+      if (data.user) {
+        await supabase.from("profiles").insert({ id: data.user.id, email, role: "user" });
+        onLogin(data.user, "user");
+        onClose();
+      } else {
+        alert("Check your email to confirm your account 📧");
+      }
     } else {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       setAuthLoading(false);
-      if (error) alert(error.message);
-      else { setUser(data.user); onClose(); }
+      if (error) { alert(error.message); return; }
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
+      onLogin(data.user, profile?.role || "user");
+      onClose();
     }
   };
 
@@ -3649,13 +3658,18 @@ function ActivityPanel({ user, modName, onClose, setUser, browseUsername }) {
               {user ? modName : browseUsername || "New User"}
             </div>
             <div style={{ color: "#64748b", fontSize: 12 }}>
-              {user ? "Moderator" : browseUsername ? "Anonymous member" : "No posts yet"}
+              {user && userRole === "mod" ? "Moderator" : user ? "Member" : browseUsername ? "Anonymous member" : "No posts yet"}
             </div>
           </div>
-          {user && (
+          {user && userRole === "mod" && (
             <Link to="/mod" onClick={onClose} style={{ padding: "6px 12px", borderRadius: 10, background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 12, textDecoration: "none", flexShrink: 0 }}>
               Mod Panel
             </Link>
+          )}
+          {user && (
+            <button onClick={() => { onLogout(); onClose(); }} style={{ padding: "6px 10px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#94a3b8", fontSize: 12, cursor: "pointer", flexShrink: 0 }}>
+              Log out
+            </button>
           )}
           <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", background: "#1f2937", color: "#94a3b8", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>✕</button>
         </div>
@@ -3717,7 +3731,7 @@ function ActivityPanel({ user, modName, onClose, setUser, browseUsername }) {
         {!user && (
           <div style={{ padding: "14px 18px", borderTop: "1px solid #2e303a", background: "#0d0f14", flexShrink: 0 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              {isSignUp ? "Create account" : "Mod login"}
+              {isSignUp ? "Create account" : "Login"}
             </div>
             <div style={{ display: "grid", gap: 8 }}>
               <input
@@ -3757,15 +3771,36 @@ if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
 export default function App() {
   const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(localStorage.getItem("user_role") || null);
   const [modName, setModName] = useState(localStorage.getItem("mod_name") || "Mod");
   const [browseUsername, setBrowseUsername] = useState(null);
   const [showActivity, setShowActivity] = useState(false);
 
+  const applyRole = (role) => {
+    if (role) localStorage.setItem("user_role", role);
+    else localStorage.removeItem("user_role");
+    setUserRole(role);
+  };
+
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => { setUser(session?.user || null); }
-    );
+    supabase.auth.getUser().then(async ({ data }) => {
+      const u = data.user;
+      setUser(u);
+      if (u) {
+        const { data: profile } = await supabase.from("profiles").select("role").eq("id", u.id).maybeSingle();
+        applyRole(profile?.role || "user");
+      }
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const u = session?.user || null;
+      setUser(u);
+      if (u) {
+        const { data: profile } = await supabase.from("profiles").select("role").eq("id", u.id).maybeSingle();
+        applyRole(profile?.role || "user");
+      } else {
+        applyRole(null);
+      }
+    });
     return () => { subscription.unsubscribe(); };
   }, []);
 
@@ -3826,17 +3861,19 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/board/:slug" element={<BoardPage />} />
-          <Route path="/new" element={<NewPost user={user} />} />
-          <Route path="/post/:id" element={<PostPage user={user} />} />
-          <Route path="/mod" element={user ? <ModPanel setModName={setModName} /> : <Auth setUser={setUser} />} />
+          <Route path="/new" element={<NewPost user={user} userRole={userRole} />} />
+          <Route path="/post/:id" element={<PostPage user={user} userRole={userRole} />} />
+          <Route path="/mod" element={userRole === "mod" ? <ModPanel setModName={setModName} /> : <Auth setUser={setUser} />} />
         </Routes>
 
         {showActivity && (
           <ActivityPanel
             user={user}
+            userRole={userRole}
             modName={modName}
             onClose={() => setShowActivity(false)}
-            setUser={setUser}
+            onLogin={(u, role) => { setUser(u); applyRole(role); }}
+            onLogout={() => { supabase.auth.signOut(); applyRole(null); }}
             browseUsername={browseUsername}
           />
         )}
