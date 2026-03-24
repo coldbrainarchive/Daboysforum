@@ -2147,7 +2147,22 @@ function PostPage({ user }) {
       .order("created_at");
 
     setPost(hydratePostWithBoardTag(p));
-    setComments(c || []);
+    const all = c || [];
+    const validIds = new Set();
+    // Two passes: first collect top-level, then replies whose parent is valid
+    all.filter((comment) => !comment.parent_comment_id).forEach((comment) => validIds.add(comment.id));
+    let changed = true;
+    while (changed) {
+      changed = false;
+      all.forEach((comment) => {
+        if (!validIds.has(comment.id) && comment.parent_comment_id && validIds.has(comment.parent_comment_id)) {
+          validIds.add(comment.id);
+          changed = true;
+        }
+      });
+    }
+    const filtered = all.filter((comment) => validIds.has(comment.id));
+    setComments(filtered);
     setPendingComments([]);
     if (p?.id) {
       const votes = await fetchVotesForPosts([p.id]);
