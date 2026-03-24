@@ -1242,7 +1242,8 @@ function BoardBadge({ boardName }) {
         display: "inline-flex",
         alignItems: "center",
         gap: 6,
-        padding: "5px 8px",
+        height: 26,
+        padding: "0 8px",
         borderRadius: 999,
         background: "#20262f",
         color: "#dbe4ee",
@@ -2299,15 +2300,16 @@ function PostPage({ user }) {
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    padding: "5px 8px",
+                    width: 26,
+                    height: 26,
                     borderRadius: 999,
                     border: "none",
                     background: "#20262f",
                     color: "#dbe4ee",
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: 800,
                     cursor: "pointer",
-                    lineHeight: 1
+                    flexShrink: 0
                   }}
                 >
                   ←
