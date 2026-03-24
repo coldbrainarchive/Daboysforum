@@ -1,4 +1,4 @@
-import { Component, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Component, useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
@@ -538,12 +538,7 @@ function RealtimeStyles() {
         gap: 10px;
       }
 
-      .comment-flat.pending-toplevel,
-      .comment-flat.pending-reply {
-        animation: popDown 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-      }
-
-      .comment-avatar {
+.comment-avatar {
         width: 30px;
         height: 30px;
         border-radius: 999px;
@@ -774,30 +769,8 @@ function RealtimeStyles() {
         border: 1px solid #2e303a;
       }
 
-      @keyframes composerPulse {
-        0% { opacity: 0.55; transform: scale(0.98); }
-        50% { opacity: 1; transform: scale(1); }
-        100% { opacity: 0.55; transform: scale(0.98); }
-      }
 
-      @keyframes sendFlight {
-        0% { transform: translateX(0) translateY(0) scale(1); opacity: 1; }
-        70% { transform: translateX(14px) translateY(-10px) scale(1.08); opacity: 1; }
-        100% { transform: translateX(22px) translateY(-18px) scale(0.9); opacity: 0; }
-      }
-
-      @keyframes livePop {
-        0% { opacity: 0; transform: translateY(10px); }
-        100% { opacity: 1; transform: translateY(0); }
-      }
-
-      @keyframes popDown {
-        0%   { opacity: 0; transform: translateY(-20px) scale(0.97); }
-        65%  { opacity: 1; transform: translateY(3px) scale(1); }
-        100% { opacity: 1; transform: translateY(0) scale(1); }
-      }
-
-      @media (max-width: 900px) {
+@media (max-width: 900px) {
         .app-topbar {
           padding: 12px 14px;
         }
@@ -1462,7 +1435,7 @@ function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappenin
   );
 }
 
-function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply, allComments = [], threadReplies = [], flipId }) {
+function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply, allComments = [], threadReplies = [] }) {
   const isModUser = isModPost(comment);
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState("");
@@ -1488,7 +1461,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
   const showQuote = parentComment && !!parentComment.parent_comment_id;
 
   return (
-    <div className={`comment-flat${isPending ? (comment.parent_comment_id ? " pending-reply" : " pending-toplevel") : ""}`} data-comment-id={flipId || comment.id}>
+    <div className="comment-flat">
       <div className="comment-avatar" style={{ background: avatarColor }}>
         {avatarLetter}
       </div>
@@ -2156,39 +2129,6 @@ function PostPage({ user }) {
   const [commentSort, setCommentSort] = useState("newest");
   const [voteData, setVoteData] = useState({ score: 0, myVote: 0 });
   const [shareLabel, setShareLabel] = useState("Share");
-  const commentsListRef = useRef(null);
-  const prevPositions = useRef({});
-
-  useLayoutEffect(() => {
-    const list = commentsListRef.current;
-    if (!list) return;
-    const items = Array.from(list.children);
-    const prev = prevPositions.current;
-    const toAnimate = [];
-    items.forEach((el) => {
-      const id = el.dataset.commentId;
-      if (!id) return;
-      const top = el.offsetTop; // layout position — unaffected by CSS transitions
-      if (id in prev && Math.abs(prev[id] - top) > 0.5) {
-        toAnimate.push({ el, delta: prev[id] - top });
-      }
-      prev[id] = top;
-    });
-    if (toAnimate.length > 0) {
-      toAnimate.forEach(({ el, delta }) => {
-        el.style.transition = "none";
-        el.style.transform = `translateY(${delta}px)`;
-      });
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          toAnimate.forEach(({ el }) => {
-            el.style.transition = "transform 0.38s cubic-bezier(0.22, 1, 0.36, 1)";
-            el.style.transform = "";
-          });
-        });
-      });
-    }
-  });
 
   const isMod = !!user;
 
@@ -2424,7 +2364,7 @@ function PostPage({ user }) {
             </div>
 
             <span className="feed-post-action-pill">
-              💬 {comments.length + pendingComments.length}
+              💬 {comments.length}
             </span>
 
             <button
@@ -2493,7 +2433,7 @@ function PostPage({ user }) {
           <div className="content-card comments-panel">
             <div className="comments-panel-header">
               <div className="comments-panel-title">
-                {comments.length + pendingComments.length} Comments
+                {comments.length} Comments
               </div>
 
               <div className="comments-panel-controls">
@@ -2543,7 +2483,7 @@ function PostPage({ user }) {
               </div>
             )}
 
-            <div className="comments-list" ref={commentsListRef}>
+            <div className="comments-list">
               {topLevelComments.map((c) => (
                 <CommentCard
                   key={c.id}
@@ -2554,7 +2494,6 @@ function PostPage({ user }) {
                   onReply={(content, parentId) => submitComment(content, parentId)}
                   allComments={allComments}
                   threadReplies={getThreadReplies(c.id)}
-                  flipId={c.id}
                 />
               ))}
             </div>
