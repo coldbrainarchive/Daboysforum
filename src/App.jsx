@@ -559,7 +559,7 @@ function RealtimeStyles() {
       .comment-card {
         flex: 1 1 auto;
         min-width: 0;
-        padding-top: 5px;
+        padding-top: 3px;
       }
 
       .comment-card-header {
@@ -569,6 +569,35 @@ function RealtimeStyles() {
         margin-bottom: 8px;
         flex-wrap: nowrap;
         overflow: hidden;
+      }
+
+      .comment-header-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+
+      .comment-header-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        height: 24px;
+        padding: 0 9px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        background: transparent;
+        color: #60a5fa;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.15s;
+      }
+
+      .comment-header-btn:hover {
+        background: rgba(96, 165, 250, 0.08);
       }
 
       .comment-card-author {
@@ -660,31 +689,7 @@ function RealtimeStyles() {
         overflow-wrap: anywhere;
       }
 
-      .comment-replies-toggle {
-        margin-top: 10px;
-      }
-
-      .comment-replies-toggle button {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        height: 28px;
-        padding: 0 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(148, 163, 184, 0.2);
-        background: transparent;
-        color: #60a5fa;
-        font-size: 12px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: background 0.15s;
-      }
-
-      .comment-replies-toggle button:hover {
-        background: rgba(96, 165, 250, 0.08);
-      }
-
-      .comment-replies-list {
+.comment-replies-list {
         margin-top: 12px;
         padding-left: 12px;
         border-left: 2px solid rgba(148, 163, 184, 0.15);
@@ -1495,6 +1500,31 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
             <span className="comment-card-op">OP</span>
           )}
           <span className="comment-card-time">· {timeAgo(comment.created_at)}</span>
+          <div className="comment-header-actions">
+            {threadReplies.length > 0 && (
+              <button
+                type="button"
+                className="comment-header-btn"
+                onClick={() => setRepliesExpanded((v) => !v)}
+              >
+                {repliesExpanded ? "▲" : "▼"} {threadReplies.length} {threadReplies.length === 1 ? "Reply" : "Replies"}
+              </button>
+            )}
+            {onReply && (
+              <button
+                type="button"
+                className="comment-header-btn"
+                onClick={() => setIsReplying((v) => !v)}
+              >
+                Reply
+              </button>
+            )}
+            {canDelete && (
+              <button type="button" className="comment-header-btn" onClick={onDelete}>
+                🗑
+              </button>
+            )}
+          </div>
         </div>
 
         {showQuote && (
@@ -1505,25 +1535,6 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
         )}
 
         <div className="comment-body">{comment.content}</div>
-
-        <div className="comment-card-actions">
-          {onReply && (
-            <button
-              type="button"
-              className="comment-action"
-              onClick={() => setIsReplying((v) => !v)}
-            >
-              <span>💬</span>
-              <span>Reply</span>
-            </button>
-          )}
-          {canDelete && (
-            <button type="button" className="comment-action" onClick={onDelete}>
-              <span>🗑</span>
-              <span>Delete</span>
-            </button>
-          )}
-        </div>
 
         {isReplying && (
           <div className="inline-reply-box">
@@ -1560,14 +1571,6 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
                 Comment
               </button>
             </div>
-          </div>
-        )}
-
-        {threadReplies.length > 0 && (
-          <div className="comment-replies-toggle">
-            <button type="button" onClick={() => setRepliesExpanded((v) => !v)}>
-              {repliesExpanded ? "▲" : "▼"} {threadReplies.length} {threadReplies.length === 1 ? "Reply" : "Replies"}
-            </button>
           </div>
         )}
 
