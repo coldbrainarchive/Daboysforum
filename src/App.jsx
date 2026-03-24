@@ -566,17 +566,24 @@ function RealtimeStyles() {
         align-items: center;
         gap: 6px;
         margin-bottom: 8px;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        overflow: hidden;
       }
 
       .comment-card-author {
         font-size: 13px;
         font-weight: 800;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .comment-card-time {
         font-size: 12px;
         color: #8fa0b6;
+        white-space: nowrap;
+        flex-shrink: 0;
       }
 
       .comment-card-op {
@@ -650,6 +657,39 @@ function RealtimeStyles() {
         line-height: 1.5;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
+      }
+
+      .comment-replies-toggle {
+        margin-top: 10px;
+      }
+
+      .comment-replies-toggle button {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        height: 28px;
+        padding: 0 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        background: transparent;
+        color: #60a5fa;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      .comment-replies-toggle button:hover {
+        background: rgba(96, 165, 250, 0.08);
+      }
+
+      .comment-replies-list {
+        margin-top: 12px;
+        padding-left: 12px;
+        border-left: 2px solid rgba(148, 163, 184, 0.15);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
       }
 
       .comment-composer {
@@ -1421,11 +1461,12 @@ function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappenin
   );
 }
 
-function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply, allComments = [] }) {
+function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply, allComments = [], threadReplies = [] }) {
   const isModUser = isModPost(comment);
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [isSendingReply, setIsSendingReply] = useState(false);
+  const [repliesExpanded, setRepliesExpanded] = useState(false);
   const isPending = comment.isPending === true;
   const displayName =
     isPending && !isModUser && !comment.username
@@ -1522,6 +1563,31 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
                 Comment
               </button>
             </div>
+          </div>
+        )}
+
+        {threadReplies.length > 0 && (
+          <div className="comment-replies-toggle">
+            <button type="button" onClick={() => setRepliesExpanded((v) => !v)}>
+              {repliesExpanded ? "▲" : "▼"} {threadReplies.length} {threadReplies.length === 1 ? "Reply" : "Replies"}
+            </button>
+          </div>
+        )}
+
+        {repliesExpanded && threadReplies.length > 0 && (
+          <div className="comment-replies-list">
+            {threadReplies.map((r) => (
+              <CommentCard
+                key={r.id}
+                comment={r}
+                postBrowserId={postBrowserId}
+                canDelete={canDelete}
+                onDelete={onDelete ? () => onDelete(r.id) : undefined}
+                onReply={onReply}
+                allComments={allComments}
+                threadReplies={[]}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -2210,6 +2276,18 @@ function PostPage({ user }) {
     const tB = new Date(b.created_at).getTime();
     return commentSort === "oldest" ? tA - tB : tB - tA;
   });
+  const topLevelComments = flatComments.filter((c) => !c.parent_comment_id);
+  function getThreadReplies(rootId) {
+    const result = [];
+    const queue = [rootId];
+    while (queue.length > 0) {
+      const parentId = queue.shift();
+      const direct = allComments.filter((c) => c.parent_comment_id === parentId);
+      result.push(...direct);
+      direct.forEach((r) => queue.push(r.id));
+    }
+    return result.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  }
 
   return (
     <div className="home-shell">
@@ -2438,7 +2516,7 @@ function PostPage({ user }) {
             )}
 
             <div className="comments-list">
-              {flatComments.map((c) => (
+              {topLevelComments.map((c) => (
                 <CommentCard
                   key={c.id}
                   comment={c}
@@ -2447,6 +2525,7 @@ function PostPage({ user }) {
                   onDelete={() => modAction({ type: "delete_comment", comment_id: c.id })}
                   onReply={(content, parentId) => submitComment(content, parentId)}
                   allComments={allComments}
+                  threadReplies={getThreadReplies(c.id)}
                 />
               ))}
             </div>
