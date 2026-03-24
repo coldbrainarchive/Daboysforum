@@ -1462,7 +1462,7 @@ function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappenin
   );
 }
 
-function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply, allComments = [], threadReplies = [] }) {
+function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply, allComments = [], threadReplies = [], flipId }) {
   const isModUser = isModPost(comment);
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState("");
@@ -1488,7 +1488,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
   const showQuote = parentComment && !!parentComment.parent_comment_id;
 
   return (
-    <div className={`comment-flat${isPending ? (comment.parent_comment_id ? " pending-reply" : " pending-toplevel") : ""}`}>
+    <div className={`comment-flat${isPending ? (comment.parent_comment_id ? " pending-reply" : " pending-toplevel") : ""}`} data-comment-id={flipId || comment.id}>
       <div className="comment-avatar" style={{ background: avatarColor }}>
         {avatarLetter}
       </div>
@@ -2156,6 +2156,39 @@ function PostPage({ user }) {
   const [commentSort, setCommentSort] = useState("newest");
   const [voteData, setVoteData] = useState({ score: 0, myVote: 0 });
   const [shareLabel, setShareLabel] = useState("Share");
+  const commentsListRef = useRef(null);
+  const prevPositions = useRef({});
+
+  useLayoutEffect(() => {
+    const list = commentsListRef.current;
+    if (!list) return;
+    const items = Array.from(list.children);
+    const prev = prevPositions.current;
+    const toAnimate = [];
+    items.forEach((el) => {
+      const id = el.dataset.commentId;
+      if (!id) return;
+      const top = el.getBoundingClientRect().top;
+      if (id in prev && Math.abs(prev[id] - top) > 0.5) {
+        toAnimate.push({ el, delta: prev[id] - top });
+      }
+      prev[id] = top;
+    });
+    if (toAnimate.length > 0) {
+      toAnimate.forEach(({ el, delta }) => {
+        el.style.transition = "none";
+        el.style.transform = `translateY(${delta}px)`;
+      });
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          toAnimate.forEach(({ el }) => {
+            el.style.transition = "transform 0.38s cubic-bezier(0.22, 1, 0.36, 1)";
+            el.style.transform = "";
+          });
+        });
+      });
+    }
+  });
 
   const isMod = !!user;
 
@@ -2524,7 +2557,7 @@ function PostPage({ user }) {
               </div>
             )}
 
-            <div className="comments-list">
+            <div className="comments-list" ref={commentsListRef}>
               {topLevelComments.map((c) => (
                 <CommentCard
                   key={c.id}
@@ -2535,6 +2568,7 @@ function PostPage({ user }) {
                   onReply={(content, parentId) => submitComment(content, parentId)}
                   allComments={allComments}
                   threadReplies={getThreadReplies(c.id)}
+                  flipId={c.id}
                 />
               ))}
             </div>
