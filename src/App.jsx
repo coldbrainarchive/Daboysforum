@@ -1890,6 +1890,7 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, all
         <div className="chat-msg-meta">
           <span style={{ color: avatarColor }}>{displayName}</span>
           {isOP && <span className="comment-card-op">OP</span>}
+          <span className="chat-msg-time">· {timeAgo(comment.created_at)}</span>
         </div>
         <div
           className={`chat-bubble${isPending ? " pending" : ""}`}
