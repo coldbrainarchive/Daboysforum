@@ -3005,13 +3005,22 @@ function PostPage({ user }) {
           <div className="content-card comments-panel" style={{ padding: 0, overflow: "clip", display: "flex", flexDirection: "column", height: "min(600px, 80dvh)" }}>
             <div className="chat-panel-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span className="comments-panel-title">{comments.length} Chats</span>
-              <button
-                type="button"
-                className="feed-post-action-pill"
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              >
-                💬
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <button
+                  type="button"
+                  className="feed-post-action-pill"
+                  onClick={() => setCommentSort(s => s === "oldest" ? "newest" : "oldest")}
+                >
+                  {commentSort === "oldest" ? "Oldest" : "Newest"}
+                </button>
+                <button
+                  type="button"
+                  className="feed-post-action-pill"
+                  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                >
+                  💬
+                </button>
+              </div>
             </div>
 
             <div
