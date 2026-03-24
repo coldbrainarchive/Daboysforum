@@ -553,7 +553,8 @@ function RealtimeStyles() {
       }
 
       .chat-window {
-        height: 460px;
+        flex: 1;
+        min-height: 0;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
@@ -567,10 +568,6 @@ function RealtimeStyles() {
         align-items: flex-end;
         gap: 8px;
         max-width: 100%;
-      }
-
-      .chat-msg.mine {
-        flex-direction: row-reverse;
       }
 
       .chat-avatar {
@@ -590,11 +587,7 @@ function RealtimeStyles() {
         display: flex;
         flex-direction: column;
         gap: 3px;
-        max-width: 72%;
-      }
-
-      .chat-msg.mine .chat-msg-body {
-        align-items: flex-end;
+        max-width: 80%;
       }
 
       .chat-msg-meta {
@@ -615,7 +608,7 @@ function RealtimeStyles() {
       .chat-bubble {
         background: #1e2530;
         color: #dbe4ee;
-        border-radius: 18px 18px 18px 4px;
+        border-radius: 4px 18px 18px 18px;
         padding: 9px 13px;
         font-size: 14px;
         line-height: 1.45;
@@ -628,52 +621,34 @@ function RealtimeStyles() {
         opacity: 0.85;
       }
 
-      .chat-bubble.mine {
-        background: #7c3aed;
-        color: #fff;
-        border-radius: 18px 18px 4px 18px;
-      }
-
       .chat-bubble.pending {
         opacity: 0.55;
       }
 
       .chat-quote-bar {
-        border-left: 3px solid rgba(255,255,255,0.3);
+        border-left: 3px solid rgba(148,163,184,0.4);
         padding: 4px 8px;
         margin-bottom: 6px;
         border-radius: 0 6px 6px 0;
-        background: rgba(255,255,255,0.07);
-      }
-
-      .chat-bubble:not(.mine) .chat-quote-bar {
-        border-left-color: rgba(148,163,184,0.4);
+        background: rgba(148,163,184,0.07);
       }
 
       .chat-quote-name {
         display: block;
         font-size: 11px;
         font-weight: 700;
-        color: rgba(255,255,255,0.6);
-        margin-bottom: 2px;
-      }
-
-      .chat-bubble:not(.mine) .chat-quote-name {
         color: #60a5fa;
+        margin-bottom: 2px;
       }
 
       .chat-quote-text {
         margin: 0;
         font-size: 12px;
-        color: rgba(255,255,255,0.5);
+        color: #8fa0b6;
         overflow: hidden;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
-      }
-
-      .chat-bubble:not(.mine) .chat-quote-text {
-        color: #8fa0b6;
       }
 
       .chat-bubble-text {
@@ -704,10 +679,14 @@ function RealtimeStyles() {
 
       .chat-compose {
         border-top: 1px solid rgba(148, 163, 184, 0.1);
-        padding: 10px 12px;
+        padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
         display: flex;
         flex-direction: column;
         gap: 6px;
+        background: #1b1d24;
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
       }
 
       .chat-reply-preview {
@@ -1885,7 +1864,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
   );
 }
 
-function ChatMessage({ comment, postBrowserId, isMe, canDelete, onDelete, onReply, allComments = [] }) {
+function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, allComments = [] }) {
   const isModUser = isModPost(comment);
   const isPending = comment.isPending === true;
   const displayName = isPending && !isModUser && !comment.username
@@ -1903,22 +1882,18 @@ function ChatMessage({ comment, postBrowserId, isMe, canDelete, onDelete, onRepl
     : null;
 
   return (
-    <div className={`chat-msg${isMe ? " mine" : ""}`}>
-      {!isMe && (
-        <div className="chat-avatar" style={{ background: avatarColor }}>
-          {avatarLetter}
-        </div>
-      )}
+    <div className="chat-msg">
+      <div className="chat-avatar" style={{ background: avatarColor }}>
+        {avatarLetter}
+      </div>
       <div className="chat-msg-body">
-        {!isMe && (
-          <div className="chat-msg-meta">
-            <span style={{ color: avatarColor }}>{displayName}</span>
-            {isOP && <span className="comment-card-op">OP</span>}
-            <span className="chat-msg-time">· {timeAgo(comment.created_at)}</span>
-          </div>
-        )}
+        <div className="chat-msg-meta">
+          <span style={{ color: avatarColor }}>{displayName}</span>
+          {isOP && <span className="comment-card-op">OP</span>}
+          <span className="chat-msg-time">· {timeAgo(comment.created_at)}</span>
+        </div>
         <div
-          className={`chat-bubble${isMe ? " mine" : ""}${isPending ? " pending" : ""}`}
+          className={`chat-bubble${isPending ? " pending" : ""}`}
           onClick={() => onReply && onReply(comment)}
           title="Tap to reply"
         >
@@ -1931,7 +1906,7 @@ function ChatMessage({ comment, postBrowserId, isMe, canDelete, onDelete, onRepl
           <span className="chat-bubble-text">{comment.content}</span>
         </div>
         <div className="chat-msg-footer">
-          {isMe && <span className="chat-msg-time">{timeAgo(comment.created_at)}</span>}
+          <span className="chat-msg-time">{timeAgo(comment.created_at)}</span>
           {canDelete && (
             <button
               type="button"
@@ -2818,7 +2793,7 @@ function PostPage({ user }) {
         </div>
 
         <section className="comments-shell">
-          <div className="content-card comments-panel" style={{ padding: 0, overflow: "hidden" }}>
+          <div className="content-card comments-panel" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", height: "min(600px, 80dvh)" }}>
             <div className="chat-panel-header">
               <span className="comments-panel-title">{comments.length} Messages</span>
             </div>
@@ -2837,7 +2812,6 @@ function PostPage({ user }) {
                   key={c.id}
                   comment={c}
                   postBrowserId={post.browser_id}
-                  isMe={c.browser_id === getBrowserId()}
                   canDelete={isMod}
                   onDelete={async () => { await modAction({ type: "delete_comment", comment_id: c.id }); await load(); }}
                   onReply={(msg) => setReplyTarget(msg)}
