@@ -2417,6 +2417,7 @@ function NewPost({ user }) {
         .from("posts")
         .select("username")
         .eq("browser_id", browserId)
+        .eq("is_mod", false)
         .not("username", "is", null)
         .limit(1)
         .maybeSingle();
@@ -2425,6 +2426,7 @@ function NewPost({ user }) {
         .from("comments")
         .select("username")
         .eq("browser_id", browserId)
+        .eq("is_mod", false)
         .not("username", "is", null)
         .limit(1)
         .maybeSingle();
