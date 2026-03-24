@@ -3609,6 +3609,8 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
     })();
   }, []);
 
+  const [confirmed, setConfirmed] = useState(false);
+
   const handleAuth = async () => {
     if (!email || !password) return;
     setAuthLoading(true);
@@ -3616,12 +3618,14 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
       const { data, error } = await supabase.auth.signUp({ email, password });
       setAuthLoading(false);
       if (error) { alert(error.message); return; }
-      if (data.user) {
+      // session is null when email confirmation is required
+      if (!data.session) {
+        setConfirmed(true);
+      } else {
+        // confirmation disabled — log straight in
         await supabase.from("profiles").insert({ id: data.user.id, email, role: "user" });
         onLogin(data.user, "user");
         onClose();
-      } else {
-        alert("Check your email to confirm your account 📧");
       }
     } else {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -3730,33 +3734,46 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
         {/* Auth section */}
         {!user && (
           <div style={{ padding: "14px 18px", borderTop: "1px solid #2e303a", background: "#0d0f14", flexShrink: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              {isSignUp ? "Create account" : "Login"}
-            </div>
-            <div style={{ display: "grid", gap: 8 }}>
-              <input
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#16171d", color: "#f8fafc", fontSize: 13, width: "100%", boxSizing: "border-box" }}
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAuth()}
-                style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#16171d", color: "#f8fafc", fontSize: 13, width: "100%", boxSizing: "border-box" }}
-              />
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={handleAuth} disabled={authLoading} style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-                  {authLoading ? "…" : isSignUp ? "Sign Up" : "Log In"}
-                </button>
-                <button onClick={() => setIsSignUp((s) => !s)} style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#94a3b8", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
-                  {isSignUp ? "Log In instead" : "Sign Up"}
+            {confirmed ? (
+              <div style={{ textAlign: "center", padding: "8px 0" }}>
+                <div style={{ fontSize: 28, marginBottom: 8 }}>📧</div>
+                <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Check your email</div>
+                <div style={{ color: "#64748b", fontSize: 12, marginBottom: 12 }}>We sent a confirmation link to <b style={{ color: "#94a3b8" }}>{email}</b></div>
+                <button onClick={() => { setConfirmed(false); setIsSignUp(false); }} style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#94a3b8", fontSize: 12, cursor: "pointer" }}>
+                  Back to login
                 </button>
               </div>
-            </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  {isSignUp ? "Create account" : "Login"}
+                </div>
+                <div style={{ display: "grid", gap: 8 }}>
+                  <input
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#16171d", color: "#f8fafc", fontSize: 13, width: "100%", boxSizing: "border-box" }}
+                  />
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAuth()}
+                    style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#16171d", color: "#f8fafc", fontSize: 13, width: "100%", boxSizing: "border-box" }}
+                  />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={handleAuth} disabled={authLoading} style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                      {authLoading ? "…" : isSignUp ? "Sign Up" : "Log In"}
+                    </button>
+                    <button onClick={() => setIsSignUp((s) => !s)} style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#94a3b8", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
+                      {isSignUp ? "Log In instead" : "Sign Up"}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -3796,7 +3813,12 @@ export default function App() {
       setUser(u);
       if (u) {
         const { data: profile } = await supabase.from("profiles").select("role").eq("id", u.id).maybeSingle();
-        applyRole(profile?.role || "user");
+        if (!profile) {
+          await supabase.from("profiles").insert({ id: u.id, email: u.email, role: "user" });
+          applyRole("user");
+        } else {
+          applyRole(profile.role);
+        }
       } else {
         applyRole(null);
       }
