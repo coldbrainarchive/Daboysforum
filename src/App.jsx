@@ -909,7 +909,7 @@ function filterPostsForBoard(posts, boardName) {
 const BOARD_TAGS_STORAGE_KEY = "board_tags_by_post_id";
 const PENDING_BOARD_TAGS_STORAGE_KEY = "pending_board_tags";
 const POST_REACTIONS_STORAGE_KEY = "post_reactions_by_browser";
-const POST_VOTES_STORAGE_KEY = "post_votes_by_browser";
+const WORKER_URL = "https://daboysforumip.coldbrainarchive.workers.dev";
 const STANDARD_REACTIONS = [
   "😀", "😁", "😂", "🤣", "😊", "😍", "😘", "😎",
   "🤔", "😮", "😢", "😭", "😡", "👏", "🙌", "🙏",
@@ -1153,42 +1153,32 @@ function toggleReactionForPost(postId, emoji) {
   });
 }
 
-function getStoredPostVotes() {
-  return readStorageJson(POST_VOTES_STORAGE_KEY, {});
-}
-
-function setStoredPostVotes(votes) {
-  writeStorageJson(POST_VOTES_STORAGE_KEY, votes);
-}
-
-function getVoteStateForPost(postId) {
-  const votesByPost = getStoredPostVotes();
-  const postVotes = votesByPost[postId] || {};
-  const values = Object.values(postVotes);
-
-  return {
-    score: values.reduce((sum, value) => sum + value, 0),
-    selectedVote: postVotes[getBrowserId()] || 0
-  };
-}
-
-function toggleVoteForPost(postId, direction) {
-  const browserId = getBrowserId();
-  const votesByPost = getStoredPostVotes();
-  const postVotes = {
-    ...(votesByPost[postId] || {})
-  };
-
-  if (postVotes[browserId] === direction) {
-    delete postVotes[browserId];
-  } else {
-    postVotes[browserId] = direction;
-  }
-
-  setStoredPostVotes({
-    ...votesByPost,
-    [postId]: postVotes
+async function voteOnPost(postId, value) {
+  const res = await fetch(`${WORKER_URL}/vote-post`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ post_id: postId, browser_id: getBrowserId(), value })
   });
+  return res.json();
+}
+
+async function fetchVotesForPosts(postIds) {
+  if (!postIds.length) return {};
+  const browserId = getBrowserId();
+  const { data } = await supabase
+    .from("post_votes")
+    .select("post_id, value, browser_id")
+    .in("post_id", postIds);
+
+  const result = {};
+  for (const postId of postIds) {
+    const rows = (data || []).filter((r) => r.post_id === postId);
+    result[postId] = {
+      score: rows.reduce((s, r) => s + (r.value || 0), 0),
+      myVote: rows.find((r) => r.browser_id === browserId)?.value || 0
+    };
+  }
+  return result;
 }
 
 function BoardBadge({ boardName }) {
@@ -1218,12 +1208,10 @@ function BoardBadge({ boardName }) {
   );
 }
 
-function PostCard({ post, commentCount = 0 }) {
-  const [voteVersion, setVoteVersion] = useState(0);
+function PostCard({ post, commentCount = 0, score = 0, myVote = 0, onVote }) {
   const [shareLabel, setShareLabel] = useState("Share");
   const isMod = isModPost(post);
   const boardName = getBoardNameFromPost(post);
-  const { score, selectedVote } = getVoteStateForPost(post.id);
 
   async function handleShare(event) {
     event.preventDefault();
@@ -1315,26 +1303,24 @@ function PostCard({ post, commentCount = 0 }) {
           <button
             type="button"
             aria-label="Thumbs up"
-            className={`feed-post-action-button${selectedVote === 1 ? " active" : ""}`}
+            className={`feed-post-action-button${myVote === 1 ? " active" : ""}`}
             onClick={(event) => {
               event.preventDefault();
-              toggleVoteForPost(post.id, 1);
-              setVoteVersion((current) => current + 1);
+              onVote?.(post.id, myVote === 1 ? 0 : 1);
             }}
           >
             <span aria-hidden="true">👍</span>
           </button>
-          <span key={voteVersion} className="feed-post-vote-score">
+          <span className="feed-post-vote-score">
             {score}
           </span>
           <button
             type="button"
             aria-label="Thumbs down"
-            className={`feed-post-action-button${selectedVote === -1 ? " active downvote" : ""}`}
+            className={`feed-post-action-button${myVote === -1 ? " active downvote" : ""}`}
             onClick={(event) => {
               event.preventDefault();
-              toggleVoteForPost(post.id, -1);
-              setVoteVersion((current) => current + 1);
+              onVote?.(post.id, myVote === -1 ? 0 : -1);
             }}
           >
             <span aria-hidden="true">👎</span>
