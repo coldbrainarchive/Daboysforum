@@ -3024,9 +3024,14 @@ function PostPage({ user }) {
                 <button
                   type="button"
                   className="feed-post-action-pill"
-                  onClick={() => setCommentSort(s => s === "oldest" ? "newest" : "oldest")}
+                  onClick={() => {
+                    const next = commentSort === "oldest" ? "newest" : "oldest";
+                    setCommentSort(next);
+                    const el = chatWindowRef.current;
+                    if (el) el.scrollTo({ top: next === "oldest" ? 0 : el.scrollHeight, behavior: "smooth" });
+                  }}
                 >
-                  {commentSort === "oldest" ? "Newest" : "Oldest"}
+                  {commentSort === "oldest" ? "Oldest" : "Newest"}
                 </button>
                 <button
                   type="button"
