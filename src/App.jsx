@@ -2229,6 +2229,7 @@ function Home() {
         .from("posts")
         .select("*")
         .eq("deleted", false)
+        .neq("community_id", "jail")
         .order("pinned", { ascending: false })
         .order("last_activity", { ascending: false }),
       supabase
@@ -2410,6 +2411,7 @@ function NewPost({ user }) {
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [previewName, setPreviewName] = useState(null);
+  const [isUserJailed, setIsUserJailed] = useState(false);
   const requestedBoard = getBoardBySlug(searchParams.get("board"));
   const [selectedBoardSlug, setSelectedBoardSlug] = useState(requestedBoard?.slug || BOARDS[0].slug);
 
@@ -2417,14 +2419,14 @@ function NewPost({ user }) {
     if (user) return;
     const browserId = getBrowserId();
     (async () => {
-      const { data: postRow } = await supabase
-        .from("posts")
-        .select("username")
-        .eq("browser_id", browserId)
-        .eq("is_mod", false)
-        .not("username", "is", null)
-        .limit(1)
-        .maybeSingle();
+      const [{ data: jailRow }, { data: postRow }] = await Promise.all([
+        supabase.from("jailed").select("browser_id").eq("browser_id", browserId).maybeSingle(),
+        supabase.from("posts").select("username").eq("browser_id", browserId).eq("is_mod", false).not("username", "is", null).limit(1).maybeSingle()
+      ]);
+      if (jailRow) {
+        setIsUserJailed(true);
+        setSelectedBoardSlug("jail");
+      }
       if (postRow?.username) { setPreviewName(postRow.username); return; }
       const { data: commentRow } = await supabase
         .from("comments")
@@ -2513,7 +2515,7 @@ function NewPost({ user }) {
             <select
               value={selectedBoardSlug}
               onChange={(e) => setSelectedBoardSlug(e.target.value)}
-              disabled={isSending}
+              disabled={isSending || isUserJailed}
               style={{
                 padding: "4px 10px",
                 borderRadius: 999,
@@ -2521,8 +2523,9 @@ function NewPost({ user }) {
                 fontSize: 13,
                 fontWeight: 700,
                 background: "#0f1117",
-                color: "#f8fafc",
-                cursor: "pointer"
+                color: isUserJailed ? "#fbbf24" : "#f8fafc",
+                cursor: isUserJailed ? "not-allowed" : "pointer",
+                opacity: isUserJailed ? 0.8 : 1
               }}
             >
               {BOARDS.map((board) => (
@@ -2531,6 +2534,9 @@ function NewPost({ user }) {
                 </option>
               ))}
             </select>
+            {isUserJailed && (
+              <span style={{ color: "#fbbf24", fontSize: 12, fontWeight: 700, marginLeft: 8 }}>🚔 Jailed — posts go to Jail only</span>
+            )}
           </div>
 
           <div className="feed-post-author-row" style={{ marginBottom: 8 }}>
@@ -3148,6 +3154,7 @@ function ModPanel({ setModName }) {
   const [name, setName] = useState(localStorage.getItem("mod_name") || "");
   const [users, setUsers] = useState([]);
   const [bans, setBans] = useState([]);
+  const [jailed, setJailed] = useState([]);
   const [email, setEmail] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -3159,9 +3166,11 @@ function ModPanel({ setModName }) {
     const { data: posts } = await supabase.from("posts").select("*");
     const { data: comments } = await supabase.from("comments").select("*");
     const { data: bans } = await supabase.from("bans").select("*");
+    const { data: jailedData } = await supabase.from("jailed").select("*");
     const { data: userData } = await supabase.auth.getUser();
 
     setBans(bans || []);
+    setJailed(jailedData || []);
     setEmail(userData?.user?.email || "");
 
     const all = [...(posts || []), ...(comments || [])];
@@ -3234,12 +3243,12 @@ function ModPanel({ setModName }) {
 
   // BAN SYSTEM
   const isBanned = (u) =>
-  bans.some(
-    (b) =>
-      b.browser_id === u.browser_id ||
-      b.ip_hash === u.ip_hash ||
-      b.username === u.username
-  );
+    bans.some(
+      (b) =>
+        b.browser_id === u.browser_id ||
+        b.ip_hash === u.ip_hash ||
+        b.username === u.username
+    );
 
   const toggleBan = async (u) => {
     if (isBanned(u)) {
@@ -3252,6 +3261,32 @@ function ModPanel({ setModName }) {
         ip_hash: u.ip_hash
       });
     }
+    load();
+  };
+
+  // JAIL SYSTEM
+  const isJailed = (u) => jailed.some((j) => j.browser_id === u.browser_id);
+
+  const toggleJail = async (u) => {
+    if (isJailed(u)) {
+      await supabase.from("jailed").delete().eq("browser_id", u.browser_id);
+    } else {
+      await supabase.from("jailed").insert({
+        browser_id: u.browser_id,
+        username: u.username,
+        ip_hash: u.ip_hash
+      });
+    }
+    load();
+  };
+
+  // DELETE USERNAME (gives them a fresh name next post)
+  const deleteUsername = async (u) => {
+    if (!confirm(`Clear "${u.username}"'s name? They'll get a new one next time they post.`)) return;
+    await Promise.all([
+      supabase.from("posts").update({ username: null }).eq("browser_id", u.browser_id),
+      supabase.from("comments").update({ username: null }).eq("browser_id", u.browser_id)
+    ]);
     load();
   };
 
@@ -3365,16 +3400,22 @@ function ModPanel({ setModName }) {
         <div style={{ display: "flex", flexDirection: "column" }}>
           {sortedUsers.map((u, i) => {
             const banned = isBanned(u);
+            const jailedUser = isJailed(u);
+            const rowBg = banned
+              ? "rgba(248, 113, 113, 0.04)"
+              : jailedUser
+              ? "rgba(251, 191, 36, 0.04)"
+              : "transparent";
             return (
               <div
                 key={u.browser_id}
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 14,
+                  gap: 12,
                   padding: "12px 20px",
                   borderBottom: i < sortedUsers.length - 1 ? "1px solid #2e303a" : "none",
-                  background: banned ? "rgba(248, 113, 113, 0.04)" : "transparent"
+                  background: rowBg
                 }}
               >
                 <div
@@ -3395,35 +3436,37 @@ function ModPanel({ setModName }) {
                   {u.username[0].toUpperCase()}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     <span style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14 }}>{u.username}</span>
+                    {banned && <span style={{ fontSize: 11, fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.12)", padding: "1px 7px", borderRadius: 999 }}>BANNED</span>}
+                    {jailedUser && !banned && <span style={{ fontSize: 11, fontWeight: 700, color: "#fbbf24", background: "rgba(251,191,36,0.12)", padding: "1px 7px", borderRadius: 999 }}>JAILED</span>}
                     {u.joined_at && (
-                      <span style={{ color: "#64748b", fontSize: 12 }}>
-                        · joined {timeAgo(u.joined_at)}
-                      </span>
+                      <span style={{ color: "#64748b", fontSize: 12 }}>· joined {timeAgo(u.joined_at)}</span>
                     )}
                   </div>
                   <div style={{ color: "#64748b", fontSize: 12, fontFamily: "var(--mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.browser_id}</div>
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: banned ? "#f87171" : "#4ade80", flexShrink: 0 }}>
-                  {banned ? "BANNED" : "ACTIVE"}
-                </span>
-                <button
-                  onClick={() => toggleBan(u)}
-                  style={{
-                    padding: "7px 14px",
-                    borderRadius: 10,
-                    border: "none",
-                    background: banned ? "#1f2937" : "#c084fc",
-                    color: banned ? "#f8fafc" : "#14081d",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    fontSize: 13,
-                    flexShrink: 0
-                  }}
-                >
-                  {banned ? "Unban" : "Ban"}
-                </button>
+                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                  <button
+                    onClick={() => deleteUsername(u)}
+                    title="Clear name — gives them a fresh bird name next post"
+                    style={{ padding: "7px 10px", borderRadius: 10, border: "1px solid #374151", background: "#1f2937", color: "#94a3b8", fontWeight: 700, cursor: "pointer", fontSize: 12 }}
+                  >
+                    🗑 Clear
+                  </button>
+                  <button
+                    onClick={() => toggleJail(u)}
+                    style={{ padding: "7px 12px", borderRadius: 10, border: "none", background: jailedUser ? "#78350f" : "#451a03", color: jailedUser ? "#fde68a" : "#fbbf24", fontWeight: 700, cursor: "pointer", fontSize: 13 }}
+                  >
+                    {jailedUser ? "Unjail" : "🚔 Jail"}
+                  </button>
+                  <button
+                    onClick={() => toggleBan(u)}
+                    style={{ padding: "7px 12px", borderRadius: 10, border: "none", background: banned ? "#1f2937" : "#c084fc", color: banned ? "#f8fafc" : "#14081d", fontWeight: 700, cursor: "pointer", fontSize: 13 }}
+                  >
+                    {banned ? "Unban" : "Ban"}
+                  </button>
+                </div>
               </div>
             );
           })}
