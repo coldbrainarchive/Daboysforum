@@ -2924,9 +2924,20 @@ function PostPage({ user }) {
               </button>
             </div>
 
-            <span className="feed-post-action-pill">
+            <button
+              type="button"
+              className="feed-post-action-pill"
+              onClick={() => {
+                const shell = document.querySelector(".comments-shell");
+                if (shell) shell.scrollIntoView({ behavior: "smooth" });
+                setTimeout(() => {
+                  const el = chatWindowRef.current;
+                  if (el) el.scrollTop = el.scrollHeight;
+                }, 350);
+              }}
+            >
               💬 {comments.length}
-            </span>
+            </button>
 
             <button
               type="button"
@@ -2993,7 +3004,7 @@ function PostPage({ user }) {
         <section className="comments-shell">
           <div className="content-card comments-panel" style={{ padding: 0, overflow: "clip", display: "flex", flexDirection: "column", height: "min(600px, 80dvh)" }}>
             <div className="chat-panel-header">
-              <span className="comments-panel-title">{comments.length} Messages</span>
+              <span className="comments-panel-title">{comments.length} Chats</span>
             </div>
 
             <div
@@ -3005,6 +3016,17 @@ function PostPage({ user }) {
                 isAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
               }}
             >
+              <div style={{ display: "flex", justifyContent: "center", padding: "6px 0 2px" }}>
+                <button
+                  type="button"
+                  className="feed-post-action-pill"
+                  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                  style={{ fontSize: 18, lineHeight: 1 }}
+                >
+                  💬
+                </button>
+              </div>
+
               {flatComments.map((c) => (
                 <ChatMessage
                   key={c.id}
