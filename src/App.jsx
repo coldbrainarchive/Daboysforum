@@ -2299,12 +2299,13 @@ function PostPage({ user }) {
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    padding: "5px 10px",
+                    padding: "5px 8px",
                     borderRadius: 999,
                     border: "none",
                     background: "#20262f",
                     color: "#dbe4ee",
-                    fontSize: 14,
+                    fontSize: 11,
+                    fontWeight: 800,
                     cursor: "pointer",
                     lineHeight: 1
                   }}
