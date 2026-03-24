@@ -621,6 +621,11 @@ function RealtimeStyles() {
         opacity: 0.85;
       }
 
+      .chat-bubble.highlight {
+        background: #2e3a50;
+        transition: background 0.3s ease;
+      }
+
       .chat-bubble.pending {
         opacity: 0.55;
       }
@@ -3053,8 +3058,20 @@ function PostPage({ user }) {
                   reactions={reactions}
                   allComments={allComments}
                   onFindParent={(parentId) => {
-                    const el = chatWindowRef.current?.querySelector(`[data-comment-id="${parentId}"]`);
-                    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                    const win = chatWindowRef.current;
+                    const el = win?.querySelector(`[data-comment-id="${parentId}"]`);
+                    if (win && el) {
+                      const elTop = el.offsetTop;
+                      const target = elTop - (win.clientHeight / 2) + (el.offsetHeight / 2);
+                      win.scrollTo({ top: target, behavior: "smooth" });
+                      const bubble = el.querySelector(".chat-bubble");
+                      if (bubble) {
+                        setTimeout(() => {
+                          bubble.classList.add("highlight");
+                          setTimeout(() => bubble.classList.remove("highlight"), 1000);
+                        }, 400);
+                      }
+                    }
                   }}
                 />
               ))}
