@@ -319,6 +319,46 @@ export default {
       }
     }
 
+    if (url.pathname === "/create-profile") {
+      if (!authUser) {
+        return json({ error: "Unauthorized" }, 401);
+      }
+      const { username: signUpUsername, browser_id } = body;
+      if (!signUpUsername || !browser_id) {
+        return json({ error: "Missing fields" }, 400);
+      }
+      // Check if profile already exists (avoid duplicate on race)
+      const checkRes = await fetch(
+        `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${authUser.id}&select=id`,
+        { headers: { apikey: env.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}` } }
+      );
+      const existing = checkRes.ok ? await checkRes.json() : [];
+      if (Array.isArray(existing) && existing.length > 0) {
+        return json({ success: true });
+      }
+      const insertRes = await fetch(`${env.SUPABASE_URL}/rest/v1/profiles`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: env.SUPABASE_SERVICE_KEY,
+          Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+          Prefer: "return=minimal"
+        },
+        body: JSON.stringify({
+          id: authUser.id,
+          email: authUser.email || "",
+          role: "user",
+          username: signUpUsername,
+          browser_id
+        })
+      });
+      if (!insertRes.ok) {
+        const text = await insertRes.text();
+        return json({ error: text }, 500);
+      }
+      return json({ success: true });
+    }
+
     if (url.pathname === "/get-profiles") {
       if (!isModerator) {
         return json({ error: "Unauthorized" }, 401);

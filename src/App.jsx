@@ -3698,7 +3698,13 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
       if (data.user) {
         const bid = getBrowserId();
         const signUpUsername = username.trim();
-        await supabase.from("profiles").insert({ id: data.user.id, email: fakeEmail, role: "user", username: signUpUsername, browser_id: bid });
+        const { data: session } = await supabase.auth.getSession();
+        const authToken = session?.session?.access_token;
+        await fetch("https://daboysforumip.coldbrainarchive.workers.dev/create-profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
+          body: JSON.stringify({ username: signUpUsername, browser_id: bid })
+        });
         await Promise.all([
           supabase.from("posts").update({ username: signUpUsername }).eq("browser_id", bid).eq("is_mod", false),
           supabase.from("comments").update({ username: signUpUsername }).eq("browser_id", bid).eq("is_mod", false)
