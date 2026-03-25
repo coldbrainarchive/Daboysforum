@@ -3575,10 +3575,11 @@ function ModPanel({ setModName }) {
 // ==============================
 // ACTIVITY PANEL
 // ==============================
-function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, browseUsername, lastMemberUsername }) {
+function ActivityPanel({ user, userRole, modName, onClose, onClear, onLogin, onLogout, browseUsername, lastMemberUsername }) {
   const [tab, setTab] = useState("all");
   const [loading, setLoading] = useState(true);
   const [notifs, setNotifs] = useState([]);
+  const unseenThreshold = useRef(localStorage.getItem("notif_last_seen") || new Date(0).toISOString());
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
@@ -3694,7 +3695,7 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
     };
 
     fetchNotifs();
-    const interval = setInterval(fetchNotifs, 30000);
+    const interval = setInterval(fetchNotifs, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -3771,6 +3772,11 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
               Mod Panel
             </Link>
           )}
+          {notifs.length > 0 && (
+            <button onClick={() => { unseenThreshold.current = new Date().toISOString(); onClear(); }} style={{ padding: "0 10px", height: 30, borderRadius: 10, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 11, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
+              Clear
+            </button>
+          )}
           <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", background: "#1f2937", color: "#94a3b8", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>✕</button>
         </div>
 
@@ -3804,14 +3810,16 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
               <div style={{ fontSize: 12, marginTop: 4 }}>Activity shows up once you start posting</div>
             </div>
           ) : (
-            filtered.map((n) => (
+            filtered.map((n) => {
+              const isUnseen = !!n.time && n.time > unseenThreshold.current;
+              return (
               <Link
                 key={n.id}
                 to={n.postId ? `/post/${n.postId}` : "#"}
                 onClick={onClose}
-                style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 18px", textDecoration: "none", borderBottom: "1px solid #1a1c23", transition: "background 0.12s" }}
+                style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 18px", textDecoration: "none", borderBottom: "1px solid #1a1c23", transition: "background 0.12s", background: isUnseen ? "rgba(192,132,252,0.07)" : "transparent", borderLeft: isUnseen ? "2px solid #c084fc" : "2px solid transparent" }}
                 onMouseEnter={(e) => e.currentTarget.style.background = "#1f2028"}
-                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                onMouseLeave={(e) => e.currentTarget.style.background = isUnseen ? "rgba(192,132,252,0.07)" : "transparent"}
               >
                 <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#1f2937", border: "1px solid #2e303a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>
                   {n.icon}
@@ -3823,7 +3831,8 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
                   {n.time && <div style={{ color: "#475569", fontSize: 11, marginTop: 5 }}>{timeAgo(n.time)}</div>}
                 </div>
               </Link>
-            ))
+              );
+            })
           )}
         </div>
 
@@ -3965,7 +3974,7 @@ export default function App() {
     };
 
     fetchCount();
-    const interval = setInterval(fetchCount, 30000);
+    const interval = setInterval(fetchCount, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -3995,8 +4004,6 @@ export default function App() {
               <button
                 onClick={() => {
                   setShowActivity(true);
-                  setNotifCount(0);
-                  localStorage.setItem("notif_last_seen", new Date().toISOString());
                 }}
                 style={{
                   display: "inline-flex",
@@ -4053,6 +4060,7 @@ export default function App() {
             userRole={userRole}
             modName={modName}
             onClose={() => setShowActivity(false)}
+            onClear={() => { setNotifCount(0); localStorage.setItem("notif_last_seen", new Date().toISOString()); }}
             onLogin={(u, role, newUsername) => {
               setUser(u); applyRole(role);
               if (newUsername) {
