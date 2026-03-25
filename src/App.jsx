@@ -167,10 +167,14 @@ async function getAuthHeader() {
   if (!data.session?.access_token) {
     throw new Error("No active moderator session. Please log in again.");
   }
+  return { Authorization: `Bearer ${data.session.access_token}` };
+}
 
-  return {
-    Authorization: `Bearer ${data.session.access_token}`
-  };
+async function getOptionalAuthHeader() {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token
+    ? { Authorization: `Bearer ${data.session.access_token}` }
+    : {};
 }
 
 
@@ -2480,7 +2484,7 @@ function NewPost({ user, userRole, memberUsername }) {
 
       const { data } = await supabase.auth.getUser();
       const modMetadata = buildModMetadata(data.user, memberUsername);
-      const authHeaders = userRole === "mod" ? await getAuthHeader() : {};
+      const authHeaders = await getOptionalAuthHeader();
       const selectedBoard = getBoardBySlug(selectedBoardSlug) || BOARDS[0];
       const browserId = getBrowserId();
 
@@ -2510,6 +2514,10 @@ function NewPost({ user, userRole, memberUsername }) {
           alert(result.error);
         }
         return;
+      }
+
+      if (user && memberUsername) {
+        await supabase.from("posts").update({ username: memberUsername }).eq("browser_id", browserId).eq("is_mod", false).is("username", null);
       }
 
       queuePendingBoardTag({
@@ -2788,7 +2796,7 @@ function PostPage({ user, userRole, memberUsername }) {
       const browserId = getBrowserId();
       const { data } = await supabase.auth.getUser();
       const modMetadata = buildModMetadata(data.user, memberUsername);
-      const authHeaders = userRole === "mod" ? await getAuthHeader() : {};
+      const authHeaders = await getOptionalAuthHeader();
       setIsSendingComment(true);
       setPendingComments((current) => [
         ...current,
@@ -2832,6 +2840,10 @@ function PostPage({ user, userRole, memberUsername }) {
           alert(result.error);
         }
         throw new Error(result.error);
+      }
+
+      if (user && memberUsername) {
+        await supabase.from("comments").update({ username: memberUsername }).eq("browser_id", browserId).eq("is_mod", false).is("username", null);
       }
 
       setIsSendingComment(false);
