@@ -3511,13 +3511,6 @@ function ModPanel({ setModName }) {
                 </div>
                 <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                   <button
-                    onClick={() => deleteUsername(u)}
-                    title="Clear name — gives them a fresh bird name next post"
-                    style={{ padding: "7px 10px", borderRadius: 10, border: "1px solid #374151", background: "#1f2937", color: "#94a3b8", fontWeight: 700, cursor: "pointer", fontSize: 12 }}
-                  >
-                    🗑 Clear
-                  </button>
-                  <button
                     onClick={() => toggleJail(u)}
                     style={{ padding: "7px 12px", borderRadius: 10, border: "none", background: jailedUser ? "#78350f" : "#451a03", color: jailedUser ? "#fde68a" : "#fbbf24", fontWeight: 700, cursor: "pointer", fontSize: 13 }}
                   >
@@ -3525,9 +3518,16 @@ function ModPanel({ setModName }) {
                   </button>
                   <button
                     onClick={() => toggleBan(u)}
-                    style={{ padding: "7px 12px", borderRadius: 10, border: "none", background: banned ? "#1f2937" : "#c084fc", color: banned ? "#f8fafc" : "#14081d", fontWeight: 700, cursor: "pointer", fontSize: 13 }}
+                    style={{ padding: "7px 12px", borderRadius: 10, border: "none", background: banned ? "#1f2937" : "#7f1d1d", color: banned ? "#f8fafc" : "#fca5a5", fontWeight: 700, cursor: "pointer", fontSize: 13 }}
                   >
                     {banned ? "Unban" : "Ban"}
+                  </button>
+                  <button
+                    onClick={() => deleteUsername(u)}
+                    title="Clear name — gives them a fresh bird name next post"
+                    style={{ padding: "7px 10px", borderRadius: 10, border: "1px solid #374151", background: "#1f2937", color: "#94a3b8", fontWeight: 700, cursor: "pointer", fontSize: 12 }}
+                  >
+                    🗑 Clear
                   </button>
                 </div>
               </div>
