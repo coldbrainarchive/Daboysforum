@@ -319,6 +319,24 @@ export default {
       }
     }
 
+    if (url.pathname === "/get-profiles") {
+      if (!isModerator) {
+        return json({ error: "Unauthorized" }, 401);
+      }
+      const res = await fetch(
+        `${env.SUPABASE_URL}/rest/v1/profiles?select=*&order=created_at.desc`,
+        {
+          headers: {
+            apikey: env.SUPABASE_SERVICE_KEY,
+            Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`
+          }
+        }
+      );
+      if (!res.ok) return json({ error: "Failed to fetch profiles" }, 500);
+      const profiles = await res.json();
+      return json({ profiles });
+    }
+
     if (url.pathname === "/mod-action") {
       try {
         if (!isModerator) {

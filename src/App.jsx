@@ -3197,12 +3197,14 @@ function ModPanel({ setModName }) {
     const { data: comments } = await supabase.from("comments").select("*");
     const { data: bans } = await supabase.from("bans").select("*");
     const { data: jailedData } = await supabase.from("jailed").select("*");
-    const { data: profilesData } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
     const { data: userData } = await supabase.auth.getUser();
+    const authHeaders = await getAuthHeader();
+    const profilesRes = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/get-profiles", { headers: authHeaders });
+    const profilesJson = profilesRes.ok ? await profilesRes.json() : { profiles: [] };
 
     setBans(bans || []);
     setJailed(jailedData || []);
-    setMembers(profilesData || []);
+    setMembers(profilesJson.profiles || []);
     setEmail(userData?.user?.email || "");
 
     const all = [...(posts || []), ...(comments || [])];
@@ -3410,7 +3412,7 @@ function ModPanel({ setModName }) {
       <div className="content-card" style={{ padding: 0, overflow: "hidden" }}>
         <div style={{ padding: "14px 20px", borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <h3 style={{ margin: 0, color: "#f8fafc", fontSize: 16, fontWeight: 700, marginRight: "auto" }}>
-            Users <span style={{ color: "#64748b", fontWeight: 500, fontSize: 13 }}>{sortedUsers.length}</span>
+            Anonymous <span style={{ color: "#64748b", fontWeight: 500, fontSize: 13 }}>{sortedUsers.length}</span>
           </h3>
           <input
             placeholder="Search users…"
