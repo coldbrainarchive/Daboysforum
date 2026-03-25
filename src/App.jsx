@@ -2421,14 +2421,17 @@ function NewPost({ user, userRole, memberUsername }) {
       if (memberUsername) setPreviewName(memberUsername);
       return;
     }
-    setPreviewName("");
     const browserId = getBrowserId();
     (async () => {
-      const { data: jailRow } = await supabase.from("jailed").select("browser_id").eq("browser_id", browserId).maybeSingle();
+      const [{ data: jailRow }] = await Promise.all([
+        supabase.from("jailed").select("browser_id").eq("browser_id", browserId).maybeSingle()
+      ]);
       if (jailRow) {
         setIsUserJailed(true);
         setSelectedBoardSlug("cage");
       }
+      const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/my-username", { headers: await getOptionalAuthHeader() });
+      if (res.ok) { const d = await res.json(); if (d.username) setPreviewName(d.username); }
     })();
   }, [user, memberUsername]);
 
