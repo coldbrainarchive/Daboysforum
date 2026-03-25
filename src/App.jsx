@@ -138,11 +138,11 @@ function isModPost(record) {
   return record?.is_mod === true;
 }
 
-function buildModMetadata(user) {
+function buildModMetadata(user, memberUsername) {
   const isMod = !!user && localStorage.getItem("user_role") === "mod";
   if (!isMod) {
     return {
-      username: null,
+      username: (user && memberUsername) ? memberUsername : null,
       is_mod: false,
       moderator: false,
       author_role: "user",
@@ -2435,7 +2435,7 @@ function BoardPage() {
 // ==============================
 // CREATE POST (FIXED)
 // ==============================
-function NewPost({ user, userRole }) {
+function NewPost({ user, userRole, memberUsername }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [title, setTitle] = useState("");
@@ -2447,7 +2447,10 @@ function NewPost({ user, userRole }) {
   const [selectedBoardSlug, setSelectedBoardSlug] = useState(requestedBoard?.slug || BOARDS[0].slug);
 
   useEffect(() => {
-    if (user) return;
+    if (user) {
+      if (memberUsername) setPreviewName(memberUsername);
+      return;
+    }
     const browserId = getBrowserId();
     (async () => {
       const [{ data: jailRow }, { data: postRow }] = await Promise.all([
@@ -2469,7 +2472,7 @@ function NewPost({ user, userRole }) {
         .maybeSingle();
       if (commentRow?.username) setPreviewName(commentRow.username);
     })();
-  }, [user]);
+  }, [user, memberUsername]);
 
   const createPost = async () => {
     try {
@@ -2482,7 +2485,7 @@ function NewPost({ user, userRole }) {
       setIsSending(true);
 
       const { data } = await supabase.auth.getUser();
-      const modMetadata = buildModMetadata(data.user);
+      const modMetadata = buildModMetadata(data.user, memberUsername);
       const authHeaders = await getOptionalAuthHeader();
       const selectedBoard = getBoardBySlug(selectedBoardSlug) || BOARDS[0];
       const browserId = getBrowserId();
@@ -2530,6 +2533,7 @@ function NewPost({ user, userRole }) {
 
       setTitle("");
       setContent("");
+      setIsSending(false);
       setTimeout(() => {
         navigate(`/board/${selectedBoard.slug}`);
       }, 450);
@@ -2658,7 +2662,7 @@ function NewPost({ user, userRole }) {
 // ==============================
 // POST PAGE (WITH MOD CONTROLS 🔥)
 // ==============================
-function PostPage({ user, userRole }) {
+function PostPage({ user, userRole, memberUsername }) {
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -2789,7 +2793,7 @@ function PostPage({ user, userRole }) {
     try {
       const browserId = getBrowserId();
       const { data } = await supabase.auth.getUser();
-      const modMetadata = buildModMetadata(data.user);
+      const modMetadata = buildModMetadata(data.user, memberUsername);
       const authHeaders = await getOptionalAuthHeader();
       setIsSendingComment(true);
       setPendingComments((current) => [
@@ -3587,7 +3591,7 @@ function ModPanel({ setModName }) {
 // ==============================
 // ACTIVITY PANEL
 // ==============================
-function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, browseUsername, onUsernameChange }) {
+function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, browseUsername }) {
   const [tab, setTab] = useState("all");
   const [loading, setLoading] = useState(true);
   const [notifs, setNotifs] = useState([]);
@@ -3595,10 +3599,6 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
-
-  // Account section (for logged-in non-mod users)
-  const [nameInput, setNameInput] = useState(browseUsername || "");
-  const [nameLoading, setNameLoading] = useState(false);
   const [colorError, setColorError] = useState("");
 
   useEffect(() => {
@@ -3835,46 +3835,9 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
           <div style={{ padding: "14px 18px", borderTop: "1px solid #2e303a", background: "#0d0f14", flexShrink: 0 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Account</div>
 
-            {/* Name change */}
-            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-              <input
-                placeholder="Change display name"
-                value={nameInput}
-                onChange={(e) => setNameInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && (async () => {
-                  const newName = nameInput.trim();
-                  if (!newName || newName === browseUsername) return;
-                  setNameLoading(true);
-                  const bid = getBrowserId();
-                  await Promise.all([
-                    supabase.from("posts").update({ username: newName }).eq("browser_id", bid).eq("is_mod", false),
-                    supabase.from("comments").update({ username: newName }).eq("browser_id", bid).eq("is_mod", false)
-                  ]);
-                  if (user) await supabase.from("profiles").update({ username: newName }).eq("id", user.id);
-                  onUsernameChange(newName);
-                  setNameLoading(false);
-                })()}
-                style={{ flex: 1, padding: "8px 10px", borderRadius: 10, border: "1px solid #3f4756", background: "#16171d", color: "#f8fafc", fontSize: 13, boxSizing: "border-box" }}
-              />
-              <button
-                disabled={nameLoading}
-                onClick={async () => {
-                  const newName = nameInput.trim();
-                  if (!newName || newName === browseUsername) return;
-                  setNameLoading(true);
-                  const bid = getBrowserId();
-                  await Promise.all([
-                    supabase.from("posts").update({ username: newName }).eq("browser_id", bid).eq("is_mod", false),
-                    supabase.from("comments").update({ username: newName }).eq("browser_id", bid).eq("is_mod", false)
-                  ]);
-                  if (user) await supabase.from("profiles").update({ username: newName }).eq("id", user.id);
-                  onUsernameChange(newName);
-                  setNameLoading(false);
-                }}
-                style={{ padding: "8px 14px", borderRadius: 10, border: "none", background: "#1f2937", color: "#f8fafc", fontWeight: 700, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}
-              >
-                {nameLoading ? "…" : "Save"}
-              </button>
+            {/* Signed-in username (locked) */}
+            <div style={{ marginBottom: 10, padding: "8px 10px", borderRadius: 10, border: "1px solid #2e303a", background: "#16171d", color: "#94a3b8", fontSize: 13 }}>
+              @{browseUsername || "—"}
             </div>
 
             {/* Color picker */}
@@ -4050,8 +4013,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/board/:slug" element={<BoardPage />} />
-          <Route path="/new" element={<NewPost user={user} userRole={userRole} />} />
-          <Route path="/post/:id" element={<PostPage user={user} userRole={userRole} />} />
+          <Route path="/new" element={<NewPost user={user} userRole={userRole} memberUsername={browseUsername} />} />
+          <Route path="/post/:id" element={<PostPage user={user} userRole={userRole} memberUsername={browseUsername} />} />
           <Route path="/mod" element={userRole === "mod" ? <ModPanel setModName={setModName} /> : <Auth setUser={setUser} />} />
         </Routes>
 
@@ -4064,7 +4027,6 @@ export default function App() {
             onLogin={(u, role, newUsername) => { setUser(u); applyRole(role); if (newUsername) setBrowseUsername(newUsername); }}
             onLogout={() => { supabase.auth.signOut(); applyRole(null); }}
             browseUsername={browseUsername}
-            onUsernameChange={(name) => setBrowseUsername(name)}
           />
         )}
       </Router>
