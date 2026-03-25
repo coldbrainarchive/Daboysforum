@@ -3579,7 +3579,7 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
     const browserId = getBrowserId();
     const isMod = userRole === "mod";
 
-    (async () => {
+    const fetchNotifs = async () => {
       const isMember = !!user && !isMod;
       const [{ data: myPosts }, { data: myComments }] = await Promise.all([
         isMod
@@ -3682,7 +3682,11 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
 
       setNotifs(results);
       setLoading(false);
-    })();
+    };
+
+    fetchNotifs();
+    const interval = setInterval(fetchNotifs, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleAuth = async () => {
@@ -3885,6 +3889,7 @@ export default function App() {
   const [browseUsername, setBrowseUsername] = useState(null);
   const [lastMemberUsername, setLastMemberUsername] = useState(localStorage.getItem("last_member_username") || null);
   const [showActivity, setShowActivity] = useState(false);
+  const [notifCount, setNotifCount] = useState(0);
 
   const applyRole = (role) => {
     if (role) localStorage.setItem("user_role", role);
@@ -3915,6 +3920,41 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const fetchCount = async () => {
+      const browserId = getBrowserId();
+      const lastSeen = localStorage.getItem("notif_last_seen") || new Date(0).toISOString();
+      const isMod = localStorage.getItem("user_role") === "mod";
+      const { data: { user: u } } = await supabase.auth.getUser();
+      const memberUser = !isMod ? u : null;
+      const memberName = memberUser?.user_metadata?.username || null;
+      const lmName = localStorage.getItem("last_member_username");
+
+      let postsQuery = isMod
+        ? supabase.from("posts").select("id").eq("is_mod", true).eq("mod_user_id", u?.id).eq("deleted", false)
+        : memberName
+        ? supabase.from("posts").select("id").eq("username", memberName).eq("is_mod", false).eq("deleted", false)
+        : (() => { let q = supabase.from("posts").select("id").eq("browser_id", browserId).eq("is_mod", false).eq("deleted", false); if (lmName) q = q.neq("username", lmName); return q; })();
+
+      const { data: myPosts } = await postsQuery;
+      const postIds = (myPosts || []).map(p => p.id);
+      if (!postIds.length) { setNotifCount(0); return; }
+
+      const { count } = await supabase.from("comments")
+        .select("id", { count: "exact", head: true })
+        .in("post_id", postIds)
+        .neq("browser_id", browserId)
+        .eq("deleted", false)
+        .gt("created_at", lastSeen);
+
+      setNotifCount(count || 0);
+    };
+
+    fetchCount();
+    const interval = setInterval(fetchCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     const browserId = getBrowserId();
     (async () => {
       const { data: postRow } = await supabase
@@ -3936,33 +3976,51 @@ export default function App() {
 
           <div className="app-actions">
             <Link to="/new" className="app-chip">New Post</Link>
-            <button
-              onClick={() => setShowActivity(true)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                background: userRole === "mod"
-                  ? "#c084fc"
-                  : (browseUsername ? getUserColor(getBrowserId(), browseUsername) : "#c084fc"),
-                color: "#14081d",
-                fontWeight: 800,
-                fontSize: 15,
-                flexShrink: 0,
-                border: userRole === "mod" ? "2px solid #d8b4fe" : "2px solid transparent",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-                cursor: "pointer"
-              }}
-            >
-              {userRole === "mod"
-                ? (modName[0]?.toUpperCase() || "M")
-                : browseUsername
-                ? browseUsername[0].toUpperCase()
-                : "P"}
-            </button>
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <button
+                onClick={() => {
+                  setShowActivity(true);
+                  setNotifCount(0);
+                  localStorage.setItem("notif_last_seen", new Date().toISOString());
+                }}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  background: userRole === "mod"
+                    ? "#c084fc"
+                    : (browseUsername ? getUserColor(getBrowserId(), browseUsername) : "#c084fc"),
+                  color: "#14081d",
+                  fontWeight: 800,
+                  fontSize: 15,
+                  border: userRole === "mod" ? "2px solid #d8b4fe" : "2px solid transparent",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                  cursor: "pointer"
+                }}
+              >
+                {userRole === "mod"
+                  ? (modName[0]?.toUpperCase() || "M")
+                  : browseUsername
+                  ? browseUsername[0].toUpperCase()
+                  : "P"}
+              </button>
+              {notifCount > 0 && (
+                <span style={{
+                  position: "absolute", top: -4, right: -4,
+                  background: "#ef4444", color: "#fff",
+                  fontSize: 10, fontWeight: 800,
+                  borderRadius: 999, minWidth: 16, height: 16,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  padding: "0 3px", pointerEvents: "none",
+                  border: "1.5px solid #0f1117"
+                }}>
+                  {notifCount > 99 ? "99+" : notifCount}
+                </span>
+              )}
+            </div>
           </div>
         </nav>
 
