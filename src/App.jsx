@@ -3199,10 +3199,7 @@ function ModPanel({ setModName }) {
     const { data: userData } = await supabase.auth.getUser();
     const authHeaders = await getAuthHeader();
     const membersRes = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/get-members", { headers: authHeaders });
-    const membersText = await membersRes.text();
-    console.log("get-members status:", membersRes.status, "body:", membersText);
-    let membersJson = { members: [] };
-    try { membersJson = JSON.parse(membersText); } catch {}
+    const membersJson = membersRes.ok ? await membersRes.json() : { members: [] };
 
     setBans(bans || []);
     setJailed(jailedData || []);
