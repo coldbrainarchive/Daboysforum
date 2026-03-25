@@ -3972,21 +3972,24 @@ export default function App() {
       const u = data.user;
       setUser(u);
       if (u) {
-        const { data: profile } = await supabase.from("profiles").select("role").eq("id", u.id).maybeSingle();
+        const { data: profile } = await supabase.from("profiles").select("role, username").eq("id", u.id).maybeSingle();
         applyRole(profile?.role || "user");
+        if (profile?.username) setBrowseUsername(profile.username);
       }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const u = session?.user || null;
       setUser(u);
       if (u) {
-        const { data: profile } = await supabase.from("profiles").select("role").eq("id", u.id).maybeSingle();
+        const { data: profile } = await supabase.from("profiles").select("role, username").eq("id", u.id).maybeSingle();
         if (!profile) {
           const bid = getBrowserId();
           const { data: postRow } = await supabase.from("posts").select("username").eq("browser_id", bid).eq("is_mod", false).not("username", "is", null).limit(1).maybeSingle();
           await supabase.from("profiles").insert({ id: u.id, email: u.email, role: "user", username: postRow?.username || null, browser_id: bid });
+          if (postRow?.username) setBrowseUsername(postRow.username);
           applyRole("user");
         } else {
+          if (profile.username) setBrowseUsername(profile.username);
           applyRole(profile.role);
         }
       } else {
