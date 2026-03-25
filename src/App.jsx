@@ -3185,7 +3185,6 @@ function ModPanel({ setModName }) {
   const [jailed, setJailed] = useState([]);
   const [members, setMembers] = useState([]);
   const [email, setEmail] = useState("");
-  const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("joined_desc");
@@ -3247,18 +3246,6 @@ function ModPanel({ setModName }) {
   // LOGOUT
   const logout = async () => {
     await supabase.auth.signOut();
-  };
-
-  // UPDATE EMAIL
-  const updateEmail = async () => {
-    if (!newEmail) return;
-
-    const { error } = await supabase.auth.updateUser({ email: newEmail });
-
-    if (error) return alert(error.message);
-
-    alert("Check your email to confirm change 📧");
-    setNewEmail("");
   };
 
   // UPDATE PASSWORD
@@ -3358,21 +3345,6 @@ function ModPanel({ setModName }) {
           >
             🚪 Logout
           </button>
-
-          <div style={{ display: "grid", gap: 8 }}>
-            <input
-              placeholder="New email"
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-              style={{ width: "100%", boxSizing: "border-box", padding: "11px 14px", borderRadius: 10, border: "1px solid #3f4756", fontSize: 14, background: "#0f1117", color: "#f8fafc" }}
-            />
-            <button
-              onClick={updateEmail}
-              style={{ width: "100%", padding: "10px 16px", borderRadius: 12, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, cursor: "pointer", fontSize: 14 }}
-            >
-              Update Email
-            </button>
-          </div>
 
           <div style={{ display: "grid", gap: 8 }}>
             <input
