@@ -3902,6 +3902,7 @@ function ActivityPanel({ user, userRole, modName, onClose, onClear, onLogin, onL
 // MAIN
 // ==============================
 if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+if (!localStorage.getItem("notif_last_seen")) localStorage.setItem("notif_last_seen", new Date().toISOString());
 
 export default function App() {
   const [user, setUser] = useState(null);
