@@ -3603,10 +3603,10 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
 
       const [postCommentsRes, repliesRes, reactionsRes, votesRes] = await Promise.all([
         postIds.length
-          ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("post_id", postIds).neq("is_mod", true).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(60)
+          ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("post_id", postIds).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(60)
           : Promise.resolve({ data: [] }),
         commentIds.length
-          ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("parent_comment_id", commentIds).neq("is_mod", true).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(60)
+          ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("parent_comment_id", commentIds).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(60)
           : Promise.resolve({ data: [] }),
         commentIds.length
           ? supabase.from("comment_reactions").select("comment_id, emoji, browser_id").in("comment_id", commentIds)
