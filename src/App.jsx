@@ -61,7 +61,33 @@ class ErrorBoundary extends Component {
 // ==============================
 // HELPERS
 // ==============================
+function hexToHsl(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) { h = s = 0; }
+  else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return { h: h * 360, s: s * 100, l: l * 100 };
+}
+
 function getUserColor(id, username) {
+  // Check for custom color set by the current user (only applies on their own device)
+  if (id && id === getBrowserId()) {
+    const custom = localStorage.getItem("custom_color");
+    if (custom) return custom;
+  }
+
   // Prefer username so color is consistent across devices.
   // For old records with no username, use first 8 chars of browser_id
   // so at least the same device is always the same color.
@@ -3561,14 +3587,19 @@ function ModPanel({ setModName }) {
 // ==============================
 // ACTIVITY PANEL
 // ==============================
-function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, browseUsername }) {
+function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, browseUsername, onUsernameChange }) {
   const [tab, setTab] = useState("all");
   const [loading, setLoading] = useState(true);
   const [notifs, setNotifs] = useState([]);
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+
+  // Account section (for logged-in non-mod users)
+  const [nameInput, setNameInput] = useState(browseUsername || "");
+  const [nameLoading, setNameLoading] = useState(false);
+  const [colorError, setColorError] = useState("");
 
   useEffect(() => {
     const browserId = getBrowserId();
@@ -3674,30 +3705,28 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
     })();
   }, []);
 
-  const [confirmed, setConfirmed] = useState(false);
-
   const handleAuth = async () => {
-    if (!email || !password) return;
+    if (!username.trim() || !password) return;
+    const fakeEmail = `${username.trim().toLowerCase().replace(/\s+/g, "_")}@users.postchats.invalid`;
     setAuthLoading(true);
     if (isSignUp) {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ email: fakeEmail, password });
       setAuthLoading(false);
-      if (error) { alert(error.message); return; }
-      // session is null when email confirmation is required
-      if (!data.session) {
-        setConfirmed(true);
-      } else {
-        // confirmation disabled — log straight in
+      if (error) {
+        alert(error.message.includes("already registered") ? "Username already taken" : error.message);
+        return;
+      }
+      if (data.session) {
         const bid = getBrowserId();
         const { data: postRow } = await supabase.from("posts").select("username").eq("browser_id", bid).eq("is_mod", false).not("username", "is", null).limit(1).maybeSingle();
-        await supabase.from("profiles").insert({ id: data.user.id, email, role: "user", username: postRow?.username || null, browser_id: bid });
+        await supabase.from("profiles").insert({ id: data.user.id, email: fakeEmail, role: "user", username: postRow?.username || null, browser_id: bid });
         onLogin(data.user, "user");
         onClose();
       }
     } else {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email: fakeEmail, password });
       setAuthLoading(false);
-      if (error) { alert(error.message); return; }
+      if (error) { alert("Invalid username or password"); return; }
       const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
       onLogin(data.user, profile?.role || "user");
       onClose();
@@ -3721,12 +3750,16 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
 
         {/* Header */}
         <div style={{ padding: "14px 18px", borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: userRole === "mod" ? "#c084fc" : user ? getUserColor(user.id, user.email) : browseUsername ? getUserColor(getBrowserId(), browseUsername) : "#c084fc", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#14081d", flexShrink: 0 }}>
-            {userRole === "mod" ? (modName[0]?.toUpperCase() || "M") : user ? (user.email?.[0]?.toUpperCase() || "U") : browseUsername ? browseUsername[0].toUpperCase() : "P"}
+          <div style={{
+            width: 40, height: 40, borderRadius: "50%",
+            background: userRole === "mod" ? "#c084fc" : (() => { const c = localStorage.getItem("custom_color"); return c || (browseUsername ? getUserColor(getBrowserId(), browseUsername) : "#c084fc"); })(),
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#14081d", flexShrink: 0
+          }}>
+            {userRole === "mod" ? (modName[0]?.toUpperCase() || "M") : browseUsername ? browseUsername[0].toUpperCase() : "P"}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {userRole === "mod" ? modName : user ? user.email : browseUsername || "New User"}
+              {userRole === "mod" ? modName : browseUsername || "New User"}
             </div>
             <div style={{ color: "#64748b", fontSize: 12 }}>
               {user && userRole === "mod" ? "Moderator" : user ? "Member" : browseUsername ? "Anonymous member" : "No posts yet"}
@@ -3736,11 +3769,6 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
             <Link to="/mod" onClick={onClose} style={{ padding: "0 12px", height: 30, borderRadius: 10, background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 12, textDecoration: "none", flexShrink: 0, display: "inline-flex", alignItems: "center" }}>
               Mod Panel
             </Link>
-          )}
-          {user && (
-            <button onClick={() => { onLogout(); onClose(); }} style={{ padding: "0 12px", height: 30, borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#94a3b8", fontSize: 12, cursor: "pointer", flexShrink: 0 }}>
-              Log out
-            </button>
           )}
           <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", background: "#1f2937", color: "#94a3b8", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>✕</button>
         </div>
@@ -3798,49 +3826,122 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
           )}
         </div>
 
-        {/* Auth section */}
+        {/* Account section — logged-in non-mod users */}
+        {user && userRole !== "mod" && (
+          <div style={{ padding: "14px 18px", borderTop: "1px solid #2e303a", background: "#0d0f14", flexShrink: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Account</div>
+
+            {/* Name change */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+              <input
+                placeholder="Change display name"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && (async () => {
+                  const newName = nameInput.trim();
+                  if (!newName || newName === browseUsername) return;
+                  setNameLoading(true);
+                  const bid = getBrowserId();
+                  await Promise.all([
+                    supabase.from("posts").update({ username: newName }).eq("browser_id", bid).eq("is_mod", false),
+                    supabase.from("comments").update({ username: newName }).eq("browser_id", bid).eq("is_mod", false)
+                  ]);
+                  if (user) await supabase.from("profiles").update({ username: newName }).eq("id", user.id);
+                  onUsernameChange(newName);
+                  setNameLoading(false);
+                })()}
+                style={{ flex: 1, padding: "8px 10px", borderRadius: 10, border: "1px solid #3f4756", background: "#16171d", color: "#f8fafc", fontSize: 13, boxSizing: "border-box" }}
+              />
+              <button
+                disabled={nameLoading}
+                onClick={async () => {
+                  const newName = nameInput.trim();
+                  if (!newName || newName === browseUsername) return;
+                  setNameLoading(true);
+                  const bid = getBrowserId();
+                  await Promise.all([
+                    supabase.from("posts").update({ username: newName }).eq("browser_id", bid).eq("is_mod", false),
+                    supabase.from("comments").update({ username: newName }).eq("browser_id", bid).eq("is_mod", false)
+                  ]);
+                  if (user) await supabase.from("profiles").update({ username: newName }).eq("id", user.id);
+                  onUsernameChange(newName);
+                  setNameLoading(false);
+                }}
+                style={{ padding: "8px 14px", borderRadius: 10, border: "none", background: "#1f2937", color: "#f8fafc", fontWeight: 700, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                {nameLoading ? "…" : "Save"}
+              </button>
+            </div>
+
+            {/* Color picker */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Colour</div>
+              <input
+                type="color"
+                defaultValue={localStorage.getItem("custom_color") || getUserColor(getBrowserId(), browseUsername)}
+                onChange={(e) => {
+                  const hex = e.target.value;
+                  const { h } = hexToHsl(hex);
+                  if (h >= 250 && h <= 320) {
+                    setColorError("Purple is reserved for mods — pick another colour");
+                    return;
+                  }
+                  setColorError("");
+                  localStorage.setItem("custom_color", hex);
+                }}
+                style={{ width: 36, height: 28, borderRadius: 8, border: "1px solid #3f4756", background: "none", cursor: "pointer", padding: 2 }}
+              />
+              <button
+                onClick={() => { localStorage.removeItem("custom_color"); setColorError(""); }}
+                style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #374151", background: "transparent", color: "#64748b", fontSize: 11, cursor: "pointer" }}
+              >
+                Reset
+              </button>
+              {colorError && <div style={{ fontSize: 11, color: "#f87171", flex: 1 }}>{colorError}</div>}
+            </div>
+
+            {/* Logout */}
+            <button
+              onClick={() => { onLogout(); onClose(); }}
+              style={{ width: "100%", padding: "8px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#94a3b8", fontSize: 13, cursor: "pointer" }}
+            >
+              Log out
+            </button>
+          </div>
+        )}
+
+        {/* Auth section — logged-out users */}
         {!user && (
           <div style={{ padding: "14px 18px", borderTop: "1px solid #2e303a", background: "#0d0f14", flexShrink: 0 }}>
-            {confirmed ? (
-              <div style={{ textAlign: "center", padding: "8px 0" }}>
-                <div style={{ fontSize: 28, marginBottom: 8 }}>📧</div>
-                <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Check your email</div>
-                <div style={{ color: "#64748b", fontSize: 12, marginBottom: 12 }}>We sent a confirmation link to <b style={{ color: "#94a3b8" }}>{email}</b></div>
-                <button onClick={() => { setConfirmed(false); setIsSignUp(false); }} style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#94a3b8", fontSize: 12, cursor: "pointer" }}>
-                  Back to login
-                </button>
+            <>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                {isSignUp ? "Create account" : "Login"}
               </div>
-            ) : (
-              <>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                  {isSignUp ? "Create account" : "Login"}
+              <div style={{ display: "grid", gap: 8 }}>
+                <input
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#16171d", color: "#f8fafc", fontSize: 13, width: "100%", boxSizing: "border-box" }}
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAuth()}
+                  style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#16171d", color: "#f8fafc", fontSize: 13, width: "100%", boxSizing: "border-box" }}
+                />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={handleAuth} disabled={authLoading} style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                    {authLoading ? "…" : isSignUp ? "Sign Up" : "Log In"}
+                  </button>
+                  <button onClick={() => setIsSignUp((s) => !s)} style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#94a3b8", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
+                    {isSignUp ? "Log In instead" : "Sign Up"}
+                  </button>
                 </div>
-                <div style={{ display: "grid", gap: 8 }}>
-                  <input
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#16171d", color: "#f8fafc", fontSize: 13, width: "100%", boxSizing: "border-box" }}
-                  />
-                  <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAuth()}
-                    style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#16171d", color: "#f8fafc", fontSize: 13, width: "100%", boxSizing: "border-box" }}
-                  />
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={handleAuth} disabled={authLoading} style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-                      {authLoading ? "…" : isSignUp ? "Sign Up" : "Log In"}
-                    </button>
-                    <button onClick={() => setIsSignUp((s) => !s)} style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#94a3b8", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
-                      {isSignUp ? "Log In instead" : "Sign Up"}
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
+              </div>
+            </>
           </div>
         )}
       </div>
@@ -3928,11 +4029,7 @@ export default function App() {
                 borderRadius: "50%",
                 background: userRole === "mod"
                   ? "#c084fc"
-                  : user
-                  ? getUserColor(user.id, user.email)
-                  : browseUsername
-                  ? getUserColor(getBrowserId(), browseUsername)
-                  : "#c084fc",
+                  : (() => { const c = localStorage.getItem("custom_color"); return c || (browseUsername ? getUserColor(getBrowserId(), browseUsername) : "#c084fc"); })(),
                 color: "#14081d",
                 fontWeight: 800,
                 fontSize: 15,
@@ -3944,8 +4041,6 @@ export default function App() {
             >
               {userRole === "mod"
                 ? (modName[0]?.toUpperCase() || "M")
-                : user
-                ? (user.email?.[0]?.toUpperCase() || "U")
                 : browseUsername
                 ? browseUsername[0].toUpperCase()
                 : "P"}
@@ -3970,6 +4065,7 @@ export default function App() {
             onLogin={(u, role) => { setUser(u); applyRole(role); }}
             onLogout={() => { supabase.auth.signOut(); applyRole(null); }}
             browseUsername={browseUsername}
+            onUsernameChange={(name) => setBrowseUsername(name)}
           />
         )}
       </Router>
