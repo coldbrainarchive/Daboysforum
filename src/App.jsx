@@ -3145,16 +3145,17 @@ function PostPage({ user, userRole, memberUsername }) {
                     </button>
                   </div>
                 )}
-                {!user && anonUsername && (
-                  <div style={{ padding: "4px 8px 2px", fontSize: 11, color: "#64748b" }}>
-                    Posting as <span style={{ color: getUserColor(getBrowserId(), anonUsername), fontWeight: 700 }}>{anonUsername}</span>
-                  </div>
-                )}
-                {user && userRole !== "mod" && memberUsername && (
-                  <div style={{ padding: "4px 8px 2px", fontSize: 11, color: "#64748b" }}>
-                    Posting as <span style={{ color: getUserColor(getBrowserId(), memberUsername), fontWeight: 700 }}>{memberUsername}</span>
-                  </div>
-                )}
+                {(() => {
+                  const isMod = !!user && userRole === "mod";
+                  const name = isMod ? getModName() : (memberUsername || anonUsername);
+                  const color = isMod ? "#c084fc" : (name ? getUserColor(getBrowserId(), name) : null);
+                  if (!name) return null;
+                  return (
+                    <div style={{ padding: "4px 8px 2px", fontSize: 11, color: "#64748b" }}>
+                      Posting as <span style={{ color, fontWeight: 700 }}>{name}</span>
+                    </div>
+                  );
+                })()}
                 <div className="chat-input-row">
                   <textarea
                     className="chat-input"
