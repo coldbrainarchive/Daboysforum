@@ -2640,8 +2640,18 @@ function PostPage({ user, userRole, memberUsername }) {
   const [scrollToBottom, setScrollToBottom] = useState(true);
   const [replyTarget, setReplyTarget] = useState(null);
   const [reactions, setReactions] = useState({});
+  const [anonUsername, setAnonUsername] = useState(null);
   const chatWindowRef = useRef(null);
   const isAtBottomRef = useRef(true);
+
+  useEffect(() => {
+    if (user) { setAnonUsername(null); return; }
+    (async () => {
+      const authHeaders = await getOptionalAuthHeader();
+      const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/my-username", { headers: authHeaders });
+      if (res.ok) { const d = await res.json(); setAnonUsername(d.username || null); }
+    })();
+  }, [user]);
 
   async function handleReact(commentId, emoji) {
     const myId = getBrowserId();
@@ -3117,6 +3127,16 @@ function PostPage({ user, userRole, memberUsername }) {
                     </button>
                   </div>
                 )}
+                {!user && anonUsername && (
+                  <div style={{ padding: "4px 8px 2px", fontSize: 11, color: "#64748b" }}>
+                    Posting as <span style={{ color: getUserColor(getBrowserId(), anonUsername), fontWeight: 700 }}>{anonUsername}</span>
+                  </div>
+                )}
+                {user && userRole !== "mod" && memberUsername && (
+                  <div style={{ padding: "4px 8px 2px", fontSize: 11, color: "#64748b" }}>
+                    Posting as <span style={{ color: getUserColor(getBrowserId(), memberUsername), fontWeight: 700 }}>{memberUsername}</span>
+                  </div>
+                )}
                 <div className="chat-input-row">
                   <textarea
                     className="chat-input"
@@ -3583,16 +3603,16 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
 
       const [postCommentsRes, repliesRes, reactionsRes, votesRes] = await Promise.all([
         postIds.length
-          ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("post_id", postIds).eq("is_mod", false).eq("deleted", false).order("created_at", { ascending: false }).limit(60)
+          ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("post_id", postIds).neq("is_mod", true).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(60)
           : Promise.resolve({ data: [] }),
         commentIds.length
-          ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("parent_comment_id", commentIds).eq("is_mod", false).eq("deleted", false).order("created_at", { ascending: false }).limit(60)
+          ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("parent_comment_id", commentIds).neq("is_mod", true).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(60)
           : Promise.resolve({ data: [] }),
         commentIds.length
           ? supabase.from("comment_reactions").select("comment_id, emoji, browser_id").in("comment_id", commentIds)
           : Promise.resolve({ data: [] }),
         postIds.length
-          ? supabase.from("post_votes").select("post_id, value, browser_id").in("post_id", postIds)
+          ? supabase.from("post_votes").select("post_id, value, browser_id, username").in("post_id", postIds)
           : Promise.resolve({ data: [] })
       ]);
 
@@ -3636,17 +3656,17 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
       // Votes grouped by post
       const voteGroups = {};
       (votesRes.data || []).forEach((v) => {
-        if (!voteGroups[v.post_id]) voteGroups[v.post_id] = { up: 0, down: 0 };
-        if (v.value > 0) voteGroups[v.post_id].up++;
-        else if (v.value < 0) voteGroups[v.post_id].down++;
+        if (!voteGroups[v.post_id]) voteGroups[v.post_id] = { up: [], down: [] };
+        if (v.value > 0) voteGroups[v.post_id].up.push(v.username || `Anon #${shortId(v.browser_id)}`);
+        else if (v.value < 0) voteGroups[v.post_id].down.push(v.username || `Anon #${shortId(v.browser_id)}`);
       });
       Object.entries(voteGroups).forEach(([postId, counts]) => {
         const parts = [];
-        if (counts.up) parts.push(`👍 ${counts.up}`);
-        if (counts.down) parts.push(`👎 ${counts.down}`);
+        if (counts.up.length) parts.push(`👍 ${counts.up.join(", ")}`);
+        if (counts.down.length) parts.push(`👎 ${counts.down.join(", ")}`);
         results.push({
-          id: `v-${postId}`, type: "vote", icon: counts.up >= counts.down ? "👍" : "👎",
-          text: `${parts.join("  ")} on your post`,
+          id: `v-${postId}`, type: "vote", icon: counts.up.length >= counts.down.length ? "👍" : "👎",
+          text: parts.join("  "),
           subtext: `"${(postTitleMap[postId] || "").slice(0, 50)}"`,
           time: null, postId
         });

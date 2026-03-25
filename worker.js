@@ -266,6 +266,10 @@ export default {
       }
     }
 
+    if (url.pathname === "/my-username") {
+      return json({ username });
+    }
+
     if (url.pathname === "/debug-auth") {
       return json({ isModerator, isMember, username, userId: authUser?.id ?? null });
     }
