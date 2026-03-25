@@ -3233,12 +3233,13 @@ function ModPanel({ setModName }) {
   const [jailed, setJailed] = useState([]);
   const [members, setMembers] = useState([]);
   const [ipByUsername, setIpByUsername] = useState({});
+  const [browserIdByUsername, setBrowserIdByUsername] = useState({});
+  const [memberSearch, setMemberSearch] = useState("");
+  const [memberSortBy, setMemberSortBy] = useState("joined_desc");
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("joined_desc");
-  const OWNER_EMAIL = "coldbrainarchive@gmail.com";
-
   // LOAD DATA
   const load = useCallback(async () => {
     const { data: posts } = await supabase.from("posts").select("*");
@@ -3258,9 +3259,11 @@ function ModPanel({ setModName }) {
     const all = [...(posts || []), ...(comments || [])];
     const map = {};
     const ipByUsername = {};
+    const browserIdByUsername = {};
 
     all.forEach((u) => {
       if (u.username && u.ip_hash) ipByUsername[u.username] = u.ip_hash;
+      if (u.username && u.browser_id) browserIdByUsername[u.username] = u.browser_id;
       if (!u.browser_id || !u.username) return;
 
       const existing = map[u.browser_id];
@@ -3280,6 +3283,7 @@ function ModPanel({ setModName }) {
     const memberUsernames = new Set((membersJson.members || []).map(m => m.user_metadata?.username).filter(Boolean));
     setUsers(Object.values(map).filter(u => !memberUsernames.has(u.username)));
     setIpByUsername(ipByUsername);
+    setBrowserIdByUsername(browserIdByUsername);
   }, []);
 
   useEffect(() => {
@@ -3536,70 +3540,131 @@ function ModPanel({ setModName }) {
       </div>
 
       {/* Members */}
-      <div className="content-card" style={{ padding: 0, overflow: "hidden", marginTop: 16 }}>
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <h3 style={{ margin: 0, color: "#f8fafc", fontSize: 16, fontWeight: 700 }}>
-            Members <span style={{ color: "#64748b", fontWeight: 500, fontSize: 13 }}>{members.length}</span>
-          </h3>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {members.length === 0 && (
-            <div style={{ padding: "32px 20px", color: "#64748b", fontSize: 14, textAlign: "center" }}>No registered members yet</div>
-          )}
-          {members.map((m, i) => (
-            <div
-              key={m.id}
-              style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderBottom: i < members.length - 1 ? "1px solid #2e303a" : "none" }}
-            >
-              <div style={{ width: 34, height: 34, borderRadius: "50%", background: m.user_metadata?.role === "mod" ? "#c084fc" : getUserColor(m.id, m.user_metadata?.username), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#0f1117", flexShrink: 0 }}>
-                {(m.user_metadata?.username || m.email)?.[0]?.toUpperCase() || "?"}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.user_metadata?.username || "—"}</div>
-                <div style={{ color: "#64748b", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.email}</div>
-                <div style={{ color: "#475569", fontSize: 11 }}>Joined {timeAgo(m.created_at)}{ipByUsername[m.user_metadata?.username] ? ` · IP: ${ipByUsername[m.user_metadata?.username].slice(0, 10)}…` : ""}</div>
-              </div>
-              <span style={{ fontSize: 11, fontWeight: 700, color: m.user_metadata?.role === "mod" ? "#c084fc" : "#4ade80", background: m.user_metadata?.role === "mod" ? "rgba(192,132,252,0.12)" : "rgba(74,222,128,0.1)", padding: "2px 8px", borderRadius: 999, flexShrink: 0 }}>
-                {m.user_metadata?.role === "mod" ? "MOD" : "MEMBER"}
-              </span>
-              {email === OWNER_EMAIL && m.email !== OWNER_EMAIL && (
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button
-                    onClick={async () => {
-                      const newRole = m.user_metadata?.role === "mod" ? "user" : "mod";
-                      const headers = await getAuthHeader();
-                      await fetch("https://daboysforumip.coldbrainarchive.workers.dev/update-member", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", ...headers },
-                        body: JSON.stringify({ user_id: m.id, role: newRole })
-                      });
-                      load();
-                    }}
-                    style={{ padding: "6px 12px", borderRadius: 10, border: "none", background: m.user_metadata?.role === "mod" ? "#1f2937" : "#c084fc", color: m.user_metadata?.role === "mod" ? "#f8fafc" : "#14081d", fontWeight: 700, fontSize: 12, cursor: "pointer", flexShrink: 0 }}
-                  >
-                    {m.user_metadata?.role === "mod" ? "Remove Mod" : "Make Mod"}
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (!confirm(`Remove ${m.user_metadata?.username || m.email}?`)) return;
-                      const headers = await getAuthHeader();
-                      await fetch("https://daboysforumip.coldbrainarchive.workers.dev/delete-member", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", ...headers },
-                        body: JSON.stringify({ user_id: m.id })
-                      });
-                      load();
-                    }}
-                    style={{ padding: "6px 10px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#f87171", fontWeight: 700, fontSize: 12, cursor: "pointer", flexShrink: 0 }}
-                  >
-                    Remove
-                  </button>
-                </div>
-              )}
+      {(() => {
+        const filteredMembers = memberSearch.trim()
+          ? members.filter((m) => (m.user_metadata?.username || "").toLowerCase().includes(memberSearch.toLowerCase()))
+          : members;
+        const sortedMembers = [...filteredMembers].sort((a, b) => {
+          if (memberSortBy === "joined_desc") return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+          if (memberSortBy === "joined_asc") return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+          if (memberSortBy === "name") return (a.user_metadata?.username || "").localeCompare(b.user_metadata?.username || "");
+          if (memberSortBy === "mod") return (b.user_metadata?.role === "mod" ? 1 : 0) - (a.user_metadata?.role === "mod" ? 1 : 0);
+          return 0;
+        });
+        return (
+          <div className="content-card" style={{ padding: 0, overflow: "hidden", marginTop: 16 }}>
+            <div style={{ padding: "14px 20px", borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <h3 style={{ margin: 0, color: "#f8fafc", fontSize: 16, fontWeight: 700, marginRight: "auto" }}>
+                Members <span style={{ color: "#64748b", fontWeight: 500, fontSize: 13 }}>{sortedMembers.length}</span>
+              </h3>
+              <input
+                placeholder="Search members…"
+                value={memberSearch}
+                onChange={(e) => setMemberSearch(e.target.value)}
+                style={{ padding: "7px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#0f1117", color: "#f8fafc", fontSize: 13, width: 180 }}
+              />
+              <select
+                value={memberSortBy}
+                onChange={(e) => setMemberSortBy(e.target.value)}
+                style={{ padding: "7px 12px", borderRadius: 10, border: "1px solid #374151", background: "#1f2937", color: "#dbe4ee", fontSize: 13, cursor: "pointer" }}
+              >
+                <option value="joined_desc">Newest first</option>
+                <option value="joined_asc">Oldest first</option>
+                <option value="name">Name A–Z</option>
+                <option value="mod">Mods first</option>
+              </select>
             </div>
-          ))}
-        </div>
-      </div>
+            <div style={{ display: "flex", flexDirection: "column", maxHeight: 480, overflowY: "auto" }}>
+              {sortedMembers.length === 0 && (
+                <div style={{ padding: "32px 20px", color: "#64748b", fontSize: 14, textAlign: "center" }}>No registered members yet</div>
+              )}
+              {sortedMembers.map((m, i) => {
+                const mUsername = m.user_metadata?.username || "";
+                const mIpHash = ipByUsername[mUsername] || null;
+                const mBrowserId = browserIdByUsername[mUsername] || null;
+                const mAsUser = mBrowserId ? { browser_id: mBrowserId, username: mUsername } : null;
+                const banned = mAsUser ? isBanned(mAsUser) : false;
+                const jailedMember = mAsUser ? isJailed(mAsUser) : false;
+                const isMod = m.user_metadata?.role === "mod";
+                const rowBg = banned ? "rgba(248,113,113,0.04)" : jailedMember ? "rgba(251,191,36,0.04)" : "transparent";
+                return (
+                  <div
+                    key={m.id}
+                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderBottom: i < sortedMembers.length - 1 ? "1px solid #2e303a" : "none", background: rowBg }}
+                  >
+                    <div style={{ width: 34, height: 34, borderRadius: "50%", background: isMod ? "#c084fc" : getUserColor(m.id, mUsername), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#0f1117", flexShrink: 0 }}>
+                      {(mUsername || "?")?.[0]?.toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <span style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14 }}>{mUsername || "—"}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: isMod ? "#c084fc" : "#4ade80", background: isMod ? "rgba(192,132,252,0.12)" : "rgba(74,222,128,0.1)", padding: "1px 7px", borderRadius: 999 }}>
+                          {isMod ? "MOD" : "MEMBER"}
+                        </span>
+                        {banned && <span style={{ fontSize: 11, fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.12)", padding: "1px 7px", borderRadius: 999 }}>BANNED</span>}
+                        {jailedMember && !banned && <span style={{ fontSize: 11, fontWeight: 700, color: "#fbbf24", background: "rgba(251,191,36,0.12)", padding: "1px 7px", borderRadius: 999 }}>CAGED</span>}
+                      </div>
+                      <div style={{ color: "#475569", fontSize: 11, marginTop: 2 }}>
+                        Joined {timeAgo(m.created_at)}
+                        {mIpHash ? ` · IP: ${mIpHash.slice(0, 10)}…` : ""}
+                      </div>
+                      {mBrowserId && <div style={{ color: "#64748b", fontSize: 11, fontFamily: "var(--mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{mBrowserId}</div>}
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      {mAsUser && (
+                        <>
+                          <button
+                            onClick={() => toggleJail(mAsUser)}
+                            style={{ padding: "6px 10px", borderRadius: 10, border: "none", background: jailedMember ? "#78350f" : "#451a03", color: jailedMember ? "#fde68a" : "#fbbf24", fontWeight: 700, cursor: "pointer", fontSize: 12 }}
+                          >
+                            {jailedMember ? "Uncage" : "🪹 Cage"}
+                          </button>
+                          <button
+                            onClick={() => toggleBan(mAsUser)}
+                            style={{ padding: "6px 10px", borderRadius: 10, border: "none", background: banned ? "#1f2937" : "#7f1d1d", color: banned ? "#f8fafc" : "#fca5a5", fontWeight: 700, cursor: "pointer", fontSize: 12 }}
+                          >
+                            {banned ? "Unban" : "Ban"}
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={async () => {
+                          const newRole = isMod ? "user" : "mod";
+                          const headers = await getAuthHeader();
+                          await fetch("https://daboysforumip.coldbrainarchive.workers.dev/update-member", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json", ...headers },
+                            body: JSON.stringify({ user_id: m.id, role: newRole })
+                          });
+                          load();
+                        }}
+                        style={{ padding: "6px 10px", borderRadius: 10, border: "none", background: isMod ? "#1f2937" : "#c084fc", color: isMod ? "#f8fafc" : "#14081d", fontWeight: 700, fontSize: 12, cursor: "pointer" }}
+                      >
+                        {isMod ? "Remove Mod" : "Make Mod"}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`Delete ${mUsername || "this member"}? This cannot be undone.`)) return;
+                          const headers = await getAuthHeader();
+                          await fetch("https://daboysforumip.coldbrainarchive.workers.dev/delete-member", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json", ...headers },
+                            body: JSON.stringify({ user_id: m.id })
+                          });
+                          load();
+                        }}
+                        style={{ padding: "6px 10px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#f87171", fontWeight: 700, fontSize: 12, cursor: "pointer" }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
