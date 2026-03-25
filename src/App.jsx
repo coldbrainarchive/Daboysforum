@@ -3184,6 +3184,7 @@ function ModPanel({ setModName }) {
   const [bans, setBans] = useState([]);
   const [jailed, setJailed] = useState([]);
   const [members, setMembers] = useState([]);
+  const [ipByUsername, setIpByUsername] = useState({});
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [search, setSearch] = useState("");
@@ -3208,8 +3209,10 @@ function ModPanel({ setModName }) {
 
     const all = [...(posts || []), ...(comments || [])];
     const map = {};
+    const ipByUsername = {};
 
     all.forEach((u) => {
+      if (u.username && u.ip_hash) ipByUsername[u.username] = u.ip_hash;
       if (!u.browser_id || !u.username) return;
 
       const existing = map[u.browser_id];
@@ -3227,6 +3230,7 @@ function ModPanel({ setModName }) {
     });
 
     setUsers(Object.values(map));
+    setIpByUsername(ipByUsername);
   }, []);
 
   useEffect(() => {
@@ -3504,7 +3508,7 @@ function ModPanel({ setModName }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.user_metadata?.username || "—"}</div>
                 <div style={{ color: "#64748b", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.email}</div>
-                <div style={{ color: "#475569", fontSize: 11 }}>Joined {timeAgo(m.created_at)}</div>
+                <div style={{ color: "#475569", fontSize: 11 }}>Joined {timeAgo(m.created_at)}{ipByUsername[m.user_metadata?.username] ? ` · IP: ${ipByUsername[m.user_metadata?.username].slice(0, 10)}…` : ""}</div>
               </div>
               <span style={{ fontSize: 11, fontWeight: 700, color: m.user_metadata?.role === "mod" ? "#c084fc" : "#4ade80", background: m.user_metadata?.role === "mod" ? "rgba(192,132,252,0.12)" : "rgba(74,222,128,0.1)", padding: "2px 8px", borderRadius: 999, flexShrink: 0 }}>
                 {m.user_metadata?.role === "mod" ? "MOD" : "MEMBER"}
@@ -3961,7 +3965,13 @@ export default function App() {
             modName={modName}
             onClose={() => setShowActivity(false)}
             onLogin={(u, role, newUsername) => { setUser(u); applyRole(role); if (newUsername) setBrowseUsername(newUsername); }}
-            onLogout={async () => { await supabase.auth.signOut(); applyRole(null); setBrowseUsername(null); }}
+            onLogout={async () => {
+              await supabase.auth.signOut();
+              applyRole(null);
+              const bid = getBrowserId();
+              const { data } = await supabase.from("posts").select("username").eq("browser_id", bid).eq("is_mod", false).not("username", "is", null).limit(1).maybeSingle();
+              setBrowseUsername(data?.username || null);
+            }}
             browseUsername={browseUsername}
           />
         )}
