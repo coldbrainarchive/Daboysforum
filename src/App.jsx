@@ -3546,7 +3546,7 @@ function ModPanel({ setModName }) {
 // ==============================
 // ACTIVITY PANEL
 // ==============================
-function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, browseUsername }) {
+function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, browseUsername, lastMemberUsername }) {
   const [tab, setTab] = useState("all");
   const [loading, setLoading] = useState(true);
   const [notifs, setNotifs] = useState([]);
@@ -3560,13 +3560,18 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
     const isMod = userRole === "mod";
 
     (async () => {
+      const isMember = !!user && !isMod;
       const [{ data: myPosts }, { data: myComments }] = await Promise.all([
         isMod
           ? supabase.from("posts").select("id, title").eq("is_mod", true).eq("mod_user_id", user.id).eq("deleted", false)
-          : supabase.from("posts").select("id, title").eq("browser_id", browserId).eq("is_mod", false).eq("deleted", false),
+          : isMember
+          ? supabase.from("posts").select("id, title").eq("username", browseUsername).eq("is_mod", false).eq("deleted", false)
+          : (() => { let q = supabase.from("posts").select("id, title").eq("browser_id", browserId).eq("is_mod", false).eq("deleted", false); if (lastMemberUsername) q = q.neq("username", lastMemberUsername); return q; })(),
         isMod
           ? supabase.from("comments").select("id, content, post_id").eq("is_mod", true).eq("mod_user_id", user.id).eq("deleted", false)
-          : supabase.from("comments").select("id, content, post_id").eq("browser_id", browserId).eq("is_mod", false).eq("deleted", false)
+          : isMember
+          ? supabase.from("comments").select("id, content, post_id").eq("username", browseUsername).eq("is_mod", false).eq("deleted", false)
+          : (() => { let q = supabase.from("comments").select("id, content, post_id").eq("browser_id", browserId).eq("is_mod", false).eq("deleted", false); if (lastMemberUsername) q = q.neq("username", lastMemberUsername); return q; })()
       ]);
 
       const postIds = (myPosts || []).map((p) => p.id);
@@ -3857,6 +3862,7 @@ export default function App() {
   const [userRole, setUserRole] = useState(localStorage.getItem("user_role") || null);
   const [modName, setModName] = useState(localStorage.getItem("mod_name") || "Mod");
   const [browseUsername, setBrowseUsername] = useState(null);
+  const [lastMemberUsername, setLastMemberUsername] = useState(localStorage.getItem("last_member_username") || null);
   const [showActivity, setShowActivity] = useState(false);
 
   const applyRole = (role) => {
@@ -3953,9 +3959,19 @@ export default function App() {
             userRole={userRole}
             modName={modName}
             onClose={() => setShowActivity(false)}
-            onLogin={(u, role, newUsername) => { setUser(u); applyRole(role); if (newUsername) setBrowseUsername(newUsername); }}
+            onLogin={(u, role, newUsername) => {
+              setUser(u); applyRole(role);
+              if (newUsername) {
+                setBrowseUsername(newUsername);
+                if (role !== "mod") {
+                  setLastMemberUsername(newUsername);
+                  localStorage.setItem("last_member_username", newUsername);
+                }
+              }
+            }}
             onLogout={async () => { await supabase.auth.signOut(); setUser(null); applyRole(null); setBrowseUsername(null); }}
             browseUsername={browseUsername}
+            lastMemberUsername={lastMemberUsername}
           />
         )}
       </Router>
