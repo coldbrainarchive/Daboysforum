@@ -238,6 +238,12 @@ export default {
         body: JSON.stringify({ user_metadata: { role } })
       });
       if (!res.ok) return json({ error: "Failed to update member" }, 500);
+      if (role !== "mod") {
+        await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${user_id}/logout`, {
+          method: "POST",
+          headers: { apikey: env.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}` }
+        });
+      }
       return json({ success: true });
     }
 
