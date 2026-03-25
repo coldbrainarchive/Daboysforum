@@ -61,36 +61,8 @@ class ErrorBoundary extends Component {
 // ==============================
 // HELPERS
 // ==============================
-function hexToHsl(hex) {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h, s, l = (max + min) / 2;
-  if (max === min) { h = s = 0; }
-  else {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
-    }
-    h /= 6;
-  }
-  return { h: h * 360, s: s * 100, l: l * 100 };
-}
 
 function getUserColor(id, username) {
-  // Check for custom color set by the current user (only applies on their own device)
-  if (id && id === getBrowserId()) {
-    const custom = localStorage.getItem("custom_color");
-    if (custom) return custom;
-  }
-
-  // Prefer username so color is consistent across devices.
-  // For old records with no username, use first 8 chars of browser_id
-  // so at least the same device is always the same color.
   const seed = username || (id ? id.slice(0, 8) : null);
   if (!seed) return "#dbe4ee";
 
@@ -3605,7 +3577,6 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
-  const [colorError, setColorError] = useState("");
 
   useEffect(() => {
     const browserId = getBrowserId();
@@ -3762,7 +3733,7 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
         <div style={{ padding: "14px 18px", borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
             width: 40, height: 40, borderRadius: "50%",
-            background: userRole === "mod" ? "#c084fc" : (() => { const c = localStorage.getItem("custom_color"); return c || (browseUsername ? getUserColor(getBrowserId(), browseUsername) : "#c084fc"); })(),
+            background: userRole === "mod" ? "#c084fc" : (browseUsername ? getUserColor(getBrowserId(), browseUsername) : "#c084fc"),
             display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#14081d", flexShrink: 0
           }}>
             {userRole === "mod" ? (modName[0]?.toUpperCase() || "M") : browseUsername ? browseUsername[0].toUpperCase() : "P"}
@@ -3844,33 +3815,6 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
             {/* Signed-in username (locked) */}
             <div style={{ marginBottom: 10, padding: "8px 10px", borderRadius: 10, border: "1px solid #2e303a", background: "#16171d", color: "#94a3b8", fontSize: 13 }}>
               @{browseUsername || "—"}
-            </div>
-
-            {/* Color picker */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <div style={{ fontSize: 12, color: "#64748b" }}>Colour</div>
-              <input
-                type="color"
-                defaultValue={localStorage.getItem("custom_color") || getUserColor(getBrowserId(), browseUsername)}
-                onChange={(e) => {
-                  const hex = e.target.value;
-                  const { h } = hexToHsl(hex);
-                  if (h >= 250 && h <= 320) {
-                    setColorError("Purple is reserved for mods — pick another colour");
-                    return;
-                  }
-                  setColorError("");
-                  localStorage.setItem("custom_color", hex);
-                }}
-                style={{ width: 36, height: 28, borderRadius: 8, border: "1px solid #3f4756", background: "none", cursor: "pointer", padding: 2 }}
-              />
-              <button
-                onClick={() => { localStorage.removeItem("custom_color"); setColorError(""); }}
-                style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #374151", background: "transparent", color: "#64748b", fontSize: 11, cursor: "pointer" }}
-              >
-                Reset
-              </button>
-              {colorError && <div style={{ fontSize: 11, color: "#f87171", flex: 1 }}>{colorError}</div>}
             </div>
 
             {/* Logout */}
@@ -3997,7 +3941,7 @@ export default function App() {
                 borderRadius: "50%",
                 background: userRole === "mod"
                   ? "#c084fc"
-                  : (() => { const c = localStorage.getItem("custom_color"); return c || (browseUsername ? getUserColor(getBrowserId(), browseUsername) : "#c084fc"); })(),
+                  : (browseUsername ? getUserColor(getBrowserId(), browseUsername) : "#c084fc"),
                 color: "#14081d",
                 fontWeight: 800,
                 fontSize: 15,
@@ -4031,7 +3975,7 @@ export default function App() {
             modName={modName}
             onClose={() => setShowActivity(false)}
             onLogin={(u, role, newUsername) => { setUser(u); applyRole(role); if (newUsername) setBrowseUsername(newUsername); }}
-            onLogout={() => { supabase.auth.signOut(); applyRole(null); }}
+            onLogout={async () => { await supabase.auth.signOut(); applyRole(null); setBrowseUsername(null); }}
             browseUsername={browseUsername}
           />
         )}
