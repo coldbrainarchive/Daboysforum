@@ -3609,7 +3609,7 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
           ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("parent_comment_id", commentIds).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(60)
           : Promise.resolve({ data: [] }),
         commentIds.length
-          ? supabase.from("comment_reactions").select("comment_id, emoji, browser_id").in("comment_id", commentIds)
+          ? supabase.from("comment_reactions").select("comment_id, emoji, browser_id, username").in("comment_id", commentIds)
           : Promise.resolve({ data: [] }),
         postIds.length
           ? supabase.from("post_votes").select("post_id, value, browser_id, username").in("post_id", postIds)
@@ -3640,15 +3640,16 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
       // Reactions grouped by comment
       const reactionGroups = {};
       (reactionsRes.data || []).filter((r) => r.browser_id !== browserId).forEach((r) => {
+        const who = r.username || `Anon #${shortId(r.browser_id)}`;
         if (!reactionGroups[r.comment_id]) reactionGroups[r.comment_id] = {};
-        if (!reactionGroups[r.comment_id][r.emoji]) reactionGroups[r.comment_id][r.emoji] = 0;
-        reactionGroups[r.comment_id][r.emoji]++;
+        if (!reactionGroups[r.comment_id][r.emoji]) reactionGroups[r.comment_id][r.emoji] = [];
+        if (!reactionGroups[r.comment_id][r.emoji].includes(who)) reactionGroups[r.comment_id][r.emoji].push(who);
       });
-      Object.entries(reactionGroups).forEach(([commentId, emojiCounts]) => {
-        const emojiStr = Object.entries(emojiCounts).map(([e, n]) => `${e}${n > 1 ? ` ×${n}` : ""}`).join("  ");
+      Object.entries(reactionGroups).forEach(([commentId, emojiByUser]) => {
+        const parts = Object.entries(emojiByUser).map(([e, users]) => `${e} ${users.join(", ")}`);
         results.push({
-          id: `rx-${commentId}`, type: "reaction", icon: Object.keys(emojiCounts)[0],
-          text: `${emojiStr} on your comment`,
+          id: `rx-${commentId}`, type: "reaction", icon: Object.keys(emojiByUser)[0],
+          text: `${parts.join("  ")} on your comment`,
           time: null, postId: commentPostMap[commentId]
         });
       });
