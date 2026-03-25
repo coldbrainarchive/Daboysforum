@@ -3199,12 +3199,12 @@ function ModPanel({ setModName }) {
     const { data: jailedData } = await supabase.from("jailed").select("*");
     const { data: userData } = await supabase.auth.getUser();
     const authHeaders = await getAuthHeader();
-    const profilesRes = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/get-profiles", { headers: authHeaders });
-    const profilesJson = profilesRes.ok ? await profilesRes.json() : { profiles: [] };
+    const membersRes = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/get-members", { headers: authHeaders });
+    const membersJson = membersRes.ok ? await membersRes.json() : { members: [] };
 
     setBans(bans || []);
     setJailed(jailedData || []);
-    setMembers(profilesJson.profiles || []);
+    setMembers(membersJson.members || []);
     setEmail(userData?.user?.email || "");
 
     const all = [...(posts || []), ...(comments || [])];
@@ -3526,33 +3526,43 @@ function ModPanel({ setModName }) {
               key={m.id}
               style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderBottom: i < members.length - 1 ? "1px solid #2e303a" : "none" }}
             >
-              <div style={{ width: 34, height: 34, borderRadius: "50%", background: m.role === "mod" ? "#c084fc" : getUserColor(m.id, m.username || m.email), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#0f1117", flexShrink: 0 }}>
-                {(m.username || m.email)?.[0]?.toUpperCase() || "?"}
+              <div style={{ width: 34, height: 34, borderRadius: "50%", background: m.user_metadata?.role === "mod" ? "#c084fc" : getUserColor(m.id, m.user_metadata?.username), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#0f1117", flexShrink: 0 }}>
+                {(m.user_metadata?.username || m.email)?.[0]?.toUpperCase() || "?"}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                {m.username && <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.username}</div>}
-                <div style={{ color: m.username ? "#64748b" : "#f8fafc", fontWeight: m.username ? 400 : 700, fontSize: m.username ? 12 : 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.email || m.id}</div>
+                <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.user_metadata?.username || "—"}</div>
+                <div style={{ color: "#64748b", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.email}</div>
                 <div style={{ color: "#475569", fontSize: 11 }}>Joined {timeAgo(m.created_at)}</div>
               </div>
-              <span style={{ fontSize: 11, fontWeight: 700, color: m.role === "mod" ? "#c084fc" : "#4ade80", background: m.role === "mod" ? "rgba(192,132,252,0.12)" : "rgba(74,222,128,0.1)", padding: "2px 8px", borderRadius: 999, flexShrink: 0 }}>
-                {m.role === "mod" ? "MOD" : "MEMBER"}
+              <span style={{ fontSize: 11, fontWeight: 700, color: m.user_metadata?.role === "mod" ? "#c084fc" : "#4ade80", background: m.user_metadata?.role === "mod" ? "rgba(192,132,252,0.12)" : "rgba(74,222,128,0.1)", padding: "2px 8px", borderRadius: 999, flexShrink: 0 }}>
+                {m.user_metadata?.role === "mod" ? "MOD" : "MEMBER"}
               </span>
               {email === OWNER_EMAIL && m.email !== OWNER_EMAIL && (
                 <div style={{ display: "flex", gap: 6 }}>
                   <button
                     onClick={async () => {
-                      const newRole = m.role === "mod" ? "user" : "mod";
-                      await supabase.from("profiles").update({ role: newRole }).eq("id", m.id);
+                      const newRole = m.user_metadata?.role === "mod" ? "user" : "mod";
+                      const headers = await getAuthHeader();
+                      await fetch("https://daboysforumip.coldbrainarchive.workers.dev/update-member", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", ...headers },
+                        body: JSON.stringify({ user_id: m.id, role: newRole })
+                      });
                       load();
                     }}
-                    style={{ padding: "6px 12px", borderRadius: 10, border: "none", background: m.role === "mod" ? "#1f2937" : "#c084fc", color: m.role === "mod" ? "#f8fafc" : "#14081d", fontWeight: 700, fontSize: 12, cursor: "pointer", flexShrink: 0 }}
+                    style={{ padding: "6px 12px", borderRadius: 10, border: "none", background: m.user_metadata?.role === "mod" ? "#1f2937" : "#c084fc", color: m.user_metadata?.role === "mod" ? "#f8fafc" : "#14081d", fontWeight: 700, fontSize: 12, cursor: "pointer", flexShrink: 0 }}
                   >
-                    {m.role === "mod" ? "Remove Mod" : "Make Mod"}
+                    {m.user_metadata?.role === "mod" ? "Remove Mod" : "Make Mod"}
                   </button>
                   <button
                     onClick={async () => {
-                      if (!confirm(`Remove ${m.email} from members?`)) return;
-                      await supabase.from("profiles").delete().eq("id", m.id);
+                      if (!confirm(`Remove ${m.user_metadata?.username || m.email}?`)) return;
+                      const headers = await getAuthHeader();
+                      await fetch("https://daboysforumip.coldbrainarchive.workers.dev/delete-member", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", ...headers },
+                        body: JSON.stringify({ user_id: m.id })
+                      });
                       load();
                     }}
                     style={{ padding: "6px 10px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#f87171", fontWeight: 700, fontSize: 12, cursor: "pointer", flexShrink: 0 }}
@@ -3689,7 +3699,12 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
     const fakeEmail = `${username.trim().toLowerCase().replace(/\s+/g, "_")}@users.postchats.invalid`;
     setAuthLoading(true);
     if (isSignUp) {
-      const { data, error } = await supabase.auth.signUp({ email: fakeEmail, password });
+      const signUpUsername = username.trim();
+      const { data, error } = await supabase.auth.signUp({
+        email: fakeEmail,
+        password,
+        options: { data: { username: signUpUsername, role: "user" } }
+      });
       setAuthLoading(false);
       if (error) {
         alert(error.message.includes("already registered") ? "Username already taken" : error.message);
@@ -3697,17 +3712,6 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
       }
       if (data.user) {
         const bid = getBrowserId();
-        const signUpUsername = username.trim();
-        const authToken = data.session?.access_token;
-        const profileRes = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/create-profile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
-          body: JSON.stringify({ username: signUpUsername, browser_id: bid })
-        });
-        if (!profileRes.ok) {
-          const err = await profileRes.json().catch(() => ({}));
-          console.error("Profile creation failed:", err);
-        }
         await Promise.all([
           supabase.from("posts").update({ username: signUpUsername }).eq("browser_id", bid).eq("is_mod", false),
           supabase.from("comments").update({ username: signUpUsername }).eq("browser_id", bid).eq("is_mod", false)
@@ -3719,12 +3723,9 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
       const { data, error } = await supabase.auth.signInWithPassword({ email: fakeEmail, password });
       setAuthLoading(false);
       if (error) { alert("Invalid username or password"); return; }
-      const authToken = data.session?.access_token;
-      const profileRes = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/get-profile", {
-        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
-      });
-      const profileJson = profileRes.ok ? await profileRes.json() : {};
-      onLogin(data.user, profileJson.role || "user", profileJson.username || null);
+      const role = data.user.user_metadata?.role || "user";
+      const memberUsername = data.user.user_metadata?.username || null;
+      onLogin(data.user, role, memberUsername);
       onClose();
     }
   };
@@ -3900,22 +3901,20 @@ export default function App() {
   };
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
+    supabase.auth.getUser().then(({ data }) => {
       const u = data.user;
       setUser(u);
       if (u) {
-        const { data: profile } = await supabase.from("profiles").select("role, username").eq("id", u.id).maybeSingle();
-        applyRole(profile?.role || "user");
-        if (profile?.username) setBrowseUsername(profile.username);
+        applyRole(u.user_metadata?.role || "user");
+        if (u.user_metadata?.username) setBrowseUsername(u.user_metadata.username);
       }
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user || null;
       setUser(u);
       if (u) {
-        const { data: profile } = await supabase.from("profiles").select("role, username").eq("id", u.id).maybeSingle();
-        if (profile?.username) setBrowseUsername(profile.username);
-        applyRole(profile?.role || "user");
+        applyRole(u.user_metadata?.role || "user");
+        if (u.user_metadata?.username) setBrowseUsername(u.user_metadata.username);
       } else {
         applyRole(null);
       }
