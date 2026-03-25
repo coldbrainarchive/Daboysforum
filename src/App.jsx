@@ -2674,7 +2674,8 @@ function PostPage({ user, userRole, memberUsername }) {
       await supabase.from("comment_reactions").delete()
         .eq("comment_id", commentId).eq("browser_id", myId).eq("emoji", emoji);
     } else {
-      await supabase.from("comment_reactions").insert({ comment_id: commentId, browser_id: myId, emoji });
+      const reactUsername = memberUsername || anonUsername || null;
+      await supabase.from("comment_reactions").insert({ comment_id: commentId, browser_id: myId, emoji, username: reactUsername });
     }
   }
   const [voteData, setVoteData] = useState({ score: 0, myVote: 0 });
@@ -3939,14 +3940,20 @@ export default function App() {
       const postIds = (myPosts || []).map(p => p.id);
       if (!postIds.length) { setNotifCount(0); return; }
 
-      const { count } = await supabase.from("comments")
-        .select("id", { count: "exact", head: true })
-        .in("post_id", postIds)
-        .neq("browser_id", browserId)
-        .eq("deleted", false)
-        .gt("created_at", lastSeen);
+      const [{ count: commentCount }, { count: reactionCount }] = await Promise.all([
+        supabase.from("comments")
+          .select("id", { count: "exact", head: true })
+          .in("post_id", postIds)
+          .neq("browser_id", browserId)
+          .eq("deleted", false)
+          .gt("created_at", lastSeen),
+        supabase.from("comment_reactions")
+          .select("comment_id", { count: "exact", head: true })
+          .neq("browser_id", browserId)
+          .gt("created_at", lastSeen)
+      ]);
 
-      setNotifCount(count || 0);
+      setNotifCount((commentCount || 0) + (reactionCount || 0));
     };
 
     fetchCount();
@@ -4009,7 +4016,7 @@ export default function App() {
               </button>
               {notifCount > 0 && (
                 <span style={{
-                  position: "absolute", top: -4, right: -4,
+                  position: "absolute", top: -4, left: -4,
                   background: "#ef4444", color: "#fff",
                   fontSize: 10, fontWeight: 800,
                   borderRadius: 999, minWidth: 16, height: 16,
