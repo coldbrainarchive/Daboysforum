@@ -173,12 +173,6 @@ async function getAuthHeader() {
   };
 }
 
-async function getOptionalAuthHeader() {
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token
-    ? { Authorization: `Bearer ${data.session.access_token}` }
-    : {};
-}
 
 function RealtimeStyles() {
   return (
@@ -2486,7 +2480,7 @@ function NewPost({ user, userRole, memberUsername }) {
 
       const { data } = await supabase.auth.getUser();
       const modMetadata = buildModMetadata(data.user, memberUsername);
-      const authHeaders = await getOptionalAuthHeader();
+      const authHeaders = userRole === "mod" ? await getAuthHeader() : {};
       const selectedBoard = getBoardBySlug(selectedBoardSlug) || BOARDS[0];
       const browserId = getBrowserId();
 
@@ -2794,7 +2788,7 @@ function PostPage({ user, userRole, memberUsername }) {
       const browserId = getBrowserId();
       const { data } = await supabase.auth.getUser();
       const modMetadata = buildModMetadata(data.user, memberUsername);
-      const authHeaders = await getOptionalAuthHeader();
+      const authHeaders = userRole === "mod" ? await getAuthHeader() : {};
       setIsSendingComment(true);
       setPendingComments((current) => [
         ...current,
@@ -3716,7 +3710,7 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
         alert(error.message.includes("already registered") ? "Username already taken" : error.message);
         return;
       }
-      if (data.session) {
+      if (data.user) {
         const bid = getBrowserId();
         const signUpUsername = username.trim();
         await supabase.from("profiles").insert({ id: data.user.id, email: fakeEmail, role: "user", username: signUpUsername, browser_id: bid });
