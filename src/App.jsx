@@ -3229,7 +3229,8 @@ function ModPanel({ setModName }) {
       };
     });
 
-    setUsers(Object.values(map));
+    const memberUsernames = new Set((membersJson.members || []).map(m => m.user_metadata?.username).filter(Boolean));
+    setUsers(Object.values(map).filter(u => !memberUsernames.has(u.username)));
     setIpByUsername(ipByUsername);
   }, []);
 
@@ -3965,13 +3966,7 @@ export default function App() {
             modName={modName}
             onClose={() => setShowActivity(false)}
             onLogin={(u, role, newUsername) => { setUser(u); applyRole(role); if (newUsername) setBrowseUsername(newUsername); }}
-            onLogout={async () => {
-              await supabase.auth.signOut();
-              applyRole(null);
-              const bid = getBrowserId();
-              const { data } = await supabase.from("posts").select("username").eq("browser_id", bid).eq("is_mod", false).not("username", "is", null).limit(1).maybeSingle();
-              setBrowseUsername(data?.username || null);
-            }}
+            onLogout={async () => { await supabase.auth.signOut(); applyRole(null); setBrowseUsername(null); }}
             browseUsername={browseUsername}
           />
         )}
