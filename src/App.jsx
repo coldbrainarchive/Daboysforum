@@ -3718,17 +3718,21 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
       }
       if (data.session) {
         const bid = getBrowserId();
-        const { data: postRow } = await supabase.from("posts").select("username").eq("browser_id", bid).eq("is_mod", false).not("username", "is", null).limit(1).maybeSingle();
-        await supabase.from("profiles").insert({ id: data.user.id, email: fakeEmail, role: "user", username: postRow?.username || null, browser_id: bid });
-        onLogin(data.user, "user");
+        const signUpUsername = username.trim();
+        await supabase.from("profiles").insert({ id: data.user.id, email: fakeEmail, role: "user", username: signUpUsername, browser_id: bid });
+        await Promise.all([
+          supabase.from("posts").update({ username: signUpUsername }).eq("browser_id", bid).eq("is_mod", false),
+          supabase.from("comments").update({ username: signUpUsername }).eq("browser_id", bid).eq("is_mod", false)
+        ]);
+        onLogin(data.user, "user", signUpUsername);
         onClose();
       }
     } else {
       const { data, error } = await supabase.auth.signInWithPassword({ email: fakeEmail, password });
       setAuthLoading(false);
       if (error) { alert("Invalid username or password"); return; }
-      const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
-      onLogin(data.user, profile?.role || "user");
+      const { data: profile } = await supabase.from("profiles").select("role, username").eq("id", data.user.id).maybeSingle();
+      onLogin(data.user, profile?.role || "user", profile?.username || null);
       onClose();
     }
   };
@@ -3982,16 +3986,8 @@ export default function App() {
       setUser(u);
       if (u) {
         const { data: profile } = await supabase.from("profiles").select("role, username").eq("id", u.id).maybeSingle();
-        if (!profile) {
-          const bid = getBrowserId();
-          const { data: postRow } = await supabase.from("posts").select("username").eq("browser_id", bid).eq("is_mod", false).not("username", "is", null).limit(1).maybeSingle();
-          await supabase.from("profiles").insert({ id: u.id, email: u.email, role: "user", username: postRow?.username || null, browser_id: bid });
-          if (postRow?.username) setBrowseUsername(postRow.username);
-          applyRole("user");
-        } else {
-          if (profile.username) setBrowseUsername(profile.username);
-          applyRole(profile.role);
-        }
+        if (profile?.username) setBrowseUsername(profile.username);
+        applyRole(profile?.role || "user");
       } else {
         applyRole(null);
       }
@@ -4065,7 +4061,7 @@ export default function App() {
             userRole={userRole}
             modName={modName}
             onClose={() => setShowActivity(false)}
-            onLogin={(u, role) => { setUser(u); applyRole(role); }}
+            onLogin={(u, role, newUsername) => { setUser(u); applyRole(role); if (newUsername) setBrowseUsername(newUsername); }}
             onLogout={() => { supabase.auth.signOut(); applyRole(null); }}
             browseUsername={browseUsername}
             onUsernameChange={(name) => setBrowseUsername(name)}
