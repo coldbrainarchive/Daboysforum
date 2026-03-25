@@ -2421,26 +2421,14 @@ function NewPost({ user, userRole, memberUsername }) {
       if (memberUsername) setPreviewName(memberUsername);
       return;
     }
+    setPreviewName("");
     const browserId = getBrowserId();
     (async () => {
-      const [{ data: jailRow }, { data: postRow }] = await Promise.all([
-        supabase.from("jailed").select("browser_id").eq("browser_id", browserId).maybeSingle(),
-        supabase.from("posts").select("username").eq("browser_id", browserId).eq("is_mod", false).not("username", "is", null).limit(1).maybeSingle()
-      ]);
+      const { data: jailRow } = await supabase.from("jailed").select("browser_id").eq("browser_id", browserId).maybeSingle();
       if (jailRow) {
         setIsUserJailed(true);
         setSelectedBoardSlug("cage");
       }
-      if (postRow?.username) { setPreviewName(postRow.username); return; }
-      const { data: commentRow } = await supabase
-        .from("comments")
-        .select("username")
-        .eq("browser_id", browserId)
-        .eq("is_mod", false)
-        .not("username", "is", null)
-        .limit(1)
-        .maybeSingle();
-      if (commentRow?.username) setPreviewName(commentRow.username);
     })();
   }, [user, memberUsername]);
 
@@ -3966,7 +3954,7 @@ export default function App() {
             modName={modName}
             onClose={() => setShowActivity(false)}
             onLogin={(u, role, newUsername) => { setUser(u); applyRole(role); if (newUsername) setBrowseUsername(newUsername); }}
-            onLogout={async () => { await supabase.auth.signOut(); applyRole(null); setBrowseUsername(null); }}
+            onLogout={async () => { await supabase.auth.signOut(); setUser(null); applyRole(null); setBrowseUsername(null); }}
             browseUsername={browseUsername}
           />
         )}
