@@ -2430,8 +2430,10 @@ function NewPost({ user, userRole, memberUsername }) {
         setIsUserJailed(true);
         setSelectedBoardSlug("cage");
       }
-      const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/my-username", { headers: await getOptionalAuthHeader() });
-      if (res.ok) { const d = await res.json(); if (d.username) setPreviewName(d.username); }
+      try {
+        const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/my-username", { headers: await getOptionalAuthHeader() });
+        if (res.ok) { const d = await res.json(); if (d.username) setPreviewName(d.username); }
+      } catch {}
     })();
   }, [user, memberUsername]);
 
@@ -2651,8 +2653,10 @@ function PostPage({ user, userRole, memberUsername }) {
     if (user) { setAnonUsername(null); return; }
     (async () => {
       const authHeaders = await getOptionalAuthHeader();
-      const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/my-username", { headers: authHeaders });
-      if (res.ok) { const d = await res.json(); setAnonUsername(d.username || null); }
+      try {
+        const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/my-username", { headers: authHeaders });
+        if (res.ok) { const d = await res.json(); setAnonUsername(d.username || null); }
+      } catch {}
     })();
   }, [user]);
 
@@ -2683,8 +2687,10 @@ function PostPage({ user, userRole, memberUsername }) {
         reactUsername = u?.user_metadata?.username || null;
       }
       if (!reactUsername) {
-        const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/my-username", { headers: await getOptionalAuthHeader() });
-        if (res.ok) { const d = await res.json(); reactUsername = d.username || null; }
+        try {
+          const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/my-username", { headers: await getOptionalAuthHeader() });
+          if (res.ok) { const d = await res.json(); reactUsername = d.username || null; }
+        } catch {}
       }
       await supabase.from("comment_reactions").insert({ comment_id: commentId, browser_id: myId, emoji, username: reactUsername });
     }
