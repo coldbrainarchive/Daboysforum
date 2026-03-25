@@ -1810,7 +1810,7 @@ function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappenin
   );
 }
 
-function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onReply, allComments = [], threadReplies = [] }) {
+function CommentCard({ comment, postBrowserId, postUsername, canDelete = false, onDelete, onReply, allComments = [], threadReplies = [] }) {
   const isModUser = isModPost(comment);
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState("");
@@ -1846,7 +1846,8 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
           <span className="comment-card-author" style={{ color: avatarColor }}>
             {displayName}
           </span>
-          {comment.browser_id === postBrowserId && (
+          {comment.browser_id === postBrowserId &&
+            (postUsername ? comment.username === postUsername : !comment.username) && (
             <span className="comment-card-op">OP</span>
           )}
           <span className="comment-card-time">· {timeAgo(comment.created_at)}</span>
@@ -1952,7 +1953,7 @@ function CommentCard({ comment, postBrowserId, canDelete = false, onDelete, onRe
   );
 }
 
-function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, onReact, reactions = {}, allComments = [], onFindParent }) {
+function ChatMessage({ comment, postBrowserId, postUsername, canDelete, onDelete, onReply, onReact, reactions = {}, allComments = [], onFindParent }) {
   const isModUser = isModPost(comment);
   const isPending = comment.isPending === true;
   const displayName = isPending && !isModUser && !comment.username
@@ -1960,7 +1961,8 @@ function ChatMessage({ comment, postBrowserId, canDelete, onDelete, onReply, onR
     : (comment.username || `Anon #${shortId(comment.browser_id)}`);
   const avatarColor = isModUser ? "#c084fc" : getUserColor(comment.browser_id, comment.username);
   const avatarLetter = isModUser ? "👤" : (displayName[0]?.toUpperCase() || "?");
-  const isOP = comment.browser_id === postBrowserId;
+  const isOP = comment.browser_id === postBrowserId &&
+    (postUsername ? comment.username === postUsername : !comment.username);
   const [showActions, setShowActions] = useState(false);
   const [isPickingEmoji, setIsPickingEmoji] = useState(false);
   const emojiInputRef = useRef(null);
@@ -3122,6 +3124,7 @@ function PostPage({ user, userRole, memberUsername }) {
                   key={c.id}
                   comment={c}
                   postBrowserId={post.browser_id}
+                  postUsername={post.username || null}
                   canDelete={isMod}
                   onDelete={async () => { await modAction({ type: "delete_comment", comment_id: c.id }); await load(); }}
                   onReply={(msg) => setReplyTarget(msg)}
