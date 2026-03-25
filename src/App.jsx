@@ -2674,7 +2674,15 @@ function PostPage({ user, userRole, memberUsername }) {
       await supabase.from("comment_reactions").delete()
         .eq("comment_id", commentId).eq("browser_id", myId).eq("emoji", emoji);
     } else {
-      const reactUsername = memberUsername || anonUsername || null;
+      let reactUsername = memberUsername || anonUsername || null;
+      if (!reactUsername) {
+        const { data: { user: u } } = await supabase.auth.getUser();
+        reactUsername = u?.user_metadata?.username || null;
+      }
+      if (!reactUsername) {
+        const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/my-username", { headers: await getOptionalAuthHeader() });
+        if (res.ok) { const d = await res.json(); reactUsername = d.username || null; }
+      }
       await supabase.from("comment_reactions").insert({ comment_id: commentId, browser_id: myId, emoji, username: reactUsername });
     }
   }
