@@ -223,7 +223,7 @@ export default {
       const res = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=200`, {
         headers: { apikey: env.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}` }
       });
-      if (!res.ok) return json({ error: "Failed to fetch members" }, 500);
+      if (!res.ok) return json({ error: "Failed to fetch members", detail: await res.text() }, 500);
       const data = await res.json();
       return json({ members: data.users || [] });
     }
