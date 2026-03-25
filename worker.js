@@ -319,6 +319,18 @@ export default {
       }
     }
 
+    if (url.pathname === "/get-profile") {
+      if (!authUser) return json({ error: "Unauthorized" }, 401);
+      const res = await fetch(
+        `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${authUser.id}&select=role,username`,
+        { headers: { apikey: env.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}` } }
+      );
+      if (!res.ok) return json({ error: "Failed" }, 500);
+      const rows = await res.json();
+      const profile = Array.isArray(rows) && rows.length > 0 ? rows[0] : {};
+      return json(profile);
+    }
+
     if (url.pathname === "/create-profile") {
       if (!authUser) {
         return json({ error: "Unauthorized" }, 401);

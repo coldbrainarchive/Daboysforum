@@ -3698,13 +3698,16 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
       if (data.user) {
         const bid = getBrowserId();
         const signUpUsername = username.trim();
-        const { data: session } = await supabase.auth.getSession();
-        const authToken = session?.session?.access_token;
-        await fetch("https://daboysforumip.coldbrainarchive.workers.dev/create-profile", {
+        const authToken = data.session?.access_token;
+        const profileRes = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/create-profile", {
           method: "POST",
           headers: { "Content-Type": "application/json", ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
           body: JSON.stringify({ username: signUpUsername, browser_id: bid })
         });
+        if (!profileRes.ok) {
+          const err = await profileRes.json().catch(() => ({}));
+          console.error("Profile creation failed:", err);
+        }
         await Promise.all([
           supabase.from("posts").update({ username: signUpUsername }).eq("browser_id", bid).eq("is_mod", false),
           supabase.from("comments").update({ username: signUpUsername }).eq("browser_id", bid).eq("is_mod", false)
@@ -3716,8 +3719,12 @@ function ActivityPanel({ user, userRole, modName, onClose, onLogin, onLogout, br
       const { data, error } = await supabase.auth.signInWithPassword({ email: fakeEmail, password });
       setAuthLoading(false);
       if (error) { alert("Invalid username or password"); return; }
-      const { data: profile } = await supabase.from("profiles").select("role, username").eq("id", data.user.id).maybeSingle();
-      onLogin(data.user, profile?.role || "user", profile?.username || null);
+      const authToken = data.session?.access_token;
+      const profileRes = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/get-profile", {
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
+      });
+      const profileJson = profileRes.ok ? await profileRes.json() : {};
+      onLogin(data.user, profileJson.role || "user", profileJson.username || null);
       onClose();
     }
   };
