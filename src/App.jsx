@@ -624,8 +624,9 @@ function RealtimeStyles() {
       }
 
       .chat-bubble.highlight {
-        background: #2e3a50;
-        transition: background 0.3s ease;
+        background: rgba(192, 132, 252, 0.18);
+        outline: 1.5px solid rgba(192, 132, 252, 0.5);
+        transition: background 0.3s ease, outline 0.3s ease;
       }
 
       .chat-bubble.pending {
@@ -2631,6 +2632,8 @@ function NewPost({ user, userRole, memberUsername }) {
 // ==============================
 function PostPage({ user, userRole, memberUsername }) {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get("highlight");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -2648,6 +2651,24 @@ function PostPage({ user, userRole, memberUsername }) {
   const [anonUsername, setAnonUsername] = useState(null);
   const chatWindowRef = useRef(null);
   const isAtBottomRef = useRef(true);
+  const highlightedRef = useRef(false);
+
+  useEffect(() => {
+    if (!highlightId || highlightedRef.current) return;
+    const win = chatWindowRef.current;
+    const el = win?.querySelector(`[data-comment-id="${highlightId}"]`);
+    if (!el) return;
+    highlightedRef.current = true;
+    const target = el.offsetTop - win.clientHeight / 2 + el.offsetHeight / 2;
+    win.scrollTo({ top: target, behavior: "smooth" });
+    const bubble = el.querySelector(".chat-bubble");
+    if (bubble) {
+      setTimeout(() => {
+        bubble.classList.add("highlight");
+        setTimeout(() => bubble.classList.remove("highlight"), 2000);
+      }, 400);
+    }
+  }, [comments, highlightId]);
 
   useEffect(() => {
     if (user) { setAnonUsername(null); return; }
@@ -3643,7 +3664,7 @@ function ActivityPanel({ user, userRole, modName, onClose, onClear, onLogin, onL
           text: `${c.username || "Someone"} commented on your post`,
           subtext: `"${(postTitleMap[c.post_id] || "").slice(0, 50)}"`,
           preview: c.content?.slice(0, 80),
-          time: c.created_at, postId: c.post_id
+          time: c.created_at, postId: c.post_id, targetId: c.id
         });
       });
 
@@ -3653,7 +3674,7 @@ function ActivityPanel({ user, userRole, modName, onClose, onClear, onLogin, onL
           id: `r-${r.id}`, type: "reply", icon: "↩️",
           text: `${r.username || "Someone"} replied to your comment`,
           preview: r.content?.slice(0, 80),
-          time: r.created_at, postId: r.post_id
+          time: r.created_at, postId: r.post_id, targetId: r.id
         });
       });
 
@@ -3670,7 +3691,7 @@ function ActivityPanel({ user, userRole, modName, onClose, onClear, onLogin, onL
         results.push({
           id: `rx-${commentId}`, type: "reaction", icon: Object.keys(emojiByUser)[0],
           text: `${parts.join("  ")} on your comment`,
-          time: null, postId: commentPostMap[commentId]
+          time: null, postId: commentPostMap[commentId], targetId: commentId
         });
       });
 
@@ -3825,7 +3846,7 @@ function ActivityPanel({ user, userRole, modName, onClose, onClear, onLogin, onL
               return (
               <Link
                 key={n.id}
-                to={n.postId ? `/post/${n.postId}` : "#"}
+                to={n.postId ? `/post/${n.postId}${n.targetId ? `?highlight=${n.targetId}` : ""}` : "#"}
                 onClick={onClose}
                 style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 18px", textDecoration: "none", borderBottom: "1px solid #1a1c23", transition: "background 0.12s", background: isUnseen ? "rgba(192,132,252,0.07)" : "transparent", borderLeft: isUnseen ? "2px solid #c084fc" : "2px solid transparent" }}
                 onMouseEnter={(e) => e.currentTarget.style.background = "#1f2028"}
