@@ -4103,7 +4103,7 @@ export default function App() {
                 }
               }
             }}
-            onLogout={async () => { await supabase.auth.signOut(); setUser(null); applyRole(null); setBrowseUsername(null); }}
+            onLogout={async () => { await supabase.auth.signOut(); window.location.reload(); }}
             browseUsername={browseUsername}
             lastMemberUsername={lastMemberUsername}
           />
