@@ -3306,6 +3306,7 @@ function ModPanel({ setModName }) {
   // LOGOUT
   const logout = async () => {
     await supabase.auth.signOut();
+    window.location.reload();
   };
 
   // UPDATE PASSWORD
@@ -3390,7 +3391,7 @@ function ModPanel({ setModName }) {
   return (
     <div style={{ width: "min(1280px, 100%)", margin: "0 auto", padding: "24px 20px 40px", boxSizing: "border-box", textAlign: "left" }}>
       <div style={{ marginBottom: 24 }}>
-        <h2 style={{ margin: "0 0 4px", color: "#f8fafc", fontSize: 28, fontWeight: 800, letterSpacing: "-0.02em" }}>Mod Panel</h2>
+        <h2 style={{ margin: "0 0 4px", color: "#f8fafc", fontSize: 28, fontWeight: 800, letterSpacing: "-0.02em" }}>Profile</h2>
         <p style={{ color: "#94a3b8", fontSize: 14 }}>{email}</p>
       </div>
 
@@ -3672,13 +3673,208 @@ function ModPanel({ setModName }) {
   );
 }
 // ==============================
+// MEMBER PROFILE PANEL
+// ==============================
+function MemberProfilePanel({ user, browseUsername, lastMemberUsername, onClose, onLogout }) {
+  const [tab, setTab] = useState("account");
+  const [newPassword, setNewPassword] = useState("");
+  const [posts, setPosts] = useState([]);
+  const [notifs, setNotifs] = useState([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+
+  useEffect(() => {
+    if (!browseUsername) return;
+    supabase.from("posts").select("id, title, created_at, board").eq("username", browseUsername).eq("deleted", false).order("created_at", { ascending: false })
+      .then(({ data }) => setPosts(data || []));
+  }, [browseUsername]);
+
+  useEffect(() => {
+    if (!user || tab !== "notifications") return;
+    const browserId = getBrowserId();
+    setNotifLoading(true);
+    (async () => {
+      const [{ data: myPosts }, { data: myComments }] = await Promise.all([
+        supabase.from("posts").select("id, title").eq("username", browseUsername).eq("is_mod", false).eq("deleted", false),
+        supabase.from("comments").select("id, content, post_id").eq("username", browseUsername).eq("is_mod", false).eq("deleted", false)
+      ]);
+      const postIds = (myPosts || []).map((p) => p.id);
+      const postTitleMap = Object.fromEntries((myPosts || []).map((p) => [p.id, p.title]));
+      const commentIds = (myComments || []).map((c) => c.id);
+      const commentPostMap = Object.fromEntries((myComments || []).map((c) => [c.id, c.post_id]));
+      const results = [];
+      const [postCommentsRes, repliesRes, reactionsRes, votesRes] = await Promise.all([
+        postIds.length ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("post_id", postIds).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(100) : Promise.resolve({ data: [] }),
+        commentIds.length ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("parent_comment_id", commentIds).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(100) : Promise.resolve({ data: [] }),
+        commentIds.length ? supabase.from("comment_reactions").select("comment_id, emoji, browser_id, username").in("comment_id", commentIds) : Promise.resolve({ data: [] }),
+        postIds.length ? supabase.from("post_votes").select("post_id, value, browser_id, username").in("post_id", postIds) : Promise.resolve({ data: [] })
+      ]);
+      (postCommentsRes.data || []).forEach((c) => {
+        results.push({ id: `c-${c.id}`, type: "comment", icon: "💬", text: `${c.username || "Someone"} commented on your post`, subtext: `"${(postTitleMap[c.post_id] || "").slice(0, 50)}"`, preview: c.content?.slice(0, 80), time: c.created_at, postId: c.post_id, targetId: c.id });
+      });
+      (repliesRes.data || []).forEach((r) => {
+        results.push({ id: `r-${r.id}`, type: "reply", icon: "↩️", text: `${r.username || "Someone"} replied to your comment`, preview: r.content?.slice(0, 80), time: r.created_at, postId: r.post_id, targetId: r.id });
+      });
+      const reactionGroups = {};
+      (reactionsRes.data || []).filter((r) => r.browser_id !== browserId).forEach((r) => {
+        const who = r.username || `Anon #${shortId(r.browser_id)}`;
+        if (!reactionGroups[r.comment_id]) reactionGroups[r.comment_id] = {};
+        if (!reactionGroups[r.comment_id][r.emoji]) reactionGroups[r.comment_id][r.emoji] = [];
+        if (!reactionGroups[r.comment_id][r.emoji].includes(who)) reactionGroups[r.comment_id][r.emoji].push(who);
+      });
+      Object.entries(reactionGroups).forEach(([commentId, emojiByUser]) => {
+        const parts = Object.entries(emojiByUser).map(([e, users]) => `${e} ${users.join(", ")}`);
+        results.push({ id: `rx-${commentId}`, type: "reaction", icon: Object.keys(emojiByUser)[0], text: `${parts.join("  ")} on your comment`, time: null, postId: commentPostMap[commentId], targetId: commentId });
+      });
+      const voteGroups = {};
+      (votesRes.data || []).forEach((v) => {
+        if (!voteGroups[v.post_id]) voteGroups[v.post_id] = { up: [], down: [] };
+        if (v.value > 0) voteGroups[v.post_id].up.push(v.username || `Anon #${shortId(v.browser_id)}`);
+        else if (v.value < 0) voteGroups[v.post_id].down.push(v.username || `Anon #${shortId(v.browser_id)}`);
+      });
+      Object.entries(voteGroups).forEach(([postId, counts]) => {
+        const parts = [];
+        if (counts.up.length) parts.push(`👍 ${counts.up.join(", ")}`);
+        if (counts.down.length) parts.push(`👎 ${counts.down.join(", ")}`);
+        results.push({ id: `v-${postId}`, type: "vote", icon: counts.up.length >= counts.down.length ? "👍" : "👎", text: parts.join("  "), subtext: `"${(postTitleMap[postId] || "").slice(0, 50)}"`, time: null, postId });
+      });
+      results.sort((a, b) => {
+        if (a.time && b.time) return new Date(b.time) - new Date(a.time);
+        if (a.time) return -1; if (b.time) return 1; return 0;
+      });
+      setNotifs(results);
+      setNotifLoading(false);
+    })();
+  }, [tab, user, browseUsername]);
+
+  const updatePassword = async () => {
+    if (!newPassword) return;
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return alert(error.message);
+    alert("Password updated 🔑");
+    setNewPassword("");
+  };
+
+  const avatarColor = browseUsername ? getUserColor(getBrowserId(), browseUsername) : "#c084fc";
+
+  const TABS = [
+    { id: "account", label: "Account" },
+    { id: "posts", label: "Posts" },
+    { id: "notifications", label: "Notifications" }
+  ];
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 50, backdropFilter: "blur(3px)" }} />
+      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(420px, 100vw)", background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)", borderLeft: "1px solid #2e303a", zIndex: 51, display: "flex", flexDirection: "column", boxShadow: "-20px 0 60px rgba(0,0,0,0.5)" }}>
+        {/* Header */}
+        <div style={{ padding: "14px 18px", borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: avatarColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#14081d", flexShrink: 0 }}>
+            {browseUsername?.[0]?.toUpperCase() || "M"}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{browseUsername || "Member"}</div>
+            <div style={{ color: "#64748b", fontSize: 12 }}>Member</div>
+          </div>
+          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", background: "#1f2937", color: "#94a3b8", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>✕</button>
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display: "flex", borderBottom: "1px solid #2e303a", flexShrink: 0 }}>
+          {TABS.map((t) => (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, padding: "10px 8px", border: "none", borderBottom: tab === t.id ? "2px solid #c084fc" : "2px solid transparent", marginBottom: -1, background: "transparent", color: tab === t.id ? "#f8fafc" : "#64748b", fontWeight: tab === t.id ? 700 : 500, fontSize: 13, cursor: "pointer" }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          {tab === "account" && (
+            <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+              <div className="content-card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Username</div>
+                <div style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #2e303a", background: "#16171d", color: "#94a3b8", fontSize: 14 }}>@{browseUsername || "—"}</div>
+              </div>
+              <div className="content-card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Change Password</div>
+                <input
+                  type="password"
+                  placeholder="New password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && updatePassword()}
+                  style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#0f1117", color: "#f8fafc", fontSize: 13, width: "100%", boxSizing: "border-box" }}
+                />
+                <button onClick={updatePassword} style={{ padding: "9px 14px", borderRadius: 10, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                  Update Password
+                </button>
+              </div>
+              <button onClick={() => { onLogout(); onClose(); }} style={{ padding: "10px 16px", borderRadius: 12, border: "1px solid #374151", background: "transparent", color: "#94a3b8", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+                🚪 Log out
+              </button>
+            </div>
+          )}
+
+          {tab === "posts" && (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {posts.length === 0 ? (
+                <div style={{ padding: "48px 20px", color: "#64748b", textAlign: "center" }}>
+                  <div style={{ fontSize: 32, marginBottom: 10 }}>📝</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>No posts yet</div>
+                </div>
+              ) : posts.map((p, i) => (
+                <Link key={p.id} to={`/post/${p.id}`} onClick={onClose} style={{ display: "block", padding: "12px 18px", borderBottom: i < posts.length - 1 ? "1px solid #1a1c23" : "none", textDecoration: "none" }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "#1f2028"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                >
+                  <div style={{ color: "#e2e8f0", fontSize: 14, fontWeight: 600, marginBottom: 3 }}>{p.title}</div>
+                  <div style={{ color: "#475569", fontSize: 12 }}>{p.board ? `${p.board} · ` : ""}{timeAgo(p.created_at)}</div>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {tab === "notifications" && (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {notifLoading ? (
+                <div style={{ padding: 32, color: "#64748b", textAlign: "center", fontSize: 14 }}>Loading…</div>
+              ) : notifs.length === 0 ? (
+                <div style={{ padding: "48px 20px", color: "#64748b", textAlign: "center" }}>
+                  <div style={{ fontSize: 36, marginBottom: 12 }}>🐦</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>No notifications yet</div>
+                  <div style={{ fontSize: 12, marginTop: 4 }}>Activity on your posts and comments shows up here</div>
+                </div>
+              ) : notifs.map((n) => (
+                <Link key={n.id} to={n.postId ? `/post/${n.postId}${n.targetId ? `?highlight=${n.targetId}` : ""}` : "#"} onClick={onClose}
+                  style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 18px", textDecoration: "none", borderBottom: "1px solid #1a1c23" }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "#1f2028"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                >
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#1f2937", border: "1px solid #2e303a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{n.icon}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ color: "#e2e8f0", fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}>{n.text}</div>
+                    {n.subtext && <div style={{ color: "#94a3b8", fontSize: 12, marginTop: 1 }}>{n.subtext}</div>}
+                    {n.preview && <div style={{ color: "#64748b", fontSize: 12, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.preview}</div>}
+                    {n.time && <div style={{ color: "#475569", fontSize: 11, marginTop: 5 }}>{timeAgo(n.time)}</div>}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+// ==============================
 // ACTIVITY PANEL
 // ==============================
-function ActivityPanel({ user, userRole, modName, onClose, onClear, onLogin, onLogout, browseUsername, lastMemberUsername }) {
+function ActivityPanel({ user, userRole, modName, onClose, onClear, onLogin, browseUsername, lastMemberUsername }) {
   const [tab, setTab] = useState("all");
   const [loading, setLoading] = useState(true);
   const [notifs, setNotifs] = useState([]);
   const unseenThreshold = useRef(localStorage.getItem("notif_last_seen") || new Date(0).toISOString());
+  const clearedAt = useRef(localStorage.getItem("notif_cleared_at") || new Date(0).toISOString());
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
@@ -3842,7 +4038,8 @@ function ActivityPanel({ user, userRole, modName, onClose, onClear, onLogin, onL
     { id: "vote",     label: "👍 Votes" }
   ];
 
-  const filtered = tab === "all" ? notifs : notifs.filter((n) => n.type === tab);
+  const filtered = (tab === "all" ? notifs : notifs.filter((n) => n.type === tab))
+    .filter((n) => !n.time || n.time > clearedAt.current);
 
   return (
     <>
@@ -3868,11 +4065,11 @@ function ActivityPanel({ user, userRole, modName, onClose, onClear, onLogin, onL
           </div>
           {user && userRole === "mod" && (
             <Link to="/mod" onClick={onClose} style={{ padding: "0 12px", height: 30, borderRadius: 10, background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 12, textDecoration: "none", flexShrink: 0, display: "inline-flex", alignItems: "center" }}>
-              Mod Panel
+              Profile
             </Link>
           )}
-          {notifs.length > 0 && (
-            <button onClick={() => { unseenThreshold.current = new Date().toISOString(); onClear(); }} style={{ padding: "0 10px", height: 30, borderRadius: 10, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 11, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
+          {notifs.filter((n) => !n.time || n.time > clearedAt.current).length > 0 && (
+            <button onClick={() => { const now = new Date().toISOString(); clearedAt.current = now; unseenThreshold.current = now; localStorage.setItem("notif_cleared_at", now); onClear(); }} style={{ padding: "0 10px", height: 30, borderRadius: 10, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 11, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
               Clear
             </button>
           )}
@@ -3935,26 +4132,6 @@ function ActivityPanel({ user, userRole, modName, onClose, onClear, onLogin, onL
           )}
         </div>
 
-        {/* Account section — logged-in non-mod users */}
-        {user && userRole !== "mod" && (
-          <div style={{ padding: "14px 18px", borderTop: "1px solid #2e303a", background: "#0d0f14", flexShrink: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Account</div>
-
-            {/* Signed-in username (locked) */}
-            <div style={{ marginBottom: 10, padding: "8px 10px", borderRadius: 10, border: "1px solid #2e303a", background: "#16171d", color: "#94a3b8", fontSize: 13 }}>
-              @{browseUsername || "—"}
-            </div>
-
-            {/* Logout */}
-            <button
-              onClick={() => { onLogout(); onClose(); }}
-              style={{ width: "100%", padding: "8px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#94a3b8", fontSize: 13, cursor: "pointer" }}
-            >
-              Log out
-            </button>
-          </div>
-        )}
-
         {/* Auth section — logged-out users */}
         {!user && (
           <div style={{ padding: "14px 18px", borderTop: "1px solid #2e303a", background: "#0d0f14", flexShrink: 0 }}>
@@ -4007,6 +4184,7 @@ export default function App() {
   const [browseUsername, setBrowseUsername] = useState(null);
   const [lastMemberUsername, setLastMemberUsername] = useState(localStorage.getItem("last_member_username") || null);
   const [showActivity, setShowActivity] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [notifCount, setNotifCount] = useState(0);
 
   const applyRole = (role) => {
@@ -4103,7 +4281,8 @@ export default function App() {
             <div style={{ position: "relative", flexShrink: 0 }}>
               <button
                 onClick={() => {
-                  setShowActivity(true);
+                  if (user && userRole !== "mod") setShowProfile(true);
+                  else setShowActivity(true);
                 }}
                 style={{
                   display: "inline-flex",
@@ -4171,9 +4350,17 @@ export default function App() {
                 }
               }
             }}
-            onLogout={async () => { await supabase.auth.signOut(); window.location.reload(); }}
             browseUsername={browseUsername}
             lastMemberUsername={lastMemberUsername}
+          />
+        )}
+        {showProfile && (
+          <MemberProfilePanel
+            user={user}
+            browseUsername={browseUsername}
+            lastMemberUsername={lastMemberUsername}
+            onClose={() => setShowProfile(false)}
+            onLogout={async () => { await supabase.auth.signOut(); window.location.reload(); }}
           />
         )}
       </Router>
