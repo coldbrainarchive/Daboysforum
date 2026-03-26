@@ -766,7 +766,7 @@ function RealtimeStyles() {
         color: #f8fafc;
         font-size: 16px;
         font-family: inherit;
-        padding: 9px 14px 4px;
+        padding: 9px 14px;
         resize: none;
         max-height: 120px;
         overflow-y: auto;
@@ -1554,9 +1554,10 @@ function countValidComments(commentsData) {
 }
 
 async function voteOnPost(postId, value) {
+  const authHeaders = await getOptionalAuthHeader();
   const res = await fetch(`${WORKER_URL}/vote-post`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders },
     body: JSON.stringify({ post_id: postId, browser_id: getBrowserId(), value })
   });
   return res.json();
