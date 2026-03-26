@@ -3107,6 +3107,20 @@ function PostPage({ user, userRole, memberUsername }) {
                 <button
                   type="button"
                   className="feed-post-action-pill"
+                  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  className="feed-post-action-pill"
+                  onClick={() => { const el = chatWindowRef.current; if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" }); }}
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  className="feed-post-action-pill"
                   onClick={() => {
                     const el = chatWindowRef.current;
                     if (el) el.scrollTo({ top: scrollToBottom ? el.scrollHeight : 0, behavior: "smooth" });
@@ -3114,13 +3128,6 @@ function PostPage({ user, userRole, memberUsername }) {
                   }}
                 >
                   {scrollToBottom ? "Newest" : "Oldest"}
-                </button>
-                <button
-                  type="button"
-                  className="feed-post-action-pill"
-                  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                >
-                  🗒️
                 </button>
               </div>
             </div>
