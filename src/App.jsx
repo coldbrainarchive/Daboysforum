@@ -2430,7 +2430,7 @@ function NewPost({ user, userRole, memberUsername }) {
   const [previewName, setPreviewName] = useState(null);
   const [isUserJailed, setIsUserJailed] = useState(false);
   const requestedBoard = getBoardBySlug(searchParams.get("board"));
-  const [selectedBoardSlug, setSelectedBoardSlug] = useState(requestedBoard?.slug || BOARDS[0].slug);
+  const [selectedBoardSlug, setSelectedBoardSlug] = useState(requestedBoard?.slug || "random");
 
   useEffect(() => {
     if (user) {
@@ -2590,7 +2590,8 @@ function NewPost({ user, userRole, memberUsername }) {
                 background: "transparent",
                 color: "#f8fafc",
                 outline: "none",
-                paddingBottom: 10
+                paddingBottom: 10,
+                touchAction: "manipulation"
               }}
             />
 
@@ -2605,14 +2606,15 @@ function NewPost({ user, userRole, memberUsername }) {
                 boxSizing: "border-box",
                 padding: "0",
                 border: "none",
-                fontSize: 15,
+                fontSize: 16,
                 resize: "vertical",
                 background: "transparent",
                 color: "#dbe4ee",
                 outline: "none",
                 minHeight: 120,
                 fontFamily: "inherit",
-                lineHeight: 1.6
+                lineHeight: 1.6,
+                touchAction: "manipulation"
               }}
             />
           </div>
