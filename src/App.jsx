@@ -1558,7 +1558,7 @@ async function voteOnPost(postId, value) {
   const res = await fetch(`${WORKER_URL}/vote-post`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders },
-    body: JSON.stringify({ post_id: postId, browser_id: getBrowserId(), value })
+    body: JSON.stringify({ post_id: postId, browser_id: getBrowserId(), value, username: localStorage.getItem("mod_name") || undefined })
   });
   return res.json();
 }
