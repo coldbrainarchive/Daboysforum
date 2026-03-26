@@ -3757,7 +3757,7 @@ function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername
       const [postCommentsRes, repliesRes, reactionsRes, votesRes] = await Promise.all([
         postIds.length ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("post_id", postIds).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(60) : Promise.resolve({ data: [] }),
         commentIds.length ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("parent_comment_id", commentIds).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(60) : Promise.resolve({ data: [] }),
-        commentIds.length ? supabase.from("comment_reactions").select("comment_id, emoji, browser_id, username").in("comment_id", commentIds) : Promise.resolve({ data: [] }),
+        commentIds.length ? supabase.from("comment_reactions").select("comment_id, emoji, browser_id, username, created_at").in("comment_id", commentIds).neq("browser_id", browserId).order("created_at", { ascending: false }).limit(60) : Promise.resolve({ data: [] }),
         postIds.length ? supabase.from("post_votes").select("post_id, value, browser_id, username").in("post_id", postIds) : Promise.resolve({ data: [] })
       ]);
       (postCommentsRes.data || []).forEach((c) => {
@@ -3766,16 +3766,9 @@ function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername
       (repliesRes.data || []).forEach((r) => {
         results.push({ id: `r-${r.id}`, type: "reply", icon: "↩️", text: `${r.username || "Someone"} replied to your comment`, preview: r.content?.slice(0, 80), time: r.created_at, postId: r.post_id, targetId: r.id });
       });
-      const reactionGroups = {};
-      (reactionsRes.data || []).filter((r) => r.browser_id !== browserId).forEach((r) => {
+      (reactionsRes.data || []).forEach((r, i) => {
         const who = r.username || `Anon #${shortId(r.browser_id)}`;
-        if (!reactionGroups[r.comment_id]) reactionGroups[r.comment_id] = {};
-        if (!reactionGroups[r.comment_id][r.emoji]) reactionGroups[r.comment_id][r.emoji] = [];
-        if (!reactionGroups[r.comment_id][r.emoji].includes(who)) reactionGroups[r.comment_id][r.emoji].push(who);
-      });
-      Object.entries(reactionGroups).forEach(([commentId, emojiByUser]) => {
-        const parts = Object.entries(emojiByUser).map(([e, users]) => `${e} ${users.join(", ")}`);
-        results.push({ id: `rx-${commentId}`, type: "reaction", icon: Object.keys(emojiByUser)[0], text: `${parts.join("  ")} on your comment`, time: null, postId: commentPostMap[commentId], targetId: commentId });
+        results.push({ id: `rx-${r.comment_id}-${r.browser_id}-${i}`, type: "reaction", icon: r.emoji, text: `${who} reacted ${r.emoji} to your comment`, time: r.created_at, postId: commentPostMap[r.comment_id], targetId: r.comment_id });
       });
       const voteGroups = {};
       (votesRes.data || []).forEach((v) => {
@@ -3791,7 +3784,9 @@ function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername
       });
       results.sort((a, b) => {
         if (a.time && b.time) return new Date(b.time) - new Date(a.time);
-        if (a.time) return -1; if (b.time) return 1; return 0;
+        if (a.time) return -1;
+        if (b.time) return 1;
+        return 0;
       });
       setNotifs(results);
       setNotifLoading(false);
@@ -4038,19 +4033,24 @@ export default function App() {
 
       const { data: myPosts } = await postsQuery;
       const postIds = (myPosts || []).map(p => p.id);
-      if (!postIds.length) { setNotifCount(0); return; }
+
+      let commentsQuery = isMod
+        ? supabase.from("comments").select("id").eq("is_mod", true).eq("mod_user_id", u?.id).eq("deleted", false)
+        : memberName
+        ? supabase.from("comments").select("id").eq("username", memberName).eq("is_mod", false).eq("deleted", false)
+        : (() => { let q = supabase.from("comments").select("id").eq("browser_id", browserId).eq("is_mod", false).eq("deleted", false); if (lmName) q = q.neq("username", lmName); return q; })();
+      const { data: myComments } = await commentsQuery;
+      const commentIds = (myComments || []).map(c => c.id);
+
+      if (!postIds.length && !commentIds.length) { setNotifCount(0); return; }
 
       const [{ count: commentCount }, { count: reactionCount }] = await Promise.all([
-        supabase.from("comments")
-          .select("id", { count: "exact", head: true })
-          .in("post_id", postIds)
-          .neq("browser_id", browserId)
-          .eq("deleted", false)
-          .gt("created_at", lastSeen),
-        supabase.from("comment_reactions")
-          .select("comment_id", { count: "exact", head: true })
-          .neq("browser_id", browserId)
-          .gt("created_at", lastSeen)
+        postIds.length
+          ? supabase.from("comments").select("id", { count: "exact", head: true }).in("post_id", postIds).neq("browser_id", browserId).eq("deleted", false).gt("created_at", lastSeen)
+          : Promise.resolve({ count: 0 }),
+        commentIds.length
+          ? supabase.from("comment_reactions").select("comment_id", { count: "exact", head: true }).in("comment_id", commentIds).neq("browser_id", browserId).gt("created_at", lastSeen)
+          : Promise.resolve({ count: 0 })
       ]);
 
       setNotifCount((commentCount || 0) + (reactionCount || 0));
