@@ -3181,44 +3181,18 @@ function PostPage({ user, userRole, memberUsername }) {
                     </button>
                   </div>
                 )}
-                {(() => {
-                  const isMod = !!user && userRole === "mod";
-                  const name = isMod ? getModName() : (memberUsername || anonUsername);
-                  const color = isMod ? "#c084fc" : (name ? getUserColor(getBrowserId(), name) : null);
-                  return (
-                    <div className="chat-input-row">
-                      <div className="chat-input-bubble">
-                        <textarea
-                          className="chat-input"
-                          value={text}
-                          onChange={(e) => setText(e.target.value)}
-                          placeholder="Message..."
-                          disabled={isSendingComment}
-                          rows={1}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              if (!text.trim()) return;
-                              const content = text;
-                              const parentId = replyTarget?.id || null;
-                              setText("");
-                              setReplyTarget(null);
-                              isAtBottomRef.current = true;
-                              submitComment(content, parentId);
-                            }
-                          }}
-                        />
-                        {name && (
-                          <div style={{ padding: "2px 14px 6px", fontSize: 11, color: "#64748b" }}>
-                            Posting as <span style={{ color, fontWeight: 700 }}>{name}</span>
-                          </div>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        className="chat-send-btn"
-                        disabled={isSendingComment || !text.trim()}
-                        onClick={() => {
+                <div className="chat-input-row">
+                  <div className="chat-input-bubble">
+                    <textarea
+                      className="chat-input"
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      placeholder="Message..."
+                      disabled={isSendingComment}
+                      rows={1}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
                           if (!text.trim()) return;
                           const content = text;
                           const parentId = replyTarget?.id || null;
@@ -3226,13 +3200,27 @@ function PostPage({ user, userRole, memberUsername }) {
                           setReplyTarget(null);
                           isAtBottomRef.current = true;
                           submitComment(content, parentId);
-                        }}
-                      >
-                        ↑
-                      </button>
-                    </div>
-                  );
-                })()}
+                        }
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="chat-send-btn"
+                    disabled={isSendingComment || !text.trim()}
+                    onClick={() => {
+                      if (!text.trim()) return;
+                      const content = text;
+                      const parentId = replyTarget?.id || null;
+                      setText("");
+                      setReplyTarget(null);
+                      isAtBottomRef.current = true;
+                      submitComment(content, parentId);
+                    }}
+                  >
+                    ↑
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -4037,16 +4025,19 @@ export default function App() {
 
       if (!postIds.length && !commentIds.length) { setNotifCount(0); return; }
 
-      const [{ count: commentCount }, { count: reactionCount }] = await Promise.all([
+      const [{ count: commentCount }, { count: reactionCount }, { count: voteCount }] = await Promise.all([
         postIds.length
           ? supabase.from("comments").select("id", { count: "exact", head: true }).in("post_id", postIds).neq("browser_id", browserId).eq("deleted", false).gt("created_at", lastSeen)
           : Promise.resolve({ count: 0 }),
         commentIds.length
           ? supabase.from("comment_reactions").select("comment_id", { count: "exact", head: true }).in("comment_id", commentIds).neq("browser_id", browserId).gt("created_at", lastSeen)
+          : Promise.resolve({ count: 0 }),
+        postIds.length
+          ? supabase.from("post_votes").select("post_id", { count: "exact", head: true }).in("post_id", postIds).neq("browser_id", browserId).gt("created_at", lastSeen)
           : Promise.resolve({ count: 0 })
       ]);
 
-      setNotifCount((commentCount || 0) + (reactionCount || 0));
+      setNotifCount((commentCount || 0) + (reactionCount || 0) + (voteCount || 0));
     };
 
     fetchCount();
