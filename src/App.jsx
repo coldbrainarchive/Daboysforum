@@ -4028,9 +4028,12 @@ export default function App() {
 
       if (!postIds.length && !commentIds.length) { setNotifCount(0); return; }
 
-      const [{ count: commentCount }, { count: reactionCount }, { count: voteCount }] = await Promise.all([
+      const [{ count: commentCount }, { count: replyCount }, { count: reactionCount }, { count: voteCount }] = await Promise.all([
         postIds.length
-          ? supabase.from("comments").select("id", { count: "exact", head: true }).in("post_id", postIds).neq("browser_id", browserId).eq("deleted", false).gt("created_at", lastSeen)
+          ? supabase.from("comments").select("id", { count: "exact", head: true }).in("post_id", postIds).is("parent_comment_id", null).neq("browser_id", browserId).eq("deleted", false).gt("created_at", lastSeen)
+          : Promise.resolve({ count: 0 }),
+        commentIds.length
+          ? supabase.from("comments").select("id", { count: "exact", head: true }).in("parent_comment_id", commentIds).neq("browser_id", browserId).eq("deleted", false).gt("created_at", lastSeen)
           : Promise.resolve({ count: 0 }),
         commentIds.length
           ? supabase.from("comment_reactions").select("comment_id", { count: "exact", head: true }).in("comment_id", commentIds).neq("browser_id", browserId).gt("created_at", lastSeen)
@@ -4040,7 +4043,7 @@ export default function App() {
           : Promise.resolve({ count: 0 })
       ]);
 
-      setNotifCount((commentCount || 0) + (reactionCount || 0) + (voteCount || 0));
+      setNotifCount((commentCount || 0) + (replyCount || 0) + (reactionCount || 0) + (voteCount || 0));
     };
 
     fetchCount();
