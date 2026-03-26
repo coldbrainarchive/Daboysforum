@@ -3106,15 +3106,15 @@ function PostPage({ user, userRole, memberUsername }) {
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <button
                   type="button"
-                  className="feed-post-action-pill"
                   onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, borderRadius: 999, border: "none", background: "#20262f", color: "#dbe4ee", fontSize: 12, fontWeight: 800, cursor: "pointer", flexShrink: 0 }}
                 >
                   ↑
                 </button>
                 <button
                   type="button"
-                  className="feed-post-action-pill"
-                  onClick={() => { const el = chatWindowRef.current; if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" }); }}
+                  onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}
+                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, borderRadius: 999, border: "none", background: "#20262f", color: "#dbe4ee", fontSize: 12, fontWeight: 800, cursor: "pointer", flexShrink: 0 }}
                 >
                   ↓
                 </button>
