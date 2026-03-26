@@ -3835,7 +3835,7 @@ function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername
     }
   };
 
-  const filtered = notifs.filter((n) => !n.time || n.time > clearedAt.current);
+  const filtered = notifs;
 
   const TABS = [
     { id: "notifications", label: "Notifications" },
