@@ -3758,7 +3758,7 @@ function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername
         postIds.length ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("post_id", postIds).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(60) : Promise.resolve({ data: [] }),
         commentIds.length ? supabase.from("comments").select("id, content, username, browser_id, post_id, created_at").in("parent_comment_id", commentIds).neq("browser_id", browserId).eq("deleted", false).order("created_at", { ascending: false }).limit(60) : Promise.resolve({ data: [] }),
         commentIds.length ? supabase.from("comment_reactions").select("comment_id, emoji, browser_id, username, created_at").in("comment_id", commentIds).neq("browser_id", browserId).order("created_at", { ascending: false }).limit(60) : Promise.resolve({ data: [] }),
-        postIds.length ? supabase.from("post_votes").select("post_id, value, browser_id, username").in("post_id", postIds) : Promise.resolve({ data: [] })
+        postIds.length ? supabase.from("post_votes").select("post_id, value, browser_id, username, created_at").in("post_id", postIds).neq("browser_id", browserId).order("created_at", { ascending: false }).limit(60) : Promise.resolve({ data: [] })
       ]);
       (postCommentsRes.data || []).forEach((c) => {
         results.push({ id: `c-${c.id}`, type: "comment", icon: "💬", text: `${c.username || "Someone"} commented on your post`, subtext: `"${(postTitleMap[c.post_id] || "").slice(0, 50)}"`, preview: c.content?.slice(0, 80), time: c.created_at, postId: c.post_id, targetId: c.id });
@@ -3770,17 +3770,10 @@ function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername
         const who = r.username || `Anon #${shortId(r.browser_id)}`;
         results.push({ id: `rx-${r.comment_id}-${r.browser_id}-${i}`, type: "reaction", icon: r.emoji, text: `${who} reacted ${r.emoji} to your comment`, time: r.created_at, postId: commentPostMap[r.comment_id], targetId: r.comment_id });
       });
-      const voteGroups = {};
-      (votesRes.data || []).forEach((v) => {
-        if (!voteGroups[v.post_id]) voteGroups[v.post_id] = { up: [], down: [] };
-        if (v.value > 0) voteGroups[v.post_id].up.push(v.username || `Anon #${shortId(v.browser_id)}`);
-        else if (v.value < 0) voteGroups[v.post_id].down.push(v.username || `Anon #${shortId(v.browser_id)}`);
-      });
-      Object.entries(voteGroups).forEach(([postId, counts]) => {
-        const parts = [];
-        if (counts.up.length) parts.push(`👍 ${counts.up.join(", ")}`);
-        if (counts.down.length) parts.push(`👎 ${counts.down.join(", ")}`);
-        results.push({ id: `v-${postId}`, type: "vote", icon: counts.up.length >= counts.down.length ? "👍" : "👎", text: parts.join("  "), subtext: `"${(postTitleMap[postId] || "").slice(0, 50)}"`, time: null, postId });
+      (votesRes.data || []).forEach((v, i) => {
+        const who = v.username || `Anon #${shortId(v.browser_id)}`;
+        const icon = v.value > 0 ? "👍" : "👎";
+        results.push({ id: `v-${v.post_id}-${v.browser_id}-${i}`, type: "vote", icon, text: `${who} ${v.value > 0 ? "upvoted" : "downvoted"} your post`, subtext: `"${(postTitleMap[v.post_id] || "").slice(0, 50)}"`, time: v.created_at, postId: v.post_id });
       });
       results.sort((a, b) => {
         if (a.time && b.time) return new Date(b.time) - new Date(a.time);
