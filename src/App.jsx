@@ -745,15 +745,28 @@ function RealtimeStyles() {
         gap: 8px;
       }
 
-      .chat-input {
+      .chat-input-bubble {
         flex: 1;
         background: #0f1117;
         border: 1px solid #2e303a;
         border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        transition: border-color 0.15s;
+      }
+
+      .chat-input-bubble:focus-within {
+        border-color: #4b5563;
+      }
+
+      .chat-input {
+        background: transparent;
+        border: none;
+        border-radius: 20px;
         color: #f8fafc;
         font-size: 16px;
         font-family: inherit;
-        padding: 9px 14px;
+        padding: 9px 14px 4px;
         resize: none;
         max-height: 120px;
         overflow-y: auto;
@@ -766,7 +779,6 @@ function RealtimeStyles() {
 
       .chat-input:focus {
         outline: none;
-        border-color: #4b5563;
       }
 
       .chat-send-btn {
@@ -3173,51 +3185,54 @@ function PostPage({ user, userRole, memberUsername }) {
                   const isMod = !!user && userRole === "mod";
                   const name = isMod ? getModName() : (memberUsername || anonUsername);
                   const color = isMod ? "#c084fc" : (name ? getUserColor(getBrowserId(), name) : null);
-                  if (!name) return null;
                   return (
-                    <div style={{ padding: "4px 8px 2px", fontSize: 11, color: "#64748b" }}>
-                      Posting as <span style={{ color, fontWeight: 700 }}>{name}</span>
+                    <div className="chat-input-row">
+                      <div className="chat-input-bubble">
+                        <textarea
+                          className="chat-input"
+                          value={text}
+                          onChange={(e) => setText(e.target.value)}
+                          placeholder="Message..."
+                          disabled={isSendingComment}
+                          rows={1}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              if (!text.trim()) return;
+                              const content = text;
+                              const parentId = replyTarget?.id || null;
+                              setText("");
+                              setReplyTarget(null);
+                              isAtBottomRef.current = true;
+                              submitComment(content, parentId);
+                            }
+                          }}
+                        />
+                        {name && (
+                          <div style={{ padding: "2px 14px 6px", fontSize: 11, color: "#64748b" }}>
+                            Posting as <span style={{ color, fontWeight: 700 }}>{name}</span>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        className="chat-send-btn"
+                        disabled={isSendingComment || !text.trim()}
+                        onClick={() => {
+                          if (!text.trim()) return;
+                          const content = text;
+                          const parentId = replyTarget?.id || null;
+                          setText("");
+                          setReplyTarget(null);
+                          isAtBottomRef.current = true;
+                          submitComment(content, parentId);
+                        }}
+                      >
+                        ↑
+                      </button>
                     </div>
                   );
                 })()}
-                <div className="chat-input-row">
-                  <textarea
-                    className="chat-input"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder="Message..."
-                    disabled={isSendingComment}
-                    rows={1}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        if (!text.trim()) return;
-                        const content = text;
-                        const parentId = replyTarget?.id || null;
-                        setText("");
-                        setReplyTarget(null);
-                        isAtBottomRef.current = true;
-                        submitComment(content, parentId);
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="chat-send-btn"
-                    disabled={isSendingComment || !text.trim()}
-                    onClick={() => {
-                      if (!text.trim()) return;
-                      const content = text;
-                      const parentId = replyTarget?.id || null;
-                      setText("");
-                      setReplyTarget(null);
-                      isAtBottomRef.current = true;
-                      submitComment(content, parentId);
-                    }}
-                  >
-                    ↑
-                  </button>
-                </div>
               </div>
             )}
           </div>
