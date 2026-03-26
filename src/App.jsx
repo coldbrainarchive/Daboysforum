@@ -3690,7 +3690,7 @@ function ModPanel({ setModName }) {
 // ==============================
 // USER PANEL
 // ==============================
-function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername, onClose, onLogout, onLogin, onClear }) {
+function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername, onClose, onLogout, onLogin }) {
   const [tab, setTab] = useState("notifications");
   const [newPassword, setNewPassword] = useState("");
   const [posts, setPosts] = useState([]);
@@ -3701,7 +3701,11 @@ function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername
   const [isSignUp, setIsSignUp] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const unseenThreshold = useRef(localStorage.getItem("notif_last_seen") || new Date(0).toISOString());
-  const clearedAt = useRef(localStorage.getItem("notif_cleared_at") || new Date(0).toISOString());
+
+  // Stamp notif_last_seen on open so the next badge count starts from now
+  useEffect(() => {
+    localStorage.setItem("notif_last_seen", new Date().toISOString());
+  }, []);
 
   const isMod = !!user && userRole === "mod";
   const isMember = !!user && !isMod;
@@ -3852,11 +3856,6 @@ function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername
             <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</div>
             <div style={{ color: "#64748b", fontSize: 12 }}>{roleLabel}</div>
           </div>
-          {filtered.length > 0 && tab === "notifications" && (
-            <button onClick={() => { const now = new Date().toISOString(); clearedAt.current = now; unseenThreshold.current = now; localStorage.setItem("notif_cleared_at", now); onClear(); }} style={{ padding: "0 10px", height: 30, borderRadius: 10, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 11, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
-              Clear
-            </button>
-          )}
           <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", background: "#1f2937", color: "#94a3b8", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>✕</button>
         </div>
 
@@ -4090,7 +4089,6 @@ export default function App() {
               <button
                 onClick={() => {
                   setNotifCount(0);
-                  localStorage.setItem("notif_last_seen", new Date().toISOString());
                   setShowPanel(true);
                 }}
                 style={{
@@ -4150,7 +4148,6 @@ export default function App() {
             browseUsername={browseUsername}
             lastMemberUsername={lastMemberUsername}
             onClose={() => setShowPanel(false)}
-            onClear={() => { setNotifCount(0); localStorage.setItem("notif_last_seen", new Date().toISOString()); }}
             onLogin={(u, role, newUsername) => {
               setUser(u); applyRole(role);
               if (newUsername) {
