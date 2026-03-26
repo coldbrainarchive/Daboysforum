@@ -4259,6 +4259,8 @@ export default function App() {
   useEffect(() => {
     const browserId = getBrowserId();
     (async () => {
+      const { data: { user: u } } = await supabase.auth.getUser();
+      if (u?.user_metadata?.username) return;
       const { data: postRow } = await supabase
         .from("posts").select("username").eq("browser_id", browserId)
         .eq("is_mod", false).not("username", "is", null).limit(1).maybeSingle();
