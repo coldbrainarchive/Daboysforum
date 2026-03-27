@@ -49,6 +49,7 @@
 html, body {
   margin: 0;
   overscroll-behavior-y: none;
+  background: #16171d;
 }
 
 #root {

@@ -687,7 +687,7 @@ function RealtimeStyles() {
 
       .chat-compose {
         border-top: 1px solid rgba(148, 163, 184, 0.1);
-        padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+        padding: 10px 12px 10px;
         display: flex;
         flex-direction: column;
         gap: 6px;
