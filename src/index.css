@@ -46,9 +46,17 @@
   }
 }
 
+html {
+  overscroll-behavior: none;
+  overflow: hidden;
+  height: 100%;
+}
+
 body {
   margin: 0;
   overscroll-behavior: none;
+  overflow-y: scroll;
+  height: 100%;
 }
 
 #root {
