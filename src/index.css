@@ -46,15 +46,8 @@
   }
 }
 
-html {
-  overscroll-behavior-y: none;
-  height: 100%;
-}
-
 body {
   margin: 0;
-  overscroll-behavior-y: none;
-  min-height: 100%;
 }
 
 #root {

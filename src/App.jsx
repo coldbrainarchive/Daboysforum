@@ -4073,6 +4073,24 @@ export default function App() {
       if (commentRow?.username) setBrowseUsername(commentRow.username);
     })();
   }, []);
+
+  useEffect(() => {
+    let startY = 0;
+    const onTouchStart = (e) => { startY = e.touches[0].clientY; };
+    const onTouchMove = (e) => {
+      const dy = e.touches[0].clientY - startY;
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const atBottom = scrollTop + window.innerHeight >= document.documentElement.scrollHeight - 8;
+      if (atBottom && dy < 0) e.preventDefault();
+    };
+    document.addEventListener("touchstart", onTouchStart, { passive: true });
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => {
+      document.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("touchmove", onTouchMove);
+    };
+  }, []);
+
   return (
     <ErrorBoundary>
       <Router>
