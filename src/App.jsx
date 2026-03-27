@@ -4152,8 +4152,8 @@ export default function App() {
         <RealtimeStyles />
         {(ptrPull > 0 || ptrRefreshing) && (
           <div style={{
-            position: "fixed", top: 0, left: 0, right: 0, height: 52, zIndex: 9999,
-            display: "flex", alignItems: "center", justifyContent: "center",
+            position: "fixed", top: 0, left: 0, right: 0, height: 72, zIndex: 9999,
+            display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 10,
             pointerEvents: "none"
           }}>
             <div style={{
