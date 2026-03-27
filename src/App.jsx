@@ -3828,6 +3828,26 @@ function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername
     { id: "posts", label: "Posts" },
     { id: "account", label: "Account" }
   ];
+  const tabIds = TABS.map((t) => t.id);
+
+  const swipeRef = useRef({ startX: 0, startY: 0 });
+  const handleSwipeStart = (e) => {
+    swipeRef.current.startX = e.touches[0].clientX;
+    swipeRef.current.startY = e.touches[0].clientY;
+  };
+  const handleSwipeEnd = (e) => {
+    const dx = e.changedTouches[0].clientX - swipeRef.current.startX;
+    const dy = e.changedTouches[0].clientY - swipeRef.current.startY;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+    const idx = tabIds.indexOf(tab);
+    if (dx < 0) {
+      // swipe left → previous tab, or close if already on first
+      if (idx === 0) { onClose(); } else { setTab(tabIds[idx - 1]); }
+    } else {
+      // swipe right → next tab
+      if (idx < tabIds.length - 1) setTab(tabIds[idx + 1]);
+    }
+  };
 
   return (
     <>
@@ -3835,14 +3855,14 @@ function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername
       <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(420px, 100vw)", background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)", borderLeft: "1px solid #2e303a", zIndex: 51, display: "flex", flexDirection: "column", boxShadow: "-20px 0 60px rgba(0,0,0,0.5)" }}>
         {/* Header */}
         <div style={{ padding: "14px 18px", borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: avatarColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#14081d", flexShrink: 0 }}>
-            {displayName[0]?.toUpperCase() || "?"}
-          </div>
+          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", background: "#1f2937", color: "#94a3b8", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>✕</button>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</div>
             <div style={{ color: "#64748b", fontSize: 12 }}>{roleLabel}</div>
           </div>
-          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", background: "#1f2937", color: "#94a3b8", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>✕</button>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: avatarColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#14081d", flexShrink: 0 }}>
+            {displayName[0]?.toUpperCase() || "?"}
+          </div>
         </div>
 
         {/* Tabs */}
@@ -3855,7 +3875,7 @@ function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, overflowY: "auto" }}>
+        <div style={{ flex: 1, overflowY: "auto" }} onTouchStart={handleSwipeStart} onTouchEnd={handleSwipeEnd}>
           {tab === "notifications" && (
             <div style={{ display: "flex", flexDirection: "column" }}>
               {notifLoading ? (
@@ -4152,8 +4172,8 @@ export default function App() {
         <RealtimeStyles />
         {(ptrPull > 0 || ptrRefreshing) && (
           <div style={{
-            position: "fixed", top: 0, left: 0, right: 0, height: 72, zIndex: 9999,
-            display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 10,
+            position: "fixed", top: 0, left: 0, right: 0, height: 56, zIndex: 9999,
+            display: "flex", alignItems: "center", justifyContent: "center",
             pointerEvents: "none"
           }}>
             <div style={{
