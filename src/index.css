@@ -47,16 +47,14 @@
 }
 
 html {
-  overscroll-behavior: none;
-  overflow: hidden;
+  overscroll-behavior-y: none;
   height: 100%;
 }
 
 body {
   margin: 0;
-  overscroll-behavior: none;
-  overflow-y: scroll;
-  height: 100%;
+  overscroll-behavior-y: none;
+  min-height: 100%;
 }
 
 #root {

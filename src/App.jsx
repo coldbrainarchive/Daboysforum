@@ -3106,14 +3106,14 @@ function PostPage({ user, userRole, memberUsername }) {
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <button
                   type="button"
-                  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                  onClick={() => { window.scrollTo({ top: 0, behavior: "smooth" }); document.documentElement.scrollTo({ top: 0, behavior: "smooth" }); }}
                   style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, borderRadius: 999, border: "none", background: "#20262f", color: "#dbe4ee", fontSize: 12, fontWeight: 800, cursor: "pointer", flexShrink: 0 }}
                 >
                   ↑
                 </button>
                 <button
                   type="button"
-                  onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}
+                  onClick={() => { window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }); document.documentElement.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" }); }}
                   style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, borderRadius: 999, border: "none", background: "#20262f", color: "#dbe4ee", fontSize: 12, fontWeight: 800, cursor: "pointer", flexShrink: 0 }}
                 >
                   ↓
