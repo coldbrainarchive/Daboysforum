@@ -3855,14 +3855,14 @@ function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername
       <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(420px, 100vw)", background: "linear-gradient(180deg, #1b1d24 0%, #14161c 100%)", borderLeft: "1px solid #2e303a", zIndex: 51, display: "flex", flexDirection: "column", boxShadow: "-20px 0 60px rgba(0,0,0,0.5)" }}>
         {/* Header */}
         <div style={{ padding: "14px 18px", borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", gap: 12 }}>
-          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", background: "#1f2937", color: "#94a3b8", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>✕</button>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: avatarColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#14081d", flexShrink: 0 }}>
+            {displayName[0]?.toUpperCase() || "?"}
+          </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ color: "#f8fafc", fontWeight: 700, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</div>
             <div style={{ color: "#64748b", fontSize: 12 }}>{roleLabel}</div>
           </div>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: avatarColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#14081d", flexShrink: 0 }}>
-            {displayName[0]?.toUpperCase() || "?"}
-          </div>
+          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", background: "#1f2937", color: "#94a3b8", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>✕</button>
         </div>
 
         {/* Tabs */}
@@ -3936,7 +3936,7 @@ function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername
                   </div>
                   <div className="content-card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Change Password</div>
-                    <input type="password" placeholder="New password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && updatePassword()} style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#0f1117", color: "#f8fafc", fontSize: 13, width: "100%", boxSizing: "border-box" }} />
+                    <input type="password" placeholder="New password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && updatePassword()} style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#0f1117", color: "#f8fafc", fontSize: 16, width: "100%", boxSizing: "border-box" }} />
                     <button onClick={updatePassword} style={{ padding: "9px 14px", borderRadius: 10, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Update Password</button>
                   </div>
                   <button onClick={() => { onLogout(); onClose(); }} style={{ padding: "10px 16px", borderRadius: 12, border: "1px solid #374151", background: "transparent", color: "#94a3b8", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
@@ -3963,8 +3963,8 @@ function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername
                   <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 2 }}>
                     {isSignUp ? "Create account" : "Sign in"}
                   </div>
-                  <input placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#0f1117", color: "#f8fafc", fontSize: 13, width: "100%", boxSizing: "border-box" }} />
-                  <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAuth()} style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#0f1117", color: "#f8fafc", fontSize: 13, width: "100%", boxSizing: "border-box" }} />
+                  <input placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#0f1117", color: "#f8fafc", fontSize: 16, width: "100%", boxSizing: "border-box" }} />
+                  <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAuth()} style={{ padding: "9px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#0f1117", color: "#f8fafc", fontSize: 16, width: "100%", boxSizing: "border-box" }} />
                   <div style={{ display: "flex", gap: 8 }}>
                     <button onClick={handleAuth} disabled={authLoading} style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
                       {authLoading ? "…" : isSignUp ? "Sign Up" : "Log In"}
