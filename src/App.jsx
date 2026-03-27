@@ -1066,7 +1066,7 @@ function RealtimeStyles() {
         border: 1px solid #2e303a;
         border-radius: 10px;
         color: #f8fafc;
-        font-size: 13px;
+        font-size: 16px;
         font-family: inherit;
         padding: 10px 12px;
         resize: none;
@@ -3242,8 +3242,7 @@ function PostPage({ user, userRole, memberUsername }) {
 // ==============================
 // MOD PANEL (FINAL)
 // ==============================
-function ModPanel({ setModName }) {
-  const [name, setName] = useState(localStorage.getItem("mod_name") || "");
+function ModPanel() {
   const [users, setUsers] = useState([]);
   const [bans, setBans] = useState([]);
   const [jailed, setJailed] = useState([]);
@@ -3308,13 +3307,6 @@ function ModPanel({ setModName }) {
     }, 0);
     return () => window.clearTimeout(timeoutId);
   }, [load]);
-
-  // SAVE MOD NAME
-  const saveName = () => {
-    localStorage.setItem("mod_name", name);
-    setModName(name);
-    alert("Saved!");
-  };
 
   // LOGOUT
   const logout = async () => {
@@ -3426,7 +3418,7 @@ function ModPanel({ setModName }) {
               placeholder="New password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              style={{ width: "100%", boxSizing: "border-box", padding: "11px 14px", borderRadius: 10, border: "1px solid #3f4756", fontSize: 14, background: "#0f1117", color: "#f8fafc" }}
+              style={{ width: "100%", boxSizing: "border-box", padding: "11px 14px", borderRadius: 10, border: "1px solid #3f4756", fontSize: 16, background: "#0f1117", color: "#f8fafc" }}
             />
             <button
               onClick={updatePassword}
@@ -3437,21 +3429,6 @@ function ModPanel({ setModName }) {
           </div>
         </div>
 
-        {/* Display Name */}
-        <div className="content-card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <h3 style={{ margin: 0, color: "#f8fafc", fontSize: 16, fontWeight: 700 }}>Display Name</h3>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            style={{ width: "100%", boxSizing: "border-box", padding: "11px 14px", borderRadius: 10, border: "1px solid #3f4756", fontSize: 14, background: "#0f1117", color: "#f8fafc" }}
-          />
-          <button
-            onClick={saveName}
-            style={{ width: "100%", padding: "10px 16px", borderRadius: 12, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, cursor: "pointer", fontSize: 14 }}
-          >
-            Save
-          </button>
-        </div>
       </div>
 
       {/* Users */}
@@ -3464,7 +3441,7 @@ function ModPanel({ setModName }) {
             placeholder="Search users…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ padding: "7px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#0f1117", color: "#f8fafc", fontSize: 13, width: 180 }}
+            style={{ padding: "7px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#0f1117", color: "#f8fafc", fontSize: 16, width: 180 }}
           />
           <select
             value={sortBy}
@@ -3578,7 +3555,7 @@ function ModPanel({ setModName }) {
                 placeholder="Search members…"
                 value={memberSearch}
                 onChange={(e) => setMemberSearch(e.target.value)}
-                style={{ padding: "7px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#0f1117", color: "#f8fafc", fontSize: 13, width: 180 }}
+                style={{ padding: "7px 12px", borderRadius: 10, border: "1px solid #3f4756", background: "#0f1117", color: "#f8fafc", fontSize: 16, width: 180 }}
               />
               <select
                 value={memberSortBy}
@@ -4004,24 +3981,29 @@ export default function App() {
     setUserRole(role);
   };
 
+  const applyUser = (u) => {
+    if (!u) { applyRole(null); return; }
+    const role = u.user_metadata?.role || "user";
+    const username = u.user_metadata?.username || null;
+    applyRole(role);
+    if (username) {
+      setBrowseUsername(username);
+      if (role === "mod") {
+        setModName(username);
+        localStorage.setItem("mod_name", username);
+      }
+    }
+  };
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      const u = data.user;
-      setUser(u);
-      if (u) {
-        applyRole(u.user_metadata?.role || "user");
-        if (u.user_metadata?.username) setBrowseUsername(u.user_metadata.username);
-      }
+      setUser(data.user);
+      applyUser(data.user);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user || null;
       setUser(u);
-      if (u) {
-        applyRole(u.user_metadata?.role || "user");
-        if (u.user_metadata?.username) setBrowseUsername(u.user_metadata.username);
-      } else {
-        applyRole(null);
-      }
+      applyUser(u);
     });
     return () => { subscription.unsubscribe(); };
   }, []);
@@ -4245,7 +4227,7 @@ export default function App() {
           <Route path="/board/:slug" element={<BoardPage />} />
           <Route path="/new" element={<NewPost user={user} userRole={userRole} memberUsername={browseUsername} />} />
           <Route path="/post/:id" element={<PostPage user={user} userRole={userRole} memberUsername={browseUsername} />} />
-          <Route path="/mod" element={userRole === "mod" ? <ModPanel setModName={setModName} /> : <Auth setUser={setUser} />} />
+          <Route path="/mod" element={userRole === "mod" ? <ModPanel /> : <Auth setUser={setUser} />} />
         </Routes>
 
         {showPanel && (
