@@ -3841,11 +3841,11 @@ function UserPanel({ user, userRole, modName, browseUsername, lastMemberUsername
     if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
     const idx = tabIds.indexOf(tab);
     if (dx < 0) {
-      // swipe left → previous tab, or close if already on first
-      if (idx === 0) { onClose(); } else { setTab(tabIds[idx - 1]); }
-    } else {
-      // swipe right → next tab
+      // swipe left → next tab
       if (idx < tabIds.length - 1) setTab(tabIds[idx + 1]);
+    } else {
+      // swipe right → previous tab, or close if already on first
+      if (idx === 0) { onClose(); } else { setTab(tabIds[idx - 1]); }
     }
   };
 
