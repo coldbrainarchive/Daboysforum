@@ -4083,8 +4083,21 @@ export default function App() {
     const onTouchStart = (e) => {
       ptrRef.current.startY = e.touches[0].clientY;
       ptrRef.current.active = false;
+      // Don't intercept touches that originate inside a scrollable child (e.g. chat window)
+      let el = e.target;
+      ptrRef.current.insideScroller = false;
+      while (el && el !== document.body) {
+        const oy = window.getComputedStyle(el).overflowY;
+        if ((oy === "auto" || oy === "scroll") && el.scrollHeight > el.clientHeight) {
+          ptrRef.current.insideScroller = true;
+          break;
+        }
+        el = el.parentElement;
+      }
     };
     const onTouchMove = (e) => {
+      if (ptrRef.current.insideScroller) return;
+
       const dy = e.touches[0].clientY - ptrRef.current.startY;
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
       const atBottom = scrollTop + window.innerHeight >= document.documentElement.scrollHeight - 8;
@@ -4139,13 +4152,13 @@ export default function App() {
         <RealtimeStyles />
         {(ptrPull > 0 || ptrRefreshing) && (
           <div style={{
-            position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999,
-            display: "flex", justifyContent: "center", paddingTop: 12,
+            position: "fixed", top: 0, left: 0, right: 0, height: 52, zIndex: 9999,
+            display: "flex", alignItems: "center", justifyContent: "center",
             pointerEvents: "none"
           }}>
             <div style={{
-              width: 36, height: 36, borderRadius: "50%",
-              border: "3px solid #c084fc",
+              width: 20, height: 20, borderRadius: "50%",
+              border: "2.5px solid #c084fc",
               borderTopColor: "transparent",
               opacity: ptrRefreshing ? 1 : ptrPull,
               transform: `rotate(${ptrRefreshing ? 0 : ptrPull * 270}deg)`,
