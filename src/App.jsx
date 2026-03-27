@@ -4074,27 +4074,87 @@ export default function App() {
     })();
   }, []);
 
+  const [ptrPull, setPtrPull] = useState(0); // 0-1 progress
+  const [ptrRefreshing, setPtrRefreshing] = useState(false);
+  const ptrRef = useRef({ startY: 0, active: false });
+  const PTR_THRESHOLD = 72;
+
   useEffect(() => {
-    let startY = 0;
-    const onTouchStart = (e) => { startY = e.touches[0].clientY; };
+    const onTouchStart = (e) => {
+      ptrRef.current.startY = e.touches[0].clientY;
+      ptrRef.current.active = false;
+    };
     const onTouchMove = (e) => {
-      const dy = e.touches[0].clientY - startY;
+      const dy = e.touches[0].clientY - ptrRef.current.startY;
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
       const atBottom = scrollTop + window.innerHeight >= document.documentElement.scrollHeight - 8;
-      if (atBottom && dy < 0) e.preventDefault();
+
+      // Block momentum bounce at the bottom
+      if (atBottom && dy < 0) {
+        e.preventDefault();
+        return;
+      }
+
+      // Custom pull-to-refresh at the top
+      if (scrollTop <= 0 && dy > 0) {
+        e.preventDefault();
+        ptrRef.current.active = true;
+        const progress = Math.min(dy / PTR_THRESHOLD, 1);
+        setPtrPull(progress);
+        return;
+      }
+
+      // Reset if they scrolled down and then back up while active
+      if (ptrRef.current.active) {
+        setPtrPull(0);
+        ptrRef.current.active = false;
+      }
+    };
+    const onTouchEnd = () => {
+      if (ptrRef.current.active && ptrPullRef.current >= 1) {
+        setPtrRefreshing(true);
+        setTimeout(() => window.location.reload(), 300);
+      } else {
+        setPtrPull(0);
+      }
+      ptrRef.current.active = false;
     };
     document.addEventListener("touchstart", onTouchStart, { passive: true });
     document.addEventListener("touchmove", onTouchMove, { passive: false });
+    document.addEventListener("touchend", onTouchEnd);
     return () => {
       document.removeEventListener("touchstart", onTouchStart);
       document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
     };
   }, []);
+
+  // Keep a ref to ptrPull so the touchend handler can read it without stale closure
+  const ptrPullRef = useRef(0);
+  useEffect(() => { ptrPullRef.current = ptrPull; }, [ptrPull]);
 
   return (
     <ErrorBoundary>
       <Router>
         <RealtimeStyles />
+        {(ptrPull > 0 || ptrRefreshing) && (
+          <div style={{
+            position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999,
+            display: "flex", justifyContent: "center", paddingTop: 12,
+            pointerEvents: "none"
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: "50%",
+              border: "3px solid #c084fc",
+              borderTopColor: "transparent",
+              opacity: ptrRefreshing ? 1 : ptrPull,
+              transform: `rotate(${ptrRefreshing ? 0 : ptrPull * 270}deg)`,
+              animation: ptrRefreshing ? "ptr-spin 0.6s linear infinite" : "none",
+              transition: ptrRefreshing ? "none" : "opacity 0.1s"
+            }} />
+          </div>
+        )}
+        <style>{`@keyframes ptr-spin { to { transform: rotate(360deg); } }`}</style>
         <nav className="app-topbar">
           <Link to="/" className="app-brand">postchats 💬</Link>
 
