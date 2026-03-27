@@ -3247,7 +3247,6 @@ function ModPanel() {
   const [bans, setBans] = useState([]);
   const [jailed, setJailed] = useState([]);
   const [members, setMembers] = useState([]);
-  const [ipByUsername, setIpByUsername] = useState({});
   const [browserIdByUsername, setBrowserIdByUsername] = useState({});
   const [memberSearch, setMemberSearch] = useState("");
   const [memberSortBy, setMemberSortBy] = useState("joined_desc");
@@ -3297,7 +3296,6 @@ function ModPanel() {
 
     const memberUsernames = new Set((membersJson.members || []).map(m => m.user_metadata?.username).filter(Boolean));
     setUsers(Object.values(map).filter(u => !memberUsernames.has(u.username)));
-    setIpByUsername(ipByUsername);
     setBrowserIdByUsername(browserIdByUsername);
   }, []);
 
@@ -3467,60 +3465,36 @@ function ModPanel() {
               <div
                 key={u.browser_id}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "12px 20px",
+                  padding: "12px 16px",
                   borderBottom: i < sortedUsers.length - 1 ? "1px solid #2e303a" : "none",
                   background: rowBg
                 }}
               >
-                <div
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: "50%",
-                    background: getUserColor(u.browser_id, u.username),
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 13,
-                    fontWeight: 800,
-                    color: "#0f1117",
-                    flexShrink: 0
-                  }}
-                >
-                  {u.username[0].toUpperCase()}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <span style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14 }}>{u.username}</span>
-                    {banned && <span style={{ fontSize: 11, fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.12)", padding: "1px 7px", borderRadius: 999 }}>BANNED</span>}
-                    {jailedUser && !banned && <span style={{ fontSize: 11, fontWeight: 700, color: "#fbbf24", background: "rgba(251,191,36,0.12)", padding: "1px 7px", borderRadius: 999 }}>CAGED</span>}
-                    {u.joined_at && (
-                      <span style={{ color: "#64748b", fontSize: 12 }}>· joined {timeAgo(u.joined_at)}</span>
-                    )}
+                {/* Info row */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: getUserColor(u.browser_id, u.username), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#0f1117", flexShrink: 0 }}>
+                    {u.username[0].toUpperCase()}
                   </div>
-                  <div style={{ color: "#64748b", fontSize: 12, fontFamily: "var(--mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.browser_id}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <span style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14 }}>{u.username}</span>
+                      {banned && <span style={{ fontSize: 10, fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.12)", padding: "1px 6px", borderRadius: 999 }}>BANNED</span>}
+                      {jailedUser && !banned && <span style={{ fontSize: 10, fontWeight: 700, color: "#fbbf24", background: "rgba(251,191,36,0.12)", padding: "1px 6px", borderRadius: 999 }}>CAGED</span>}
+                    </div>
+                    <div style={{ color: "#64748b", fontSize: 11, marginTop: 1 }}>
+                      {u.joined_at ? `joined ${timeAgo(u.joined_at)} · ` : ""}{u.browser_id.slice(0, 8)}…
+                    </div>
+                  </div>
                 </div>
-                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                  <button
-                    onClick={() => toggleJail(u)}
-                    style={{ padding: "7px 12px", borderRadius: 10, border: "none", background: jailedUser ? "#78350f" : "#451a03", color: jailedUser ? "#fde68a" : "#fbbf24", fontWeight: 700, cursor: "pointer", fontSize: 13 }}
-                  >
+                {/* Action row */}
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button onClick={() => toggleJail(u)} style={{ flex: 1, padding: "7px 4px", borderRadius: 10, border: "none", background: jailedUser ? "#78350f" : "#451a03", color: jailedUser ? "#fde68a" : "#fbbf24", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>
                     {jailedUser ? "Uncage" : "🪹 Cage"}
                   </button>
-                  <button
-                    onClick={() => toggleBan(u)}
-                    style={{ padding: "7px 12px", borderRadius: 10, border: "none", background: banned ? "#1f2937" : "#7f1d1d", color: banned ? "#f8fafc" : "#fca5a5", fontWeight: 700, cursor: "pointer", fontSize: 13 }}
-                  >
+                  <button onClick={() => toggleBan(u)} style={{ flex: 1, padding: "7px 4px", borderRadius: 10, border: "none", background: banned ? "#1f2937" : "#7f1d1d", color: banned ? "#f8fafc" : "#fca5a5", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>
                     {banned ? "Unban" : "Ban"}
                   </button>
-                  <button
-                    onClick={() => deleteUsername(u)}
-                    title="Clear name — gives them a fresh bird name next post"
-                    style={{ padding: "7px 10px", borderRadius: 10, border: "1px solid #374151", background: "#1f2937", color: "#94a3b8", fontWeight: 700, cursor: "pointer", fontSize: 12 }}
-                  >
+                  <button onClick={() => deleteUsername(u)} title="Clear name" style={{ flex: 1, padding: "7px 4px", borderRadius: 10, border: "1px solid #374151", background: "#1f2937", color: "#94a3b8", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>
                     🗑 Clear
                   </button>
                 </div>
@@ -3574,7 +3548,6 @@ function ModPanel() {
               )}
               {sortedMembers.map((m, i) => {
                 const mUsername = m.user_metadata?.username || "";
-                const mIpHash = ipByUsername[mUsername] || null;
                 const mBrowserId = browserIdByUsername[mUsername] || null;
                 const mAsUser = mBrowserId ? { browser_id: mBrowserId, username: mUsername } : null;
                 const banned = mAsUser ? isBanned(mAsUser) : false;
@@ -3584,39 +3557,35 @@ function ModPanel() {
                 return (
                   <div
                     key={m.id}
-                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderBottom: i < sortedMembers.length - 1 ? "1px solid #2e303a" : "none", background: rowBg }}
+                    style={{ padding: "12px 16px", borderBottom: i < sortedMembers.length - 1 ? "1px solid #2e303a" : "none", background: rowBg }}
                   >
-                    <div style={{ width: 34, height: 34, borderRadius: "50%", background: isMod ? "#c084fc" : getUserColor(m.id, mUsername), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#0f1117", flexShrink: 0 }}>
-                      {(mUsername || "?")?.[0]?.toUpperCase()}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                        <span style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14 }}>{mUsername || "—"}</span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: isMod ? "#c084fc" : "#4ade80", background: isMod ? "rgba(192,132,252,0.12)" : "rgba(74,222,128,0.1)", padding: "1px 7px", borderRadius: 999 }}>
-                          {isMod ? "MOD" : "MEMBER"}
-                        </span>
-                        {banned && <span style={{ fontSize: 11, fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.12)", padding: "1px 7px", borderRadius: 999 }}>BANNED</span>}
-                        {jailedMember && !banned && <span style={{ fontSize: 11, fontWeight: 700, color: "#fbbf24", background: "rgba(251,191,36,0.12)", padding: "1px 7px", borderRadius: 999 }}>CAGED</span>}
+                    {/* Info row */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: isMod ? "#c084fc" : getUserColor(m.id, mUsername), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#0f1117", flexShrink: 0 }}>
+                        {(mUsername || "?")?.[0]?.toUpperCase()}
                       </div>
-                      <div style={{ color: "#475569", fontSize: 11, marginTop: 2 }}>
-                        Joined {timeAgo(m.created_at)}
-                        {mIpHash ? ` · IP: ${mIpHash.slice(0, 10)}…` : ""}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          <span style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14 }}>{mUsername || "—"}</span>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: isMod ? "#c084fc" : "#4ade80", background: isMod ? "rgba(192,132,252,0.12)" : "rgba(74,222,128,0.1)", padding: "1px 6px", borderRadius: 999 }}>
+                            {isMod ? "MOD" : "MEMBER"}
+                          </span>
+                          {banned && <span style={{ fontSize: 10, fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.12)", padding: "1px 6px", borderRadius: 999 }}>BANNED</span>}
+                          {jailedMember && !banned && <span style={{ fontSize: 10, fontWeight: 700, color: "#fbbf24", background: "rgba(251,191,36,0.12)", padding: "1px 6px", borderRadius: 999 }}>CAGED</span>}
+                        </div>
+                        <div style={{ color: "#475569", fontSize: 11, marginTop: 1 }}>
+                          Joined {timeAgo(m.created_at)}{mBrowserId ? ` · ${mBrowserId.slice(0, 8)}…` : ""}
+                        </div>
                       </div>
-                      {mBrowserId && <div style={{ color: "#64748b", fontSize: 11, fontFamily: "var(--mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{mBrowserId}</div>}
                     </div>
-                    <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                    {/* Action row */}
+                    <div style={{ display: "flex", gap: 6 }}>
                       {mAsUser && (
                         <>
-                          <button
-                            onClick={() => toggleJail(mAsUser)}
-                            style={{ padding: "6px 10px", borderRadius: 10, border: "none", background: jailedMember ? "#78350f" : "#451a03", color: jailedMember ? "#fde68a" : "#fbbf24", fontWeight: 700, cursor: "pointer", fontSize: 12 }}
-                          >
+                          <button onClick={() => toggleJail(mAsUser)} style={{ flex: 1, padding: "7px 4px", borderRadius: 10, border: "none", background: jailedMember ? "#78350f" : "#451a03", color: jailedMember ? "#fde68a" : "#fbbf24", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>
                             {jailedMember ? "Uncage" : "🪹 Cage"}
                           </button>
-                          <button
-                            onClick={() => toggleBan(mAsUser)}
-                            style={{ padding: "6px 10px", borderRadius: 10, border: "none", background: banned ? "#1f2937" : "#7f1d1d", color: banned ? "#f8fafc" : "#fca5a5", fontWeight: 700, cursor: "pointer", fontSize: 12 }}
-                          >
+                          <button onClick={() => toggleBan(mAsUser)} style={{ flex: 1, padding: "7px 4px", borderRadius: 10, border: "none", background: banned ? "#1f2937" : "#7f1d1d", color: banned ? "#f8fafc" : "#fca5a5", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>
                             {banned ? "Unban" : "Ban"}
                           </button>
                         </>
@@ -3625,29 +3594,21 @@ function ModPanel() {
                         onClick={async () => {
                           const newRole = isMod ? "user" : "mod";
                           const headers = await getAuthHeader();
-                          await fetch("https://daboysforumip.coldbrainarchive.workers.dev/update-member", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json", ...headers },
-                            body: JSON.stringify({ user_id: m.id, role: newRole })
-                          });
+                          await fetch("https://daboysforumip.coldbrainarchive.workers.dev/update-member", { method: "POST", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify({ user_id: m.id, role: newRole }) });
                           load();
                         }}
-                        style={{ padding: "6px 10px", borderRadius: 10, border: "none", background: isMod ? "#1f2937" : "#c084fc", color: isMod ? "#f8fafc" : "#14081d", fontWeight: 700, fontSize: 12, cursor: "pointer" }}
+                        style={{ flex: 1, padding: "7px 4px", borderRadius: 10, border: "none", background: isMod ? "#1f2937" : "#c084fc", color: isMod ? "#f8fafc" : "#14081d", fontWeight: 700, fontSize: 12, cursor: "pointer" }}
                       >
-                        {isMod ? "Remove Mod" : "Make Mod"}
+                        {isMod ? "Demote" : "Mod"}
                       </button>
                       <button
                         onClick={async () => {
                           if (!confirm(`Delete ${mUsername || "this member"}? This cannot be undone.`)) return;
                           const headers = await getAuthHeader();
-                          await fetch("https://daboysforumip.coldbrainarchive.workers.dev/delete-member", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json", ...headers },
-                            body: JSON.stringify({ user_id: m.id })
-                          });
+                          await fetch("https://daboysforumip.coldbrainarchive.workers.dev/delete-member", { method: "POST", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify({ user_id: m.id }) });
                           load();
                         }}
-                        style={{ padding: "6px 10px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#f87171", fontWeight: 700, fontSize: 12, cursor: "pointer" }}
+                        style={{ flex: 1, padding: "7px 4px", borderRadius: 10, border: "1px solid #374151", background: "transparent", color: "#f87171", fontWeight: 700, fontSize: 12, cursor: "pointer" }}
                       >
                         Delete
                       </button>
