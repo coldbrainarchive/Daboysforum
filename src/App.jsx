@@ -4033,7 +4033,11 @@ export default function App() {
       const { data: commentRow } = await supabase
         .from("comments").select("username").eq("browser_id", browserId)
         .eq("is_mod", false).not("username", "is", null).limit(1).maybeSingle();
-      if (commentRow?.username) setBrowseUsername(commentRow.username);
+      if (commentRow?.username) { setBrowseUsername(commentRow.username); return; }
+      try {
+        const res = await fetch("https://daboysforumip.coldbrainarchive.workers.dev/my-username", { headers: await getOptionalAuthHeader() });
+        if (res.ok) { const d = await res.json(); if (d.username) setBrowseUsername(d.username); }
+      } catch {}
     })();
   }, []);
 
