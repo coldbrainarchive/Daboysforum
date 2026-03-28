@@ -2096,7 +2096,7 @@ function ChatMessage({ comment, postBrowserId, postUsername, canDelete, onDelete
               ref={emojiInputRef}
               className="chat-emoji-picker-input"
               type="text"
-              inputMode="text"
+              inputMode="emoji"
               placeholder="Pick an emoji..."
               onChange={handleEmojiInput}
               onBlur={() => setIsPickingEmoji(false)}
