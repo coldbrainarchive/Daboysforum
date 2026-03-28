@@ -1994,12 +1994,10 @@ function ChatMessage({ comment, postBrowserId, postUsername, canDelete, onDelete
   function handleReactClick() {
     setShowActions(false);
     setIsPickingEmoji(true);
-    setTimeout(() => {
-      if (emojiInputRef.current) {
-        emojiInputRef.current.value = "";
-        emojiInputRef.current.focus();
-      }
-    }, 0);
+    if (emojiInputRef.current) {
+      emojiInputRef.current.value = "";
+      emojiInputRef.current.focus();
+    }
   }
 
   function handleEmojiInput(e) {
@@ -2090,19 +2088,17 @@ function ChatMessage({ comment, postBrowserId, postUsername, canDelete, onDelete
           </div>
         )}
 
-        {isPickingEmoji && (
-          <div className="chat-emoji-picker-row">
-            <input
-              ref={emojiInputRef}
-              className="chat-emoji-picker-input"
-              type="text"
-              inputMode="emoji"
-              placeholder="Pick an emoji..."
-              onChange={handleEmojiInput}
-              onBlur={() => setIsPickingEmoji(false)}
-            />
-          </div>
-        )}
+        <div className="chat-emoji-picker-row" style={{ display: isPickingEmoji ? "" : "none" }}>
+          <input
+            ref={emojiInputRef}
+            className="chat-emoji-picker-input"
+            type="text"
+            inputMode="emoji"
+            placeholder="Pick an emoji..."
+            onChange={handleEmojiInput}
+            onBlur={() => setIsPickingEmoji(false)}
+          />
+        </div>
       </div>
     </div>
   );
