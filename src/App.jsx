@@ -1641,13 +1641,107 @@ function BoardBadge({ boardName }) {
 }
 
 const POST_PREVIEW_LIMIT = 280;
+const ATTACH_MARKER = "\n\n[ATTACH:";
+
+function parsePostContent(raw) {
+  if (!raw) return { text: raw || "", attachment: null };
+  const idx = raw.indexOf(ATTACH_MARKER);
+  if (idx === -1) return { text: raw, attachment: null };
+  const text = raw.slice(0, idx);
+  try {
+    const json = raw.slice(idx + ATTACH_MARKER.length, raw.lastIndexOf("]"));
+    return { text, attachment: JSON.parse(json) };
+  } catch {
+    return { text: raw, attachment: null };
+  }
+}
+
+function PostAttachment({ attachment }) {
+  if (!attachment) return null;
+  const { type, url, title, description, image } = attachment;
+
+  if (type === "image") {
+    return (
+      <div style={{ marginTop: 10 }}>
+        <img
+          src={url}
+          alt=""
+          style={{ maxWidth: "100%", borderRadius: 10, display: "block", maxHeight: 400, objectFit: "cover" }}
+          onError={(e) => { e.target.style.display = "none"; }}
+        />
+      </div>
+    );
+  }
+
+  if (type === "video") {
+    const isYoutube = /youtube\.com|youtu\.be/.test(url);
+    if (isYoutube) {
+      const videoId = url.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1];
+      return videoId ? (
+        <div style={{ marginTop: 10, borderRadius: 10, overflow: "hidden", aspectRatio: "16/9" }}>
+          <iframe
+            src={`https://www.youtube.com/embed/${videoId}`}
+            style={{ width: "100%", height: "100%", border: "none" }}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      ) : null;
+    }
+    return (
+      <div style={{ marginTop: 10 }}>
+        <video
+          src={url}
+          controls
+          style={{ maxWidth: "100%", borderRadius: 10, maxHeight: 400 }}
+        />
+      </div>
+    );
+  }
+
+  if (type === "link") {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ textDecoration: "none", display: "block", marginTop: 10 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{
+          border: "1px solid rgba(148,163,184,0.2)",
+          borderRadius: 10,
+          overflow: "hidden",
+          background: "#1a1d27"
+        }}>
+          {image && (
+            <img
+              src={image}
+              alt=""
+              style={{ width: "100%", maxHeight: 180, objectFit: "cover", display: "block" }}
+              onError={(e) => { e.target.style.display = "none"; }}
+            />
+          )}
+          <div style={{ padding: "10px 12px" }}>
+            {title && <div style={{ color: "#f1f5f9", fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{title}</div>}
+            {description && <div style={{ color: "#94a3b8", fontSize: 12, marginBottom: 4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{description}</div>}
+            <div style={{ color: "#7c3aed", fontSize: 11, fontWeight: 600 }}>{new URL(url).hostname}</div>
+          </div>
+        </div>
+      </a>
+    );
+  }
+
+  return null;
+}
 
 function PostCard({ post, commentCount = 0, score = 0, myVote = 0, onVote }) {
   const [shareLabel, setShareLabel] = useState("Share");
   const [expanded, setExpanded] = useState(false);
   const isMod = isModPost(post);
   const boardName = getBoardNameFromPost(post);
-  const isLong = (post.content || "").length > POST_PREVIEW_LIMIT;
+  const { text: postText, attachment } = parsePostContent(post.content);
+  const isLong = postText.length > POST_PREVIEW_LIMIT;
 
   async function handleShare(event) {
     event.preventDefault();
@@ -1743,7 +1837,7 @@ function PostCard({ post, commentCount = 0, score = 0, myVote = 0, onVote }) {
           </h3>
 
           <p className="feed-post-content">
-            {isLong && !expanded ? `${post.content.slice(0, POST_PREVIEW_LIMIT)}…` : post.content}
+            {isLong && !expanded ? `${postText.slice(0, POST_PREVIEW_LIMIT)}…` : postText}
           </p>
           {isLong && (
             <button
@@ -1754,6 +1848,7 @@ function PostCard({ post, commentCount = 0, score = 0, myVote = 0, onVote }) {
               {expanded ? "See less" : "See more"}
             </button>
           )}
+          <PostAttachment attachment={attachment} />
         </div>
       </Link>
 
@@ -2465,6 +2560,13 @@ function NewPost({ user, userRole, memberUsername }) {
   const [isUserJailed, setIsUserJailed] = useState(false);
   const requestedBoard = getBoardBySlug(searchParams.get("board"));
   const [selectedBoardSlug, setSelectedBoardSlug] = useState(requestedBoard?.slug || "random");
+  const [attachment, setAttachment] = useState(null);
+  const [attachMode, setAttachMode] = useState(null);
+  const [linkInput, setLinkInput] = useState("");
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const imageInputRef = useRef(null);
+  const videoInputRef = useRef(null);
 
   useEffect(() => {
     if (user) {
@@ -2486,6 +2588,42 @@ function NewPost({ user, userRole, memberUsername }) {
       } catch {}
     })();
   }, [user, memberUsername]);
+
+  async function handleFileUpload(file, type) {
+    setUploadLoading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${getBrowserId()}/${Date.now()}.${ext}`;
+      const { data, error } = await supabase.storage.from("post-media").upload(path, file, { cacheControl: "3600" });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from("post-media").getPublicUrl(data.path);
+      setAttachment({ type, url: publicUrl });
+      setAttachMode(null);
+    } catch (err) {
+      alert("Upload failed: " + err.message);
+    } finally {
+      setUploadLoading(false);
+    }
+  }
+
+  async function handleAddLink() {
+    if (!linkInput.trim()) return;
+    let url = linkInput.trim();
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+    setLinkLoading(true);
+    try {
+      const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}`);
+      const data = await res.json();
+      const d = data.data || {};
+      setAttachment({ type: "link", url: d.url || url, title: d.title, description: d.description, image: d.image?.url });
+    } catch {
+      setAttachment({ type: "link", url });
+    } finally {
+      setLinkLoading(false);
+      setAttachMode(null);
+      setLinkInput("");
+    }
+  }
 
   const createPost = async () => {
     try {
@@ -2511,7 +2649,7 @@ function NewPost({ user, userRole, memberUsername }) {
         },
         body: JSON.stringify({
           title,
-          content,
+          content: attachment ? content + ATTACH_MARKER + JSON.stringify(attachment) + "]" : content,
           board: selectedBoard.name,
           category: selectedBoard.name,
           community_id: selectedBoard.slug,
@@ -2673,13 +2811,64 @@ function NewPost({ user, userRole, memberUsername }) {
             />
           </div>
 
+          {/* Attachment preview */}
+          {attachment && (
+            <div style={{ marginTop: 10, position: "relative" }}>
+              <PostAttachment attachment={attachment} />
+              <button
+                type="button"
+                onClick={() => setAttachment(null)}
+                style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", border: "none", color: "#fff", borderRadius: 999, width: 22, height: 22, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center" }}
+              >✕</button>
+            </div>
+          )}
+
+          {/* Link input mode */}
+          {attachMode === "link" && (
+            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+              <input
+                value={linkInput}
+                onChange={(e) => setLinkInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddLink()}
+                placeholder="Paste a URL..."
+                autoFocus
+                style={{ flex: 1, padding: "6px 12px", borderRadius: 8, border: "1px solid #3f4756", background: "#0f1117", color: "#f8fafc", fontSize: 14, outline: "none" }}
+              />
+              <button type="button" onClick={handleAddLink} disabled={linkLoading} style={{ padding: "6px 12px", borderRadius: 8, border: "none", background: "#c084fc", color: "#14081d", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                {linkLoading ? "…" : "Add"}
+              </button>
+              <button type="button" onClick={() => setAttachMode(null)} style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #3f4756", background: "transparent", color: "#94a3b8", fontSize: 13, cursor: "pointer" }}>
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {/* Hidden file inputs */}
+          <input ref={imageInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => e.target.files[0] && handleFileUpload(e.target.files[0], "image")} />
+          <input ref={videoInputRef} type="file" accept="video/*" style={{ display: "none" }} onChange={(e) => e.target.files[0] && handleFileUpload(e.target.files[0], "video")} />
+
           <div style={{ borderTop: "1px solid #2e303a", marginTop: 14 }}>
-            <div className="feed-post-actions" style={{ marginTop: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14 }}>
+              {/* Attach buttons */}
+              {!attachment && attachMode !== "link" && (
+                <>
+                  <button type="button" onClick={() => setAttachMode("link")} title="Attach link" style={{ padding: "5px 10px", borderRadius: 8, border: "1px solid #3f4756", background: "transparent", color: "#94a3b8", fontSize: 13, cursor: "pointer" }}>
+                    🔗 Link
+                  </button>
+                  <button type="button" onClick={() => imageInputRef.current?.click()} disabled={uploadLoading} title="Attach photo" style={{ padding: "5px 10px", borderRadius: 8, border: "1px solid #3f4756", background: "transparent", color: "#94a3b8", fontSize: 13, cursor: "pointer" }}>
+                    {uploadLoading ? "…" : "🖼 Photo"}
+                  </button>
+                  <button type="button" onClick={() => videoInputRef.current?.click()} disabled={uploadLoading} title="Attach video" style={{ padding: "5px 10px", borderRadius: 8, border: "1px solid #3f4756", background: "transparent", color: "#94a3b8", fontSize: 13, cursor: "pointer" }}>
+                    {uploadLoading ? "…" : "🎥 Video"}
+                  </button>
+                </>
+              )}
               <button
                 onClick={createPost}
                 disabled={isSending}
                 className="feed-post-action-pill"
                 style={{
+                  marginLeft: "auto",
                   background: isSending ? "#3b1f52" : "#c084fc",
                   color: "#14081d",
                   borderColor: "#c084fc",
@@ -3035,7 +3224,8 @@ function PostPage({ user, userRole, memberUsername }) {
             <h2 className="feed-post-title" style={{ fontSize: 32, marginBottom: 12 }}>
               {post.title}
             </h2>
-            <p className="feed-post-content">{post.content}</p>
+            <p className="feed-post-content">{parsePostContent(post.content).text}</p>
+            <PostAttachment attachment={parsePostContent(post.content).attachment} />
           </div>
 
           <div className="feed-post-actions" style={{ marginTop: 14 }}>
