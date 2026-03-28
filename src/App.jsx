@@ -226,7 +226,7 @@ function RealtimeStyles() {
         top: 73px;
         z-index: 15;
         margin: 0 0 16px;
-        padding-top: 0;
+        padding-top: 16px;
         background: #16171d;
       }
 
@@ -235,8 +235,8 @@ function RealtimeStyles() {
         position: absolute;
         left: 0;
         right: 0;
-        top: -16px;
-        height: 16px;
+        top: -32px;
+        height: 32px;
         background: #16171d;
         pointer-events: none;
       }
@@ -1151,12 +1151,12 @@ function RealtimeStyles() {
         .boards-tabs-shell {
           top: 62px;
           margin-bottom: 12px;
-          padding-top: 0;
+          padding-top: 12px;
         }
 
         .boards-tabs-shell::before {
-          top: -12px;
-          height: 12px;
+          top: -24px;
+          height: 24px;
         }
 
         .boards-dropdown {
