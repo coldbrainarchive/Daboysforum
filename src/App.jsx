@@ -4039,11 +4039,12 @@ export default function App() {
 
   const [ptrPull, setPtrPull] = useState(0); // 0-1 progress
   const [ptrRefreshing, setPtrRefreshing] = useState(false);
-  const ptrRef = useRef({ startY: 0, active: false });
+  const ptrRef = useRef({ startX: 0, startY: 0, active: false });
   const PTR_THRESHOLD = 72;
 
   useEffect(() => {
     const onTouchStart = (e) => {
+      ptrRef.current.startX = e.touches[0].clientX;
       ptrRef.current.startY = e.touches[0].clientY;
       ptrRef.current.active = false;
       // Don't intercept touches that originate inside a scrollable child (e.g. chat window)
@@ -4061,7 +4062,14 @@ export default function App() {
     const onTouchMove = (e) => {
       if (ptrRef.current.insideScroller) return;
 
+      const dx = e.touches[0].clientX - ptrRef.current.startX;
       const dy = e.touches[0].clientY - ptrRef.current.startY;
+
+      // Block browser swipe-back/forward navigation
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+        e.preventDefault();
+        return;
+      }
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
       const atBottom = scrollTop + window.innerHeight >= document.documentElement.scrollHeight - 8;
 
