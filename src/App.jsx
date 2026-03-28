@@ -217,6 +217,10 @@ function RealtimeStyles() {
         box-sizing: border-box;
       }
 
+      .boards-dropdown {
+        display: none;
+      }
+
       .boards-tabs-shell {
         position: sticky;
         top: 73px;
@@ -1156,11 +1160,23 @@ function RealtimeStyles() {
           height: 12px;
         }
 
+        .boards-dropdown {
+          display: block;
+          width: 100%;
+          padding: 10px 14px;
+          background: #1e1f2a;
+          color: #e2e8f0;
+          border: 1px solid rgba(148,163,184,0.2);
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          outline: none;
+          appearance: auto;
+        }
+
         .boards-tabs {
-          gap: 4px;
-          overflow-y: hidden;
-          padding: 0 1px 0;
-          scroll-snap-type: x proximity;
+          display: none;
         }
 
         .boards-tab {
@@ -1780,6 +1796,7 @@ function PostCard({ post, commentCount = 0, score = 0, myVote = 0, onVote }) {
 function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappening = false }) {
   const navRef = useRef(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const nav = navRef.current;
@@ -1795,8 +1812,30 @@ function BoardsTabs({ activeBoard = "", showHappening = false, highlightHappenin
     });
   }, [location.pathname, activeBoard, highlightHappening]);
 
+  const currentValue = highlightHappening ? "/" : (activeBoard ? `/board/${BOARDS.find(b => b.name === activeBoard)?.slug}` : "/");
+
+  function handleDropdownChange(e) {
+    navigate(e.target.value);
+  }
+
   return (
     <div className="boards-tabs-shell">
+      {/* Mobile dropdown */}
+      <select
+        className="boards-dropdown"
+        value={currentValue}
+        onChange={handleDropdownChange}
+        aria-label="Select board"
+      >
+        {showHappening && <option value="/">✨ Feed</option>}
+        {BOARDS.map((board) => (
+          <option key={board.name} value={`/board/${board.slug}`}>
+            {board.icon} {board.name}
+          </option>
+        ))}
+      </select>
+
+      {/* Desktop tabs */}
       <nav ref={navRef} className="boards-tabs" aria-label="Boards">
         {showHappening && (
           <Link
