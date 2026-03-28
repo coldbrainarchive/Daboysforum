@@ -2562,7 +2562,7 @@ function NewPost({ user, userRole, memberUsername }) {
 
   return (
     <div className="home-shell">
-      <main className="home-feed" style={{ textAlign: "left" }}>
+      <main className="home-feed" style={{ textAlign: "left", marginTop: 16 }}>
         <div className="content-card feed-post-card" style={{ marginBottom: 16 }}>
 
           <div style={{ marginBottom: 16, paddingBottom: 14, borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", gap: 10 }}>
