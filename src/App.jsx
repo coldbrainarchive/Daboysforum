@@ -2562,11 +2562,31 @@ function NewPost({ user, userRole, memberUsername }) {
 
   return (
     <div className="home-shell">
-      <BoardsTabs activeBoard={getBoardBySlug(selectedBoardSlug)?.name || ""} />
       <main className="home-feed" style={{ textAlign: "left" }}>
         <div className="content-card feed-post-card" style={{ marginBottom: 16 }}>
 
-          <div style={{ marginBottom: 16, paddingBottom: 14, borderBottom: "1px solid #2e303a" }}>
+          <div style={{ marginBottom: 16, paddingBottom: 14, borderBottom: "1px solid #2e303a", display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 26,
+                height: 26,
+                borderRadius: 999,
+                border: "none",
+                background: "#20262f",
+                color: "#dbe4ee",
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: "pointer",
+                flexShrink: 0
+              }}
+            >
+              ←
+            </button>
             <select
               value={selectedBoardSlug}
               onChange={(e) => setSelectedBoardSlug(e.target.value)}
