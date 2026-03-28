@@ -227,7 +227,6 @@ function RealtimeStyles() {
         z-index: 15;
         margin: 0 0 16px;
         padding-top: 0;
-        border-bottom: 1px solid rgba(48, 55, 68, 0.9);
         background: #16171d;
       }
 
