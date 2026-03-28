@@ -2031,14 +2031,14 @@ function ChatMessage({ comment, postBrowserId, postUsername, canDelete, onDelete
               className="chat-action-btn"
               onClick={() => { setShowActions(false); onReply && onReply(comment); }}
             >
-              ↩ Reply
+              Reply
             </button>
             <button
               type="button"
               className="chat-action-btn"
               onClick={handleReactClick}
             >
-              😊 React
+              React
             </button>
             {comment.parent_comment_id && (
               <button
@@ -2046,7 +2046,7 @@ function ChatMessage({ comment, postBrowserId, postUsername, canDelete, onDelete
                 className="chat-action-btn"
                 onClick={() => { setShowActions(false); onFindParent && onFindParent(comment.parent_comment_id); }}
               >
-                🔍 Find
+                Find
               </button>
             )}
             {canDelete && (
@@ -2055,7 +2055,7 @@ function ChatMessage({ comment, postBrowserId, postUsername, canDelete, onDelete
                 className="chat-action-btn"
                 onClick={(e) => { e.stopPropagation(); setShowActions(false); onDelete(); }}
               >
-                🗑 Delete
+                Delete
               </button>
             )}
           </div>
